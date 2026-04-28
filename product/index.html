@@ -1416,7 +1416,7 @@ function byId(id) {
 
 function initRefs() {
   [
-    "image-input", "ocr-hint-btn", "analyze-btn", "input-text", "ocr-text", "image-preview",
+    "image-input", "ocr-hint-btn", "run-ocr-btn", "analyze-btn", "input-text", "ocr-text", "image-preview",
     "ocr-status", "analysis-status", "analysis-empty", "analysis-content", "text-length",
     "recent-count", "category-title", "confidence-score", "source-kind",
     "matched-keywords", "extracted-signals", "likely-directions", "priority-checks",
@@ -1427,10 +1427,14 @@ function initRefs() {
 
 function bootstrap() {
   const rawData = document.getElementById("knowledge-base-data")?.textContent || "[]";
-  const entries = JSON.parse(rawData).map((entry) => ({
-    ...entry,
-    categoryTitle: entry.categoryTitle || CATEGORY_TITLES[entry.category] || CATEGORY_TITLES.unknown,
-  }));
+  let entries = [];
+  try {
+    entries = JSON.parse(rawData).map((entry) => ({
+      ...entry,
+      categoryTitle: entry.categoryTitle || CATEGORY_TITLES[entry.category] || CATEGORY_TITLES.unknown,
+    }));
+  } catch(e) {
+  }
   state.entries = entries;
   state.filteredEntries = entries;
   state.categories = deriveCategories(entries);
