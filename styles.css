@@ -325,8 +325,34 @@ body {
   font-size: 1.8rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   color: #1d1d1f;
+}
+
+.detail-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.detail-name-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #C20C0C;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+.detail-name-link:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(194,12,12,0.35);
 }
 
 .detail-bio {
