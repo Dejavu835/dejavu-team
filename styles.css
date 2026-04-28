@@ -505,12 +505,22 @@ body {
 .product-desc {
   flex: 0 0 auto;
   margin-bottom: 24px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.7em;
+  max-width: 500px;
 }
 
 .product-features {
   flex: 0 0 auto;
   min-height: 32px;
   margin-bottom: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
 
 .product-btn {
