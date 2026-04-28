@@ -453,6 +453,37 @@ body {
   padding: 20px 0;
 }
 
+/* Consistent cross-device layout structure */
+.product-mockup {
+  flex: 0 0 auto;
+}
+
+.product-tag {
+  flex: 0 0 auto;
+  margin-bottom: 14px;
+}
+
+.product-name {
+  flex: 0 0 auto;
+  margin-bottom: 14px;
+}
+
+.product-desc {
+  flex: 0 0 auto;
+  margin-bottom: 24px;
+}
+
+.product-features {
+  flex: 0 0 auto;
+  min-height: 32px;
+  margin-bottom: 28px;
+}
+
+.product-btn {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
 /* Floating device mockup */
 .product-mockup {
   width: 280px;
@@ -967,10 +998,10 @@ body {
   }
 
   .music-icon-frame {
-    width: 160px;
-    height: 110px;
+    width: 200px;
+    height: 130px;
     border-radius: 22px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
   }
 
   .music-icon {
@@ -1027,14 +1058,14 @@ body {
   }
 
   .music-icon-frame {
-    width: 120px;
-    height: 80px;
+    width: 160px;
+    height: 110px;
     border-radius: 18px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
 
   .music-icon {
-    font-size: 2.2rem;
+    font-size: 3rem;
   }
 
   .carousel-dots {
