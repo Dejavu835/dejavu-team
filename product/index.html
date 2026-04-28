@@ -520,6 +520,7 @@ a {
 .app-shell { padding-top: 60px !important; }
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -546,6 +547,7 @@ a {
           <input id="image-input" type="file" accept="image/*" capture="environment" hidden />
         </label>
         <button id="ocr-hint-btn" class="button secondary">OCR 使用提示</button>
+        <button id="run-ocr-btn" class="button secondary">🔍 识别文字</button>
         <button id="analyze-btn" class="button primary">开始分析</button>
       </div>
     </header>
@@ -554,7 +556,7 @@ a {
       <section class="panel input-panel">
         <div class="panel-header">
           <h2>输入与图片</h2>
-          <span id="ocr-status" class="status-pill muted">等待输入</span>
+          <span id="ocr-status" class="status-pill muted">点击「识别文字」开始 OCR</span>
         </div>
         <div class="stats-grid">
           <article class="stat-card">
@@ -578,7 +580,7 @@ a {
 
         <div class="field-block">
           <label for="ocr-text">OCR / 手动修正文案</label>
-          <textarea id="ocr-text" placeholder="单文件版不内置 OCR 引擎。建议在 iPhone 上用实况文本复制图片文字后粘贴到这里。"></textarea>
+          <textarea id="ocr-text" placeholder="点击上方「🔍 识别文字」按钮自动提取截图文字，或手动粘贴/修正内容。"></textarea>
         </div>
 
         <div class="field-block">
@@ -1465,6 +1467,7 @@ function wireEvents() {
   });
 
   refs["ocr-hint-btn"].addEventListener("click", showOCRHint);
+  refs["run-ocr-btn"].addEventListener("click", runOCR);
   refs["analyze-btn"].addEventListener("click", runAnalyze);
   refs["knowledge-search"].addEventListener("input", filterKnowledgeEntries);
   refs["knowledge-category"].addEventListener("change", filterKnowledgeEntries);
@@ -1473,9 +1476,42 @@ function wireEvents() {
 }
 
 function showOCRHint() {
-  refs["ocr-status"].textContent = "单文件版不内置 OCR。建议在 iPhone 上长按图片用实况文本复制，再粘贴到下方文本框。";
+  refs["ocr-status"].textContent = "上传截图后点击「🔍 识别文字」按钮自动提取文字，支持中文和英文日志。";
   refs["ocr-text"].focus();
 }
+
+async function runOCR() {
+  if (!state.imageBase64) {
+    refs["ocr-status"].textContent = "请先导入截图或拍照，再点击识别";
+    return;
+  }
+  const btn = refs["run-ocr-btn"];
+  btn.disabled = true;
+  refs["ocr-status"].textContent = "正在初始化 OCR 引擎…";
+  try {
+    const { data: { text } } = await Tesseract.recognize(
+      state.imageBase64,
+      "eng+chi_sim",
+      {
+        logger: (m) => {
+          if (m.status === "recognizing text") {
+            refs["ocr-status"].textContent = `识别中 ${Math.round(m.progress * 100)}%`;
+          }
+        }
+      }
+    );
+    refs["ocr-text"].value = text.trim();
+    refs["ocr-text"].dispatchEvent(new Event("input"));
+    refs["ocr-status"].textContent = "识别完成 · 可手动修正";
+    updateTextLength();
+  } catch (err) {
+    refs["ocr-status"].textContent = "OCR 识别失败：" + String(err.message || err);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+
 
 function fileToDataURL(file) {
   return new Promise((resolve, reject) => {
