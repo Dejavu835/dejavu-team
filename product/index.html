@@ -483,9 +483,53 @@ a {
   }
 }
 
-  </style>
+  
+/* Nav from main site */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 44px;
+  background: rgba(23, 22, 21, 0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.nav-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+}
+.nav-logo {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #f5f5f7;
+  text-decoration: none;
+}
+.nav-fade { color: #86868b; font-weight: 400; }
+.tool-footer {
+  text-align: center;
+  padding: 40px 22px 60px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.tool-footer p { font-size: 0.8rem; color: #86868b; }
+.app-shell { padding-top: 60px !important; }
+
+</style>
 </head>
 <body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="../">dejavu<span class="nav-fade"> team</span></a>
+    <span style="margin-left:auto;font-size:13px;color:#86868b;">Apple 日志分析工作台</span>
+  </div>
+</header>
+
   <div class="app-shell">
     <header class="topbar">
       <div>
@@ -1819,5 +1863,10 @@ initRefs();
 bootstrap();
 
   </script>
+
+<footer class="tool-footer">
+  <p>© 2026 dejavu team · Apple 日志分析工作台</p>
+</footer>
+
 </body>
 </html>
