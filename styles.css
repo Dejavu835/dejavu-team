@@ -863,11 +863,18 @@ body {
     padding: 28px 24px 32px;
   }
 
+  /* Allow horizontal scroll */
+  .products {
+    overflow: visible;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   /* Force full-screen swipe on mobile (<769px) */
-  body:not(.desktop-ready) .product-carousel,
   .product-carousel {
     display: flex;
     flex-direction: row;
+    flex-wrap: nowrap;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     gap: 0;
@@ -875,6 +882,8 @@ body {
     padding-bottom: env(safe-area-inset-bottom, 0);
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    width: 100vw;
+    max-width: 100vw;
   }
 
   .product-carousel::-webkit-scrollbar {
