@@ -1033,7 +1033,7 @@ body {
 .detail-card-music {
   max-width: 720px;
   padding: 0;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .detail-card-music .detail-layout {
