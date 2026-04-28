@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Apple 日志分析工作台 单文件版</title>
+  <style>
+:root {
+  color-scheme: dark;
+  --bg: #171615;
+  --panel: #242220;
+  --panel-soft: #2d2a27;
+  --panel-highlight: #313640;
+  --line: rgba(255, 255, 255, 0.08);
+  --text: #f3efe8;
+  --muted: #afa79a;
+  --accent: #4c84ff;
+  --accent-soft: rgba(76, 132, 255, 0.18);
+  --danger: #ff6666;
+  --green: rgba(72, 183, 106, 0.18);
+  --blue: rgba(76, 132, 255, 0.18);
+  --orange: rgba(255, 156, 77, 0.18);
+  font-family: "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(85, 111, 160, 0.16), transparent 26%),
+    linear-gradient(180deg, #1b1918 0%, #141312 100%);
+  color: var(--text);
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 18px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.topbar h1 {
+  margin: 0 0 4px;
+  font-size: 30px;
+}
+
+.topbar p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.runtime-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 1.18fr 1fr 0.95fr;
+  gap: 18px;
+  min-height: calc(100vh - 120px);
+}
+
+.panel {
+  background: rgba(36, 34, 32, 0.96);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 18px;
+  min-width: 0;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.panel-header h2,
+.result-card h3 {
+  margin: 0;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.status-pill.muted {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+
+.status-pill.success {
+  background: var(--green);
+}
+
+.status-pill.warning {
+  background: var(--orange);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-card,
+.result-card {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.stat-card span,
+.summary-label {
+  color: var(--muted);
+  display: block;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.stat-card strong {
+  font-size: 28px;
+}
+
+.field-block {
+  margin-bottom: 16px;
+}
+
+.field-block label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+textarea,
+input[type="search"],
+select {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: #1d1c1a;
+  color: var(--text);
+  padding: 14px 16px;
+  font: inherit;
+}
+
+textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
+textarea:focus,
+input[type="search"]:focus,
+select:focus {
+  outline: 2px solid rgba(76, 132, 255, 0.45);
+  outline-offset: 1px;
+}
+
+.image-preview {
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  background: #1c1a19;
+  border-radius: 18px;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--muted);
+}
+
+.image-preview img {
+  max-width: 100%;
+  display: block;
+}
+
+.button {
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.button.primary {
+  background: var(--accent);
+  color: white;
+}
+
+.button.secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+.button,
+.knowledge-item,
+.linked-item {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.analysis-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.analysis-summary > div {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.analysis-summary strong {
+  font-size: 22px;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.bullet-list,
+.tag-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+
+.bullet-list li,
+.linked-item,
+.knowledge-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.bullet-list li::before {
+  content: "•";
+  margin-right: 8px;
+  color: var(--muted);
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-list li {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+}
+
+.search-block {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.knowledge-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.05fr);
+  gap: 14px;
+  min-height: 72vh;
+}
+
+.knowledge-list,
+.knowledge-detail,
+.recent-list {
+  overflow: auto;
+}
+
+.knowledge-item {
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.knowledge-item:hover,
+.linked-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(76, 132, 255, 0.35);
+}
+
+.knowledge-item.active {
+  background: var(--panel-highlight);
+  border-color: rgba(76, 132, 255, 0.45);
+}
+
+.knowledge-item h4,
+.linked-item h4 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.knowledge-item p,
+.linked-item p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.linked-item {
+  cursor: pointer;
+}
+
+.detail-header {
+  margin-bottom: 16px;
+}
+
+.detail-header h3 {
+  margin: 0 0 4px;
+  font-size: 26px;
+}
+
+.detail-section {
+  margin-bottom: 16px;
+}
+
+.detail-section h4 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.detail-notes textarea {
+  min-height: 120px;
+}
+
+.note-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.reference-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  margin-bottom: 8px;
+}
+
+.reference-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge.apple-support { background: var(--green); }
+.badge.apple-developer { background: var(--blue); }
+.badge.apple-official { background: var(--orange); }
+.badge.third-party { background: rgba(255, 255, 255, 0.12); }
+
+.empty-state {
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  border-radius: 18px;
+  padding: 22px;
+  min-height: 140px;
+}
+
+.hidden {
+  display: none;
+}
+
+.recent-item {
+  cursor: pointer;
+}
+
+.muted-text {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+a {
+  color: #8ab2ff;
+}
+
+@media (max-width: 1280px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .knowledge-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .analysis-summary,
+  .stats-grid,
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 12px;
+  }
+
+  .topbar {
+    flex-direction: column;
+  }
+
+  .topbar h1 {
+    font-size: 24px;
+  }
+
+  .topbar-actions {
+    width: 100%;
+  }
+
+  .topbar-actions .button {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .panel {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  textarea {
+    min-height: 150px;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Apple 日志分析工作台</h1>
+        <p>单文件离线版：一个 HTML 文件即可打开，支持本地日志分析、知识库搜索、个人备注。</p>
+        <div class="runtime-banner">
+          <span id="runtime-mode" class="status-pill success">单文件离线版</span>
+          <span id="runtime-description" class="muted-text">无需端口和服务，直接打开这个 HTML 文件即可使用核心能力。</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <label class="button secondary">
+          导入截图 / 拍照
+          <input id="image-input" type="file" accept="image/*" capture="environment" hidden />
+        </label>
+        <button id="ocr-hint-btn" class="button secondary">OCR 使用提示</button>
+        <button id="analyze-btn" class="button primary">开始分析</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="panel input-panel">
+        <div class="panel-header">
+          <h2>输入与图片</h2>
+          <span id="ocr-status" class="status-pill muted">等待输入</span>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>文本长度</span>
+            <strong id="text-length">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>运行模式</span>
+            <strong>离线</strong>
+          </article>
+          <article class="stat-card">
+            <span>知识库条目</span>
+            <strong id="recent-count">0</strong>
+          </article>
+        </div>
+
+        <div class="field-block">
+          <label for="input-text">输入文本 / 日志片段</label>
+          <textarea id="input-text" placeholder="粘贴 panicString、watchdog、baseband、thermal 等日志片段"></textarea>
+        </div>
+
+        <div class="field-block">
+          <label for="ocr-text">OCR / 手动修正文案</label>
+          <textarea id="ocr-text" placeholder="单文件版不内置 OCR 引擎。建议在 iPhone 上用实况文本复制图片文字后粘贴到这里。"></textarea>
+        </div>
+
+        <div class="field-block">
+          <label>图片预览</label>
+          <div id="image-preview" class="image-preview empty">等待图片导入或拍照</div>
+        </div>
+
+        <div class="field-block">
+          <label>最近记录</label>
+          <div id="recent-list" class="recent-list"></div>
+        </div>
+      </section>
+
+      <section class="panel analysis-panel">
+        <div class="panel-header">
+          <h2>分析结果</h2>
+          <span id="analysis-status" class="status-pill muted">等待分析</span>
+        </div>
+        <div id="analysis-empty" class="empty-state">
+          粘贴日志文本，或者导入截图后手动贴入 OCR 文字，再点击“开始分析”。
+        </div>
+        <div id="analysis-content" class="analysis-content hidden">
+          <div class="analysis-summary">
+            <div>
+              <span class="summary-label">识别类型</span>
+              <strong id="category-title">未识别</strong>
+            </div>
+            <div>
+              <span class="summary-label">置信度</span>
+              <strong id="confidence-score">0%</strong>
+            </div>
+            <div>
+              <span class="summary-label">输入来源</span>
+              <strong id="source-kind">文本</strong>
+            </div>
+          </div>
+
+          <div class="result-grid">
+            <section class="result-card">
+              <h3>命中关键词</h3>
+              <ul id="matched-keywords" class="tag-list"></ul>
+            </section>
+            <section class="result-card">
+              <h3>提取信号</h3>
+              <ul id="extracted-signals" class="bullet-list"></ul>
+            </section>
+            <section class="result-card">
+              <h3>故障方向</h3>
+              <ul id="likely-directions" class="bullet-list"></ul>
+            </section>
+            <section class="result-card">
+              <h3>优先排查</h3>
+              <ul id="priority-checks" class="bullet-list"></ul>
+            </section>
+            <section class="result-card">
+              <h3>关联故障</h3>
+              <ul id="common-faults" class="bullet-list"></ul>
+            </section>
+            <section class="result-card">
+              <h3>风险提示</h3>
+              <ul id="risk-tips" class="bullet-list"></ul>
+            </section>
+          </div>
+
+          <section class="result-card">
+            <h3>匹配知识库</h3>
+            <div id="matched-entries" class="linked-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <aside class="panel knowledge-panel">
+        <div class="panel-header">
+          <h2>知识库</h2>
+          <span id="entry-count" class="status-pill muted">0 条</span>
+        </div>
+
+        <div class="search-block">
+          <input id="knowledge-search" type="search" placeholder="搜索故障码 / 关键词 / panicString" />
+          <select id="knowledge-category"></select>
+        </div>
+
+        <div class="knowledge-layout">
+          <div id="knowledge-list" class="knowledge-list"></div>
+          <div id="knowledge-detail" class="knowledge-detail empty-state">选择一个知识库条目查看详情。</div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script id="knowledge-base-data" type="application/json">[
+  {
+    "id" : "9D9D4E22-CC52-4EE9-9E5B-B02A76B0A101",
+    "title" : "Panic / panic-full 关键字段入门",
+    "category" : "panic",
+    "keywords" : [
+      "panic-full",
+      "panicString",
+      "userspace watchdog timeout",
+      "missing sensor(s)",
+      "panic"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "panicString",
+      "panic-full",
+      "userspace watchdog timeout"
+    ],
+    "symptoms" : [
+      "反复重启",
+      "偶发卡死后自动重启",
+      "分析数据中出现 panic-full"
+    ],
+    "commonCauses" : [
+      "内核或关键系统服务遇到不可恢复异常",
+      "驱动或外设通信异常",
+      "电源、存储、传感器链路触发系统 panic"
+    ],
+    "diagnosisSteps" : [
+      "先读 panicString、触发线程和触发模块名",
+      "把 panic 中出现的模块名与传感器、存储、通信、温控知识库交叉匹配",
+      "如果多次重启都指向同一模块，再提高该链路的排查优先级"
+    ],
+    "warnings" : [
+      "panic-full 更像结果型日志，不适合只看单个关键词直接定硬件",
+      "本条里的链路方向是基于 Apple 日志字段和维修场景的推断，不是 Apple 官方单点定性"
+    ],
+    "confidence" : "中",
+    "relatedTitles" : [
+      "Watchdog / 0x8badfood 无响应终止",
+      "Thermal / 温控保护触发",
+      "Storage / 容量压力与更新失败",
+      "Baseband / 无服务或搜索中"
+    ],
+    "referenceLinks" : [
+      "https://developer.apple.com/bug-reporting/",
+      "https://developer.apple.com/documentation/xcode/analyzing-a-crash-report"
+    ]
+  },
+  {
+    "id" : "C35B1D98-CC15-47A8-A08E-72015E5E0A02",
+    "title" : "Watchdog / 0x8badfood 无响应终止",
+    "category" : "watchdog",
+    "keywords" : [
+      "watchdog",
+      "0x8badfood",
+      "SIGKILL",
+      "unresponsive",
+      "timeout"
+    ],
+    "faultCodes" : [
+      "0x8badfood"
+    ],
+    "logPatterns" : [
+      "Exception Codes: 0x8badfood",
+      "watchdog timeout",
+      "scene-update watchdog transgression"
+    ],
+    "symptoms" : [
+      "卡死后重启",
+      "进入特定流程很久无响应",
+      "前台应用或关键服务超时"
+    ],
+    "commonCauses" : [
+      "主线程或关键系统线程长时间阻塞",
+      "同步 I/O 或网络等待拖住响应",
+      "外围异常导致系统服务超时"
+    ],
+    "diagnosisSteps" : [
+      "先区分是 App 级 watchdog 还是整机重启场景",
+      "检查主线程、磁盘、网络、温控或外设相关线索是否同时出现",
+      "如果是整机分析日志，继续结合 thermal、storage、baseband 等条目交叉判断"
+    ],
+    "warnings" : [
+      "0x8badfood 常表示系统因无响应而终止进程，不等于单一硬件损坏",
+      "若只有 watchdog 线索而没有功能异常，不宜直接判板层故障"
+    ],
+    "confidence" : "高",
+    "relatedTitles" : [
+      "Panic / panic-full 关键字段入门",
+      "Jetsam / 高内存压力终止",
+      "Thermal / 温控保护触发"
+    ],
+    "referenceLinks" : [
+      "https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/NetworkingOverview/CommonPitfalls/CommonPitfalls.html",
+      "https://developer.apple.com/documentation/xcode/analyzing-a-crash-report"
+    ]
+  },
+  {
+    "id" : "AC4DE605-706E-4C24-8E66-5E4D7E210A03",
+    "title" : "Jetsam / 高内存压力终止",
+    "category" : "jetsam",
+    "keywords" : [
+      "jetsam",
+      "EXC_RESOURCE",
+      "highwater",
+      "memorystatus",
+      "per-process-limit"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "jetsam",
+      "killed by jetsam",
+      "EXC_RESOURCE",
+      "highwater"
+    ],
+    "symptoms" : [
+      "大型场景下闪退",
+      "后台进程频繁被清理",
+      "资源吃紧时分析日志频繁出现"
+    ],
+    "commonCauses" : [
+      "系统内存压力过高",
+      "单个进程持续占用异常内存",
+      "后台任务、媒体处理或缓存堆积导致资源不足"
+    ],
+    "diagnosisSteps" : [
+      "优先看 Exception Type 是否为 EXC_RESOURCE 或日志里是否明确出现 jetsam/highwater",
+      "区分是单个 App 场景触发还是整机资源普遍紧张",
+      "结合低存储、后台任务数量和使用场景判断是否为资源策略问题"
+    ],
+    "warnings" : [
+      "Jetsam 是资源策略终止，不等于 NAND、CPU 或主板单点故障",
+      "如果只在特定 App 或大内存场景出现，优先按软件资源问题处理"
+    ],
+    "confidence" : "中高",
+    "relatedTitles" : [
+      "Watchdog / 0x8badfood 无响应终止",
+      "Storage / 容量压力与更新失败",
+      "Kernel / Userspace Crash 异常类型速查"
+    ],
+    "referenceLinks" : [
+      "https://developer.apple.com/documentation/xcode/understanding-the-exception-types-in-a-crash-report",
+      "https://developer.apple.com/documentation/xcode/analyzing-a-crash-report"
+    ]
+  },
+  {
+    "id" : "12F0FC0D-3175-4A2D-A818-087E1B0B0A04",
+    "title" : "Thermal / 温控保护触发",
+    "category" : "thermal",
+    "keywords" : [
+      "thermal",
+      "overtemp",
+      "temperature",
+      "Charging On Hold",
+      "thermalmonitord"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "thermal",
+      "overtemp",
+      "Charging On Hold",
+      "temperature warning"
+    ],
+    "symptoms" : [
+      "机身明显发热",
+      "亮度下降",
+      "充电暂停",
+      "相机或蜂窝功能暂时受限"
+    ],
+    "commonCauses" : [
+      "环境温度过高或过低",
+      "持续高负载",
+      "电池老化或供电发热",
+      "散热条件差或温感链路异常"
+    ],
+    "diagnosisSteps" : [
+      "先确认真实发热和环境温度是否异常",
+      "查看是否伴随 Charging On Hold、屏幕变暗、相机/蜂窝受限",
+      "如果没有明显发热却反复出现 thermal 线索，再检查温感、电池和供电路径"
+    ],
+    "warnings" : [
+      "Apple 官方明确说明高温会触发充电、显示、蜂窝和相机保护，不能只凭热日志判单一器件",
+      "若无真实热表现却长期出现 thermal 相关日志，再提升温感链路怀疑级别"
+    ],
+    "confidence" : "高",
+    "relatedTitles" : [
+      "Battery / Charging 充电异常",
+      "Watchdog / 0x8badfood 无响应终止",
+      "Reboot / 黑屏与无法开机"
+    ],
+    "referenceLinks" : [
+      "https://support.apple.com/en-us/118431",
+      "https://support.apple.com/guide/iphone/iph3006fbee4/ios"
+    ]
+  },
+  {
+    "id" : "C09A74A9-3360-4BF2-9471-D95D70FE0A05",
+    "title" : "Battery / Charging 充电异常",
+    "category" : "battery",
+    "keywords" : [
+      "charging",
+      "battery",
+      "accessory not supported",
+      "80 percent",
+      "usb",
+      "lightning",
+      "usbc"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "charging",
+      "battery",
+      "Accessory Not Supported",
+      "Charging On Hold"
+    ],
+    "symptoms" : [
+      "不充电",
+      "充电慢",
+      "充到 80% 停住",
+      "插线断续"
+    ],
+    "commonCauses" : [
+      "线材或适配器异常",
+      "充电口污损或接触不良",
+      "电池温度过高或过低触发保护",
+      "电源管理链路异常"
+    ],
+    "diagnosisSteps" : [
+      "先按 Apple 支持流程排除线材、适配器、供电插座和端口异物",
+      "区分是完全不充、慢充还是 80% 限制",
+      "结合 thermal 线索判断是热保护、优化充电还是硬件充电链路问题"
+    ],
+    "warnings" : [
+      "充到 80% 停住可能是优化充电或温控保护，不宜直接判电池损坏",
+      "现场最常见的是端口污损、配件异常和环境温度问题，应先排除"
+    ],
+    "confidence" : "高",
+    "relatedTitles" : [
+      "Thermal / 温控保护触发",
+      "Reboot / 黑屏与无法开机"
+    ],
+    "referenceLinks" : [
+      "https://support.apple.com/en-us/108805",
+      "https://support.apple.com/guide/iphone/iph3006fbee4/ios"
+    ]
+  },
+  {
+    "id" : "CB76461B-4D0E-4E86-B0BD-679901C00A06",
+    "title" : "Baseband / 无服务或搜索中",
+    "category" : "baseband",
+    "keywords" : [
+      "No Service",
+      "Searching",
+      "SOS",
+      "baseband",
+      "commcenter",
+      "carrier"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "No Service",
+      "Searching",
+      "SOS only",
+      "baseband",
+      "commcenter"
+    ],
+    "symptoms" : [
+      "无服务",
+      "搜索中",
+      "只能 SOS",
+      "蜂窝数据不稳定"
+    ],
+    "commonCauses" : [
+      "运营商或账号状态异常",
+      "SIM / eSIM 或运营商设置问题",
+      "基带通信链路异常"
+    ],
+    "diagnosisSteps" : [
+      "先按 Apple 官方流程排除飞行模式、重启、系统更新、运营商设置更新和 SIM / eSIM 问题",
+      "确认是否仅个别地区、个别卡或运营商场景触发",
+      "如果运营商侧确认正常且日志持续指向 baseband / commcenter，再进入硬件链路排查"
+    ],
+    "warnings" : [
+      "无服务不直接等于基带硬件坏；Apple 官方明确要求先排除运营商、覆盖和 SIM 问题",
+      "硬件结论应结合拨号、数据、SIM/eSIM 交叉测试和重复日志方向"
+    ],
+    "confidence" : "中高",
+    "relatedTitles" : [
+      "Wi‑Fi / 无法连接或网络异常",
+      "Panic / panic-full 关键字段入门"
+    ],
+    "referenceLinks" : [
+      "https://support.apple.com/en-us/120000"
+    ]
+  },
+  {
+    "id" : "E00DA036-DC3B-48F1-BF88-5855A0260A07",
+    "title" : "Wi‑Fi / 无法连接或网络异常",
+    "category" : "wifiBluetooth",
+    "keywords" : [
+      "wifi",
+      "bluetooth",
+      "unable to join",
+      "No Internet Connection",
+      "Wi-Fi Assist"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "unable to join the network",
+      "incorrect password",
+      "No Internet Connection",
+      "Wi-Fi setting is dimmed"
+    ],
+    "symptoms" : [
+      "搜得到网络但连不上",
+      "已连接但无网络",
+      "Wi‑Fi 置灰",
+      "Wi‑Fi / 蓝牙联动异常"
+    ],
+    "commonCauses" : [
+      "路由器或网络环境异常",
+      "系统网络设置异常",
+      "Wi‑Fi / Bluetooth 射频链路异常"
+    ],
+    "diagnosisSteps" : [
+      "先按 Apple 官方流程排除系统版本、Airplane Mode、Wi‑Fi Assist、路由器和网络侧问题",
+      "对比多个不同 Wi‑Fi 环境是否都异常",
+      "若长期置灰或多网络环境均失败，再提升硬件怀疑级别"
+    ],
+    "warnings" : [
+      "单一路由器连不上通常优先看网络环境，不建议直接判主板",
+      "Wi‑Fi 置灰是更强线索，但仍建议结合重启、系统版本和多网络对比验证"
+    ],
+    "confidence" : "中高",
+    "relatedTitles" : [
+      "Baseband / 无服务或搜索中"
+    ],
+    "referenceLinks" : [
+      "https://support.apple.com/en-us/111786",
+      "https://support.apple.com/en-us/111107"
+    ]
+  },
+  {
+    "id" : "58F406CA-9138-45F8-B593-78C2D7C90A08",
+    "title" : "Face ID / TrueDepth 传感器异常",
+    "category" : "faceIDSensor",
+    "keywords" : [
+      "Face ID",
+      "TrueDepth",
+      "Camera covered",
+      "dot projector",
+      "flood illuminator",
+      "proximity"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "Face ID",
+      "Camera covered",
+      "TrueDepth",
+      "proximity"
+    ],
+    "symptoms" : [
+      "Face ID 不可用",
+      "提示 Camera covered",
+      "录入失败",
+      "前感联动异常"
+    ],
+    "commonCauses" : [
+      "TrueDepth 区域被遮挡或污损",
+      "贴膜或壳体干扰",
+      "前感模组或排线异常",
+      "维修装配问题"
+    ],
+    "diagnosisSteps" : [
+      "先排除污渍、贴膜、壳体和遮挡",
+      "确认系统版本和 Face ID 设置正常",
+      "如果官方步骤无效，再检查前感 / 原深感链路与维修史"
+    ],
+    "warnings" : [
+      "Apple 官方先要求排除遮挡和设置问题；进一步到排线、模组属于技术人员推断",
+      "Face ID 类故障常与装配和前感链路有关，但不能只凭单条关键词定性"
+    ],
+    "confidence" : "高",
+    "relatedTitles" : [
+      "Camera / 相机或闪光灯异常"
+    ],
+    "referenceLinks" : [
+      "https://support.apple.com/en-us/118243"
+    ]
+  },
+  {
+    "id" : "17E3F72D-ECE4-462C-9D58-59DA97170A09",
+    "title" : "Camera / 相机或闪光灯异常",
+    "category" : "camera",
+    "keywords" : [
+      "camera",
+      "flash",
+      "black screen",
+      "blurry",
+      "artifact",
+      "isp"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "camera",
+      "flash",
+      "black screen",
+      "blurry",
+      "artifact"
+    ],
+    "symptoms" : [
+      "打开相机黑屏",
+      "拍照模糊",
+      "闪光灯异常",
+      "切换镜头或录像异常"
+    ],
+    "commonCauses" : [
+      "镜头或闪光灯被配件遮挡",
+      "摄像头模组异常",
+      "排线或连接异常",
+      "ISP 或系统侧异常"
+    ],
+    "diagnosisSteps" : [
+      "先按 Apple 官方流程排除保护壳、镜头附件、污渍并区分前后摄",
+      "测试手电筒、拍照、录像和切换镜头是否都异常",
+      "若单一镜头长期异常，再检查对应模组与连接"
+    ],
+    "warnings" : [
+      "Apple 官方先排除配件、污渍、重启和系统版本因素",
+      "单靠 camera 关键词不能直接判 ISP 或主板故障"
+    ],
+    "confidence" : "高",
+    "relatedTitles" : [
+      "Face ID / TrueDepth 传感器异常"
+    ],
+    "referenceLinks" : [
+      "https://support.apple.com/en-us/102514"
+    ]
+  },
+  {
+    "id" : "01CE4F12-78B6-48CF-B3CA-A0E264F70A10",
+    "title" : "Storage / 容量压力与更新失败",
+    "category" : "storageNAND",
+    "keywords" : [
+      "storage",
+      "Storage Almost Full",
+      "apfs",
+      "update failed",
+      "disk"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "Storage Almost Full",
+      "insufficient storage",
+      "update failed",
+      "apfs"
+    ],
+    "symptoms" : [
+      "容量几乎满",
+      "更新失败",
+      "系统卡顿",
+      "清理空间后异常缓解"
+    ],
+    "commonCauses" : [
+      "剩余容量不足",
+      "缓存和临时文件堆积",
+      "系统更新所需空间不够"
+    ],
+    "diagnosisSteps" : [
+      "先查看设置里的存储建议和是否有 Storage Almost Full",
+      "清理空间或卸载内容后复测更新和异常场景",
+      "只有在容量充足仍反复出现 I/O 或 APFS 相关异常时，再升级怀疑存储硬件"
+    ],
+    "warnings" : [
+      "低存储与 NAND 硬件故障不是一回事，知识库默认先按容量压力解释",
+      "如果日志明确出现反复 I/O error 或 APFS 异常，再结合刷机表现深入判断"
+    ],
+    "confidence" : "中",
+    "relatedTitles" : [
+      "Jetsam / 高内存压力终止",
+      "Reboot / 黑屏与无法开机"
+    ],
+    "referenceLinks" : [
+      "https://support.apple.com/en-us/108429",
+      "https://support.apple.com/en-us/108905"
+    ]
+  },
+  {
+    "id" : "F4D4A9E5-23B0-4126-A31A-38A7F8D60A11",
+    "title" : "Reboot / 黑屏与无法开机",
+    "category" : "reboot",
+    "keywords" : [
+      "reboot",
+      "reset",
+      "black screen",
+      "won't turn on",
+      "restart"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "black screen",
+      "won't turn on",
+      "reboot",
+      "reset"
+    ],
+    "symptoms" : [
+      "黑屏",
+      "按键无响应",
+      "重启循环",
+      "低电图标后不开机"
+    ],
+    "commonCauses" : [
+      "系统卡死",
+      "深度亏电或掉电",
+      "启动阶段异常",
+      "硬件问题需要进一步服务"
+    ],
+    "diagnosisSteps" : [
+      "先按 Apple 官方流程强制重启并充电至少 30 分钟到 1 小时",
+      "观察是否只是无显示但仍有振动、提示音或被电脑识别",
+      "若仍无法启动，再结合同时段的 panic、watchdog、charging 线索分流"
+    ],
+    "warnings" : [
+      "黑屏不等于主板故障，Apple 官方先要求重启与充电验证",
+      "如果是间歇性重启，建议和 panic、thermal、charging 相关日志一起看"
+    ],
+    "confidence" : "中高",
+    "relatedTitles" : [
+      "Battery / Charging 充电异常",
+      "Thermal / 温控保护触发",
+      "Panic / panic-full 关键字段入门"
+    ],
+    "referenceLinks" : [
+      "https://support.apple.com/en-us/116940"
+    ]
+  },
+  {
+    "id" : "4374E9AC-3E58-4911-9B07-5CE15B8C0A12",
+    "title" : "Kernel / Userspace Crash 异常类型速查",
+    "category" : "kernelCrash",
+    "keywords" : [
+      "EXC_BAD_ACCESS",
+      "EXC_CRASH",
+      "SIGABRT",
+      "SIGKILL",
+      "SIGTERM",
+      "EXC_RESOURCE"
+    ],
+    "faultCodes" : [],
+    "logPatterns" : [
+      "Exception Type",
+      "Termination Reason",
+      "EXC_BAD_ACCESS",
+      "EXC_RESOURCE",
+      "EXC_CRASH"
+    ],
+    "symptoms" : [
+      "崩溃日志难读",
+      "同类异常反复出现",
+      "需要先定归因方向"
+    ],
+    "commonCauses" : [
+      "内存访问错误",
+      "资源超限",
+      "系统策略终止",
+      "主动 abort 或异常退出"
+    ],
+    "diagnosisSteps" : [
+      "先看 Exception Type 和 Termination Reason",
+      "区分 EXC_BAD_ACCESS、EXC_RESOURCE、EXC_CRASH(SIGKILL/SIGTERM) 等方向",
+      "再决定往内存、资源、超时还是策略终止方向继续查"
+    ],
+    "warnings" : [
+      "这是日志解释入口，不直接对应单一硬件故障",
+      "Exception Type 只能缩小方向，仍需结合上下文与其它知识库条目"
+    ],
+    "confidence" : "高",
+    "relatedTitles" : [
+      "Watchdog / 0x8badfood 无响应终止",
+      "Jetsam / 高内存压力终止",
+      "Panic / panic-full 关键字段入门"
+    ],
+    "referenceLinks" : [
+      "https://developer.apple.com/documentation/xcode/understanding-the-exception-types-in-a-crash-report",
+      "https://developer.apple.com/documentation/xcode/analyzing-a-crash-report"
+    ]
+  }
+]
+</script>
+  <script>
+const CATEGORY_TITLES = {
+  panic: "Panic / 重启",
+  watchdog: "Watchdog",
+  jetsam: "Jetsam",
+  thermal: "Thermal / 发热",
+  reboot: "Reboot / Reset",
+  battery: "Battery / Charging",
+  baseband: "Baseband / 通信",
+  wifiBluetooth: "Wi‑Fi / 蓝牙",
+  faceIDSensor: "Face ID / 传感器",
+  camera: "Camera",
+  storageNAND: "Storage / NAND",
+  kernelCrash: "Kernel / Userspace Crash",
+  unknown: "未识别",
+};
+
+const ANALYSIS_RULES = [
+  {
+    category: "panic",
+    keywords: ["panic-full", "panicstring", "panic(cpu", "userspace watchdog timeout"],
+    extractedPatterns: [/panicString:.*/i, /Kernel Extensions in backtrace:.*/i],
+    likelyDirections: ["优先按 panic / 重启类故障处理", "结合 panicString 判断具体模块方向"],
+    priorityChecks: ["先确认是否为稳定复现", "查看是否伴随重启、死机、掉电", "重点检查 panicString 对应模块"],
+    commonRelatedFaults: ["传感器异常", "存储异常", "电源链路异常"],
+    riskTips: ["单条 panic 日志不能直接替代实体检测", "不同机型的 panicString 指向可能不同"],
+  },
+  {
+    category: "watchdog",
+    keywords: ["watchdog", "watchdog timeout", "stuck", "thermalmonitord"],
+    likelyDirections: ["优先排查系统卡死、供电、温控和外设拖死"],
+    priorityChecks: ["排查发热和掉电", "检查是否有外设拖慢启动", "关注是否与充电或大负载相关"],
+    commonRelatedFaults: ["热保护", "系统进程卡死", "电源管理异常"],
+    riskTips: ["watchdog 常常是结果，不一定是根因"],
+  },
+  {
+    category: "jetsam",
+    keywords: ["jetsam", "highwater", "memorystatus", "exc_resource"],
+    likelyDirections: ["优先按内存压力或资源策略终止处理"],
+    priorityChecks: ["查看是否为单个 App 触发", "检查大内存场景、缓存、后台任务", "结合存储和温控线索综合判断"],
+    commonRelatedFaults: ["内存压力", "大型媒体处理", "资源策略杀进程"],
+    riskTips: ["jetsam 不等于 NAND 或 CPU 单点故障"],
+  },
+  {
+    category: "thermal",
+    keywords: ["thermal", "overtemp", "over temperature", "charging on hold", "temperature warning"],
+    likelyDirections: ["优先排查温控、环境高温、充电发热和供电负载"],
+    priorityChecks: ["确认真实发热和环境温度", "查看是否伴随亮度下降、充电暂停、蜂窝受限", "无明显热表现时再考虑温感链路"],
+    commonRelatedFaults: ["电池老化", "充电链路发热", "温感异常"],
+    riskTips: ["热日志要结合真实发热表现，不宜孤立定性"],
+  },
+  {
+    category: "battery",
+    keywords: ["battery", "charging", "accessory not supported", "usb", "lightning", "usbc"],
+    likelyDirections: ["优先排查充电链路、电池状态和配件兼容性"],
+    priorityChecks: ["确认是否为温控限充", "检查接口、线材、充电头和电池健康", "观察是否只在特定配件下出现"],
+    commonRelatedFaults: ["尾插异常", "配件握手异常", "电池衰减或供电异常"],
+    riskTips: ["80% 限充和高温保护不一定是故障"],
+  },
+  {
+    category: "baseband",
+    keywords: ["baseband", "no service", "searching", "commcenter", "bb", "radio"],
+    likelyDirections: ["优先排查基带供电、通信链路、SIM 或射频方向"],
+    priorityChecks: ["确认是否稳定无服务或搜索中", "检查 SIM 与网络环境", "结合重启、发热、跌落/进水史综合判断"],
+    commonRelatedFaults: ["基带通信异常", "射频链路异常", "供电不稳"],
+    riskTips: ["无服务不一定全部来自基带硬件，需先排除运营商和环境因素"],
+  },
+  {
+    category: "wifiBluetooth",
+    keywords: ["wifi", "wi-fi", "bluetooth", "bt", "airport", "wireless"],
+    likelyDirections: ["优先排查 Wi‑Fi / 蓝牙模块状态、系统配置和天线链路"],
+    priorityChecks: ["区分打不开、灰色、弱信号还是频繁断连", "先复位网络设置和环境排除", "结合跌落或拆修史判断硬件概率"],
+    commonRelatedFaults: ["无线模块异常", "天线链路异常", "配置损坏"],
+    riskTips: ["单条 wireless 关键词不足以直接下硬件结论"],
+  },
+  {
+    category: "faceIDSensor",
+    keywords: ["face id", "truedepth", "sensor", "camera module", "dot projector", "flood illuminator", "missing sensor"],
+    likelyDirections: ["优先排查 Face ID / 传感器链路、排线、模组配对状态"],
+    priorityChecks: ["确认是否为摔过、进水或拆修后出现", "对照 panicString 里的传感器名", "结合前摄、人像、距离感应等功能一起看"],
+    commonRelatedFaults: ["传感器排线异常", "TrueDepth 模组异常", "维修后配对问题"],
+    riskTips: ["传感器关键词需要结合机型和具体模块名解释"],
+  },
+  {
+    category: "camera",
+    keywords: ["camera", "flash", "lens", "back camera", "front camera"],
+    likelyDirections: ["优先排查相机模组、供电、排线和闪光灯协同链路"],
+    priorityChecks: ["区分前后摄、闪光灯、对焦或黑屏", "看是否伴随发热、重启或保护日志", "结合跌落进水史综合判断"],
+    commonRelatedFaults: ["相机模组异常", "排线接触不良", "供电影响"],
+    riskTips: ["相机问题也可能由温控或系统保护间接触发"],
+  },
+  {
+    category: "storageNAND",
+    keywords: ["nand", "storage", "no space", "disk full", "i/o error", "update failed"],
+    likelyDirections: ["优先排查容量压力、存储读写异常和更新链路"],
+    priorityChecks: ["确认剩余容量", "检查是否更新失败、恢复失败、频繁卡顿", "结合 panic 或 jetsam 线索交叉判断"],
+    commonRelatedFaults: ["容量不足", "存储读写异常", "系统更新失败"],
+    riskTips: ["低容量和真正 NAND 硬故障要分开看"],
+  },
+  {
+    category: "reboot",
+    keywords: ["reset", "unexpected shutdown", "reboot", "black screen", "won't turn on"],
+    likelyDirections: ["优先排查重启、掉电、黑屏和供电稳定性"],
+    priorityChecks: ["区分黑屏、死机、自动重启、无法开机", "结合充电、发热、跌落/进水史", "联动 panic、thermal、battery 条目判断"],
+    commonRelatedFaults: ["供电链路异常", "系统 panic", "热保护"],
+    riskTips: ["黑屏不等于主板损坏，需要先区分显示、系统和供电层面"],
+  },
+  {
+    category: "kernelCrash",
+    keywords: ["exc_bad_access", "exc_crash", "sigabrt", "abort trap", "exception type"],
+    likelyDirections: ["优先按 crash 类型和异常码理解，再判断是否与系统资源或模块相关"],
+    priorityChecks: ["区分 App 崩溃、系统服务崩溃和整机重启", "抓异常类型和异常码", "配合上下文日志一起看"],
+    commonRelatedFaults: ["软件异常", "资源异常", "服务崩溃"],
+    riskTips: ["crash 类型解释需要结合上下文，不能单看缩写"],
+  },
+];
+
+const storage = {
+  get(key, fallback) {
+    try {
+      const value = window.localStorage.getItem(key);
+      return value ? JSON.parse(value) : fallback;
+    } catch {
+      return fallback;
+    }
+  },
+  set(key, value) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      return;
+    }
+  },
+};
+
+const state = {
+  entries: [],
+  filteredEntries: [],
+  categories: [],
+  selectedEntryId: null,
+  analysisResult: null,
+  imageBase64: "",
+  imageFilename: "",
+  recentRecords: storage.get("apple-log-standalone-recent", []),
+  notes: storage.get("apple-log-standalone-notes", {}),
+};
+
+const refs = {};
+
+function byId(id) {
+  return document.getElementById(id);
+}
+
+function initRefs() {
+  [
+    "image-input", "ocr-hint-btn", "analyze-btn", "input-text", "ocr-text", "image-preview",
+    "ocr-status", "analysis-status", "analysis-empty", "analysis-content", "text-length",
+    "recent-count", "category-title", "confidence-score", "source-kind",
+    "matched-keywords", "extracted-signals", "likely-directions", "priority-checks",
+    "common-faults", "risk-tips", "matched-entries", "knowledge-search", "knowledge-category",
+    "knowledge-list", "knowledge-detail", "entry-count", "recent-list",
+  ].forEach((id) => { refs[id] = byId(id); });
+}
+
+function bootstrap() {
+  const rawData = document.getElementById("knowledge-base-data")?.textContent || "[]";
+  const entries = JSON.parse(rawData).map((entry) => ({
+    ...entry,
+    categoryTitle: entry.categoryTitle || CATEGORY_TITLES[entry.category] || CATEGORY_TITLES.unknown,
+  }));
+  state.entries = entries;
+  state.filteredEntries = entries;
+  state.categories = deriveCategories(entries);
+
+  wireEvents();
+  renderCategoryOptions();
+  renderKnowledgeList();
+  renderKnowledgeDetail();
+  renderRecentRecords();
+  renderImagePreview();
+  updateTextLength();
+}
+
+function deriveCategories(entries) {
+  const map = new Map();
+  entries.forEach((entry) => {
+    const category = entry.category || "unknown";
+    map.set(category, {
+      id: category,
+      title: entry.categoryTitle || CATEGORY_TITLES[category] || CATEGORY_TITLES.unknown,
+    });
+  });
+  return [...map.values()].sort((left, right) => left.title.localeCompare(right.title, "zh-CN"));
+}
+
+function wireEvents() {
+  refs["image-input"].addEventListener("change", async (event) => {
+    const [file] = event.target.files || [];
+    if (!file) return;
+    state.imageFilename = file.name;
+    state.imageBase64 = await fileToDataURL(file);
+    renderImagePreview();
+    refs["ocr-status"].textContent = `已导入图片 · ${file.name}`;
+  });
+
+  refs["ocr-hint-btn"].addEventListener("click", showOCRHint);
+  refs["analyze-btn"].addEventListener("click", runAnalyze);
+  refs["knowledge-search"].addEventListener("input", filterKnowledgeEntries);
+  refs["knowledge-category"].addEventListener("change", filterKnowledgeEntries);
+  refs["input-text"].addEventListener("input", updateTextLength);
+  refs["ocr-text"].addEventListener("input", updateTextLength);
+}
+
+function showOCRHint() {
+  refs["ocr-status"].textContent = "单文件版不内置 OCR。建议在 iPhone 上长按图片用实况文本复制，再粘贴到下方文本框。";
+  refs["ocr-text"].focus();
+}
+
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderImagePreview() {
+  if (!state.imageBase64) {
+    refs["image-preview"].textContent = "等待图片导入或拍照";
+    refs["image-preview"].classList.add("empty");
+    return;
+  }
+  refs["image-preview"].classList.remove("empty");
+  refs["image-preview"].innerHTML = `<img src="${state.imageBase64}" alt="日志图片预览" />`;
+}
+
+function updateTextLength() {
+  const text = `${refs["input-text"].value}\n${refs["ocr-text"].value}`.trim();
+  refs["text-length"].textContent = String(text.length);
+}
+
+function runAnalyze() {
+  const text = [refs["input-text"].value, refs["ocr-text"].value].filter(Boolean).join("\n\n").trim();
+  if (!text) {
+    refs["analysis-status"].textContent = "请先输入日志或 OCR 文本";
+    return;
+  }
+
+  refs["analysis-status"].textContent = "分析中…";
+  const sourceKind = state.imageBase64 ? "screenshotOCR" : "pastedText";
+  const result = analyzeTextLocally(text, sourceKind);
+  state.analysisResult = result;
+  refs["analysis-status"].textContent = "已生成结论";
+  saveRecentRecord(text, result);
+  renderAnalysis();
+  renderRecentRecords();
+  if (result.matchedEntries?.length) {
+    selectEntry(result.matchedEntries[0].id);
+  }
+}
+
+function analyzeTextLocally(rawText, sourceKind) {
+  const lowered = rawText.toLowerCase();
+  let bestRule = null;
+  let bestScore = 0;
+  let matchedKeywords = [];
+
+  ANALYSIS_RULES.forEach((rule) => {
+    const matches = rule.keywords.filter((keyword) => lowered.includes(keyword.toLowerCase()));
+    if (matches.length > bestScore) {
+      bestRule = rule;
+      bestScore = matches.length;
+      matchedKeywords = matches;
+    }
+  });
+
+  if (!bestRule) {
+    return {
+      category: "unknown",
+      categoryTitle: CATEGORY_TITLES.unknown,
+      confidenceScore: 0.2,
+      matchedKeywords: [],
+      extractedSignals: [],
+      likelyDirections: ["未能稳定识别日志类型，建议先按关键词继续检索知识库"],
+      priorityChecks: ["确认日志是否完整", "检查 OCR 或复制过程是否有识别错误", "可直接粘贴更长的 panicString 或原始日志片段"],
+      commonRelatedFaults: [],
+      riskTips: ["日志片段太短时，误判概率会明显上升"],
+      matchedEntries: searchEntries(state.entries, rawText).slice(0, 5),
+      sourceKind,
+    };
+  }
+
+  const extractedSignals = [];
+  (bestRule.extractedPatterns || []).forEach((pattern) => {
+    const match = rawText.match(pattern);
+    if (match?.[0]) extractedSignals.push(match[0]);
+  });
+
+  return {
+    category: bestRule.category,
+    categoryTitle: CATEGORY_TITLES[bestRule.category] || CATEGORY_TITLES.unknown,
+    confidenceScore: Math.min(1, bestScore / 4 + 0.2),
+    matchedKeywords,
+    extractedSignals,
+    likelyDirections: bestRule.likelyDirections || [],
+    priorityChecks: bestRule.priorityChecks || [],
+    commonRelatedFaults: bestRule.commonRelatedFaults || [],
+    riskTips: bestRule.riskTips || [],
+    matchedEntries: searchEntries(state.entries, rawText, bestRule.category).slice(0, 5),
+    sourceKind,
+  };
+}
+
+function searchEntries(entries, rawText, preferredCategory = "") {
+  const query = String(rawText || "").toLowerCase().trim();
+  if (!query) return [];
+
+  return [...entries]
+    .map((entry) => {
+      const terms = [
+        entry.title,
+        ...(entry.keywords || []),
+        ...(entry.faultCodes || []),
+        ...(entry.logPatterns || []),
+        ...(entry.symptoms || []),
+        ...(entry.commonCauses || []),
+      ]
+        .filter(Boolean)
+        .map((item) => String(item).toLowerCase());
+
+      let score = 0;
+      terms.forEach((term) => {
+        if (query.includes(term)) score += 3;
+        else if (term.includes(query)) score += 2;
+        else if (term.split(/\s+/).some((part) => part && query.includes(part))) score += 1;
+      });
+
+      if (preferredCategory && entry.category === preferredCategory) score += 2;
+
+      return { entry, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((left, right) => right.score - left.score || left.entry.title.localeCompare(right.entry.title, "zh-CN"))
+    .map((item) => item.entry);
+}
+
+function saveRecentRecord(text, result) {
+  const next = [
+    {
+      id: crypto.randomUUID(),
+      sourceSummary: text.slice(0, 120),
+      rawText: text,
+      categoryTitle: result.categoryTitle,
+      matchedKeywords: result.matchedKeywords || [],
+    },
+    ...state.recentRecords,
+  ].slice(0, 10);
+  state.recentRecords = next;
+  storage.set("apple-log-standalone-recent", next);
+}
+
+function renderRecentRecords() {
+  refs["recent-count"].textContent = String(state.entries.length);
+  refs["recent-list"].innerHTML = state.recentRecords.length
+    ? ""
+    : `<div class="empty-state">还没有最近分析记录。</div>`;
+
+  state.recentRecords.forEach((record) => {
+    const item = document.createElement("button");
+    item.className = "linked-item recent-item";
+    item.innerHTML = `<h4>${escapeHTML(record.categoryTitle || "未识别")}</h4><p>${escapeHTML(record.sourceSummary)}</p>`;
+    item.addEventListener("click", () => {
+      refs["input-text"].value = record.rawText || "";
+      updateTextLength();
+      runAnalyze();
+    });
+    refs["recent-list"].appendChild(item);
+  });
+}
+
+function renderAnalysis() {
+  const result = state.analysisResult;
+  if (!result) {
+    refs["analysis-empty"].classList.remove("hidden");
+    refs["analysis-content"].classList.add("hidden");
+    return;
+  }
+
+  refs["analysis-empty"].classList.add("hidden");
+  refs["analysis-content"].classList.remove("hidden");
+  refs["category-title"].textContent = result.categoryTitle;
+  refs["confidence-score"].textContent = `${Math.round((result.confidenceScore || 0) * 100)}%`;
+  refs["source-kind"].textContent = result.sourceKind === "screenshotOCR" ? "图片 + 手动 OCR" : "文本输入";
+  renderSimpleList(refs["matched-keywords"], result.matchedKeywords || []);
+  renderSimpleList(refs["extracted-signals"], result.extractedSignals || []);
+  renderSimpleList(refs["likely-directions"], result.likelyDirections || []);
+  renderSimpleList(refs["priority-checks"], result.priorityChecks || []);
+  renderSimpleList(refs["common-faults"], result.commonRelatedFaults || []);
+  renderSimpleList(refs["risk-tips"], result.riskTips || []);
+  renderMatchedEntries(result.matchedEntries || []);
+}
+
+function renderSimpleList(container, items) {
+  container.innerHTML = "";
+  if (!items.length) {
+    container.innerHTML = `<li class="muted-text">暂无</li>`;
+    return;
+  }
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    container.appendChild(li);
+  });
+}
+
+function renderMatchedEntries(entries) {
+  refs["matched-entries"].innerHTML = entries.length ? "" : `<div class="empty-state">暂无直接命中的知识库条目。</div>`;
+  entries.forEach((entry) => {
+    const item = document.createElement("button");
+    item.className = "linked-item";
+    item.innerHTML = `<h4>${escapeHTML(entry.title)}</h4><p>${escapeHTML(entry.categoryTitle)}</p>`;
+    item.addEventListener("click", () => selectEntry(entry.id));
+    refs["matched-entries"].appendChild(item);
+  });
+}
+
+function renderCategoryOptions() {
+  refs["knowledge-category"].innerHTML = "";
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "全部";
+  refs["knowledge-category"].appendChild(allOption);
+  state.categories.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category.id;
+    option.textContent = category.title;
+    refs["knowledge-category"].appendChild(option);
+  });
+}
+
+function filterKnowledgeEntries() {
+  const query = refs["knowledge-search"].value.trim().toLowerCase();
+  const category = refs["knowledge-category"].value;
+  state.filteredEntries = state.entries.filter((entry) => {
+    if (category && entry.category !== category) return false;
+    if (!query) return true;
+    const haystacks = [
+      entry.title,
+      ...(entry.keywords || []),
+      ...(entry.faultCodes || []),
+      ...(entry.logPatterns || []),
+      ...(entry.symptoms || []),
+      ...(entry.commonCauses || []),
+    ].map((item) => String(item).toLowerCase());
+    return haystacks.some((item) => item.includes(query) || query.includes(item));
+  });
+  renderKnowledgeList();
+}
+
+function renderKnowledgeList() {
+  refs["entry-count"].textContent = `${state.filteredEntries.length} 条`;
+  refs["knowledge-list"].innerHTML = "";
+  state.filteredEntries.forEach((entry) => {
+    const item = document.createElement("button");
+    item.className = `knowledge-item ${state.selectedEntryId === entry.id ? "active" : ""}`;
+    item.innerHTML = `<h4>${escapeHTML(entry.title)}</h4><p>${escapeHTML(entry.categoryTitle)}</p>`;
+    item.addEventListener("click", () => selectEntry(entry.id));
+    refs["knowledge-list"].appendChild(item);
+  });
+  if (!state.filteredEntries.length) {
+    refs["knowledge-list"].innerHTML = `<div class="empty-state">没有匹配条目。</div>`;
+  }
+}
+
+function selectEntry(entryId) {
+  state.selectedEntryId = entryId;
+  renderKnowledgeList();
+  renderKnowledgeDetail();
+}
+
+function renderKnowledgeDetail() {
+  const entry = state.entries.find((item) => item.id === state.selectedEntryId);
+  if (!entry) {
+    refs["knowledge-detail"].innerHTML = "选择一个知识库条目查看详情。";
+    return;
+  }
+
+  const noteValue = state.notes[entry.id] || "";
+  refs["knowledge-detail"].innerHTML = `
+    <div class="detail-header">
+      <h3>${escapeHTML(entry.title)}</h3>
+      <p class="muted-text">${escapeHTML(entry.categoryTitle)} · 置信度 ${escapeHTML(entry.confidence || "中")}</p>
+    </div>
+    ${renderDetailSection("关键词 / 故障码", [...(entry.keywords || []), ...(entry.faultCodes || [])])}
+    ${renderDetailSection("常见日志表现", entry.logPatterns || [])}
+    ${renderDetailSection("故障现象", entry.symptoms || [])}
+    ${renderDetailSection("常见原因", entry.commonCauses || [])}
+    ${renderDetailSection("排查思路", entry.diagnosisSteps || [])}
+    ${renderDetailSection("注意事项", entry.warnings || [])}
+    ${renderRelatedSection(entry.relatedTitles || [])}
+    ${renderReferenceSection(entry.referenceLinks || [])}
+    <section class="detail-section detail-notes">
+      <h4>我的备注</h4>
+      <textarea id="entry-note-editor" placeholder="这里可以记录你自己的判断、拆机结论或后续排查建议">${escapeHTML(noteValue)}</textarea>
+      <div class="note-actions">
+        <span class="muted-text">备注优先保存在当前浏览器。</span>
+        <button id="save-note-btn" class="button secondary">保存备注</button>
+      </div>
+    </section>
+  `;
+
+  const saveButton = document.getElementById("save-note-btn");
+  const noteEditor = document.getElementById("entry-note-editor");
+  saveButton.addEventListener("click", () => {
+    state.notes[entry.id] = noteEditor.value;
+    storage.set("apple-log-standalone-notes", state.notes);
+    saveButton.textContent = "已保存";
+    setTimeout(() => { saveButton.textContent = "保存备注"; }, 1200);
+  });
+
+  refs["knowledge-detail"].querySelectorAll("[data-related-title]").forEach((element) => {
+    element.addEventListener("click", () => {
+      const title = element.getAttribute("data-related-title");
+      const matchedEntry = state.entries.find((entryItem) => entryItem.title === title)
+        || state.entries.find((entryItem) => (entryItem.title || "").includes(title) || title.includes(entryItem.title || ""));
+      if (matchedEntry) {
+        selectEntry(matchedEntry.id);
+      } else {
+        refs["knowledge-search"].value = title;
+        filterKnowledgeEntries();
+      }
+    });
+  });
+}
+
+function renderDetailSection(title, items) {
+  if (!items.length) return "";
+  const list = items.map((item) => `<li>${escapeHTML(item)}</li>`).join("");
+  return `<section class="detail-section"><h4>${title}</h4><ul class="bullet-list">${list}</ul></section>`;
+}
+
+function renderRelatedSection(items) {
+  if (!items.length) return "";
+  const list = items.map((item) => `
+    <button class="linked-item" data-related-title="${escapeHTML(item)}">
+      <h4>${escapeHTML(item)}</h4>
+      <p>点击跳转关联条目</p>
+    </button>
+  `).join("");
+  return `<section class="detail-section"><h4>关联条目</h4>${list}</section>`;
+}
+
+function renderReferenceSection(links) {
+  if (!links.length) return "";
+  const rows = links.map((link) => {
+    const authority = classifyReference(link);
+    return `
+      <div class="reference-row">
+        <div class="reference-meta">
+          <span class="badge ${authority.className}">${authority.label}</span>
+          <span class="muted-text">${escapeHTML(authority.host)}</span>
+        </div>
+        <a href="${escapeAttribute(link)}" target="_blank" rel="noreferrer">${escapeHTML(link)}</a>
+      </div>
+    `;
+  }).join("");
+  return `<section class="detail-section"><h4>参考来源</h4>${rows}</section>`;
+}
+
+function classifyReference(url) {
+  try {
+    const host = new URL(url).host.toLowerCase();
+    if (host.includes("support.apple.com")) {
+      return { label: "Apple 官方支持", className: "apple-support", host };
+    }
+    if (host.includes("developer.apple.com")) {
+      return { label: "Apple Developer", className: "apple-developer", host };
+    }
+    if (host.endsWith("apple.com")) {
+      return { label: "Apple 官方", className: "apple-official", host };
+    }
+    return { label: "第三方资料", className: "third-party", host };
+  } catch {
+    return { label: "本地资料", className: "third-party", host: "local" };
+  }
+}
+
+function escapeHTML(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;");
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll("'", "&#39;");
+}
+
+initRefs();
+bootstrap();
+
+  </script>
+</body>
+</html>
