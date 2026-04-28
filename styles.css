@@ -487,6 +487,32 @@ body {
   padding: 20px 0;
 }
 
+/* Force product cards to maintain identical layout */
+.product-inner .product-mockup {
+  margin: 0 auto 28px;
+}
+
+.product-inner .product-tag {
+  margin-bottom: 14px;
+}
+
+.product-inner .product-name {
+  margin-bottom: 14px;
+}
+
+.product-inner .product-desc {
+  margin-bottom: 24px;
+  min-height: 2.7em;
+}
+
+.product-inner .product-features {
+  margin-bottom: 28px;
+}
+
+.product-inner .product-btn {
+  margin: 0;
+}
+
 /* Consistent cross-device layout structure */
 .product-mockup {
   flex: 0 0 auto;
