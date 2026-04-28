@@ -361,9 +361,10 @@ body {
 
 /* === Products Section === */
 .products {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 40px 0 120px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 /* Hide section title on mobile, show on desktop */
@@ -797,32 +798,42 @@ body {
   display: flex;
   justify-content: center;
   gap: 8px;
-  padding: 16px 0 0;
+  padding: 24px 0 0;
 }
 
 .carousel-dots .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.25);
-  transition: background 0.3s;
+  background: rgba(255,255,255,0.2);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .carousel-dots .dot.active {
-  background: #0071e3;
+  background: #ffffff;
+  width: 24px;
+  border-radius: 4px;
 }
 
-/* Desktop: 2-column grid */
+/* Desktop (≥769px): 2-column grid */
 @media (min-width: 769px) {
+  .products {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 22px 100px;
+  }
+
   .product-carousel {
     display: grid !important;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr !important;
     overflow-x: visible !important;
     scroll-snap-type: none !important;
-    gap: 24px;
-    padding: 0 22px;
+    gap: 24px !important;
+    padding: 0;
     scrollbar-width: auto;
     -webkit-overflow-scrolling: auto;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
   }
 
   .product-carousel::-webkit-scrollbar {
@@ -830,11 +841,31 @@ body {
   }
 
   .product-carousel .product-card {
-    flex: none;
+    flex: none !important;
     scroll-snap-align: unset;
     min-height: 520px;
     padding: 60px 36px 48px;
+    border-radius: 30px;
+    width: auto;
+    height: auto;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
   }
+
+  .product-carousel .product-card:first-child,
+  .product-carousel .product-card:last-child {
+    border-radius: 30px;
+  }
+
+  .product-inner {
+    min-height: auto;
+    padding: 0;
+  }
+
+  .carousel-dots {
+    display: none;
+  }
+}
 
   .carousel-dots {
     display: none;
@@ -927,9 +958,6 @@ body {
     font-size: 2.8rem;
   }
 
-  .carousel-dots {
-    display: flex;
-  }
 }
 
 @media (max-width: 480px) {
