@@ -69,15 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (musicModalBackdrop) musicModalBackdrop.addEventListener('click', closeMusicModal);
   }
 
-  // Carousel dot sync
-  const carousel = document.querySelector('.product-carousel');
-  const dots = document.querySelectorAll('.carousel-dots .dot');
-  if (carousel && dots.length) {
-    carousel.addEventListener('scroll', () => {
-      const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
-      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-    }, { passive: true });
-  }
+
 
   window.addEventListener('scroll', () => {
     const currentScroll = window.pageYOffset;
