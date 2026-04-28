@@ -378,8 +378,12 @@ body {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   gap: 0;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
   padding-bottom: env(safe-area-inset-bottom, 0);
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .product-carousel::-webkit-scrollbar {
