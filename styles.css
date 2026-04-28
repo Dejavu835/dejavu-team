@@ -1072,6 +1072,14 @@ body {
   background-image: url('discog-goldenhour.jpg');
 }
 
+.discog-mysoul {
+  background-image: url('discog-mysoul.jpg');
+}
+
+.discog-2am {
+  background-image: url('discog-2am.jpg');
+}
+
 .discog-placeholder-img {
   background: linear-gradient(135deg, #e8e8ed 0%, #dddde5 100%);
   display: flex;
