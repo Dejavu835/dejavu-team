@@ -50,6 +50,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Navbar scroll effect ---
   const nav = document.querySelector('.nav');
+  // Music product card click opens modal
+  const musicCard = document.getElementById('music-product-card');
+  const musicModal = document.getElementById('detail-music-product');
+  const musicModalClose = document.querySelector('.detail-close-music');
+  const musicModalBackdrop = musicModal ? musicModal.querySelector('.detail-backdrop') : null;
+
+  if (musicCard && musicModal) {
+    musicCard.addEventListener('click', () => {
+      musicModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+    function closeMusicModal() {
+      musicModal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    if (musicModalClose) musicModalClose.addEventListener('click', closeMusicModal);
+    if (musicModalBackdrop) musicModalBackdrop.addEventListener('click', closeMusicModal);
+  }
+
   // Carousel dot sync
   const carousel = document.querySelector('.product-carousel');
   const dots = document.querySelectorAll('.carousel-dots .dot');

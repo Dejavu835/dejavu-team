@@ -199,14 +199,12 @@
         </div>
       </a>
 
-      <!-- AI 音乐作品 -->
-      <a href="https://163cn.tv/51b9bJa" target="_blank" class="product-card product-card-music" style="text-decoration:none;">
+      <!-- AI 音乐作品 (opens modal on click) -->
+      <div class="product-card product-card-music" id="music-product-card">
         <div class="product-inner">
           <div class="product-mockup">
-            <div class="music-qr-frame">
-              <div class="music-qr-label">网易云音乐</div>
-              <img src="music-qr.jpg" alt="音乐二维码" class="music-qr-img" />
-              <div class="music-qr-sub">歌手Déjà vu</div>
+            <div class="music-icon-frame">
+              <span class="music-icon">🎵</span>
             </div>
           </div>
           <div class="product-tag">
@@ -220,14 +218,51 @@
             <span>原创词曲</span>
             <span>多风格融合</span>
           </div>
-          <span class="product-btn product-btn-music">扫码收听 →</span>
+          <span class="product-btn product-btn-music">了解详情 →</span>
         </div>
-      </a>
+      </div>
     </div>
     <!-- Mobile dot indicators -->
     <div class="carousel-dots">
       <span class="dot active"></span>
       <span class="dot"></span>
+    </div>
+  </section>
+
+  <!-- Music Product Detail Modal -->
+  <section class="detail-view" id="detail-music-product">
+    <div class="detail-backdrop"></div>
+    <div class="detail-card detail-card-music">
+      <button class="detail-close detail-close-music">✕</button>
+      <div class="detail-layout">
+        <div class="detail-qr-section">
+          <img src="music-qr.jpg" alt="网易云音乐二维码" class="detail-qr-img" />
+          <p class="detail-qr-caption">网易云音乐 · 歌手 déjà vu</p>
+          <a href="https://163cn.tv/51b9bJa" target="_blank" class="product-btn product-btn-music detail-qr-btn">🎵 立即收听 →</a>
+        </div>
+        <div class="detail-content">
+          <span class="detail-role-tag">Music · AI 创作</span>
+          <h2 class="detail-name">AI 音乐作品</h2>
+          <p class="detail-bio">déjà vu 是 dejavu team 的 AI 音乐创作引擎。我们探索人机协作的声音边界——从旋律生成、歌词创作到混音母带，全流程由 AI 驱动，人类审美把关。</p>
+          <div class="detail-abilities">
+            <h3>核心能力</h3>
+            <ul>
+              <li><strong>AI 作曲</strong> — 根据情绪、场景、流派描述自动生成完整旋律结构</li>
+              <li><strong>歌词创作</strong> — 中英双语歌词，精准匹配曲风与情感表达</li>
+              <li><strong>风格融合</strong> — 从电子到古典、从氛围到流行，探索跨风格边界</li>
+              <li><strong>音频制作</strong> — 混音、母带处理，输出可直接发布的成品音乐</li>
+            </ul>
+          </div>
+          <div class="detail-abilities">
+            <h3>代表作品</h3>
+            <ul>
+              <li>《Echoes of Nowhere》— 氛围电子 · 探索孤独与无限</li>
+              <li>《Midnight Protocol》— 赛博朋克 · 数字世界的意识觉醒</li>
+              <li>《Bloom》— 器乐古典 · 自然生命力的 AI 诠释</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 

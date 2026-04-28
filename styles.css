@@ -578,6 +578,79 @@ body {
   transform: translateY(0);
 }
 
+/* === Music Icon Frame (product card) === */
+.music-icon-frame {
+  width: 120px;
+  height: 120px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #C20C0C 0%, #8B0000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 16px 40px rgba(194, 12, 12, 0.3), 0 0 0 1px rgba(255,255,255,0.08) inset;
+  margin: 0 auto 24px;
+  transform: rotateX(8deg) rotateY(-4deg);
+  transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.product-card-music:hover .music-icon-frame {
+  transform: rotateX(4deg) rotateY(0deg) translateY(-4px);
+}
+
+.music-icon {
+  font-size: 3.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+/* === Music Product Modal === */
+.detail-card-music {
+  background: #1d1d1f;
+}
+
+.detail-close-music {
+  background: rgba(255,255,255,0.1);
+  color: #f5f5f7;
+}
+
+.detail-close-music:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+.detail-qr-section {
+  background: #f8f8f8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  gap: 16px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+.detail-qr-img {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.detail-qr-caption {
+  font-size: 0.78rem;
+  color: #666;
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.detail-qr-btn {
+  margin-top: 4px;
+  font-size: 0.88rem;
+  padding: 10px 20px;
+}
+
 /* === Detail Links === */
 .detail-links {
   margin-top: 20px;
@@ -620,6 +693,7 @@ body {
 /* === Music Product Card === */
 .product-card-music {
   margin-top: 24px;
+  cursor: pointer;
 }
 
 .product-card-music::before {
