@@ -163,64 +163,72 @@
     </div>
   </section>
 
-  <!-- ===== PRODUCTS ===== -->
+  <!-- ===== PRODUCTS (Swipeable Carousel) ===== -->
   <section class="products">
     <h2 class="section-title">产品</h2>
-    <a href="product/" class="product-card" style="text-decoration:none;">
-      <div class="product-inner">
-        <div class="product-mockup">
-          <div class="product-window">
-            <div class="window-bar">
-              <span class="window-dot dot-red"></span>
-              <span class="window-dot dot-yellow"></span>
-              <span class="window-dot dot-green"></span>
-            </div>
-            <div class="window-content">
-              <div class="window-panel" style="background:#2d2a27;"></div>
-              <div class="window-panel" style="background:#2a2a2a;"></div>
-              <div class="window-panel" style="background:#252522;"></div>
+    <div class="product-carousel">
+      <!-- Apple 日志分析工作台 -->
+      <a href="product/" class="product-card" style="text-decoration:none;">
+        <div class="product-inner">
+          <div class="product-mockup">
+            <div class="product-window">
+              <div class="window-bar">
+                <span class="window-dot dot-red"></span>
+                <span class="window-dot dot-yellow"></span>
+                <span class="window-dot dot-green"></span>
+              </div>
+              <div class="window-content">
+                <div class="window-panel" style="background:#2d2a27;"></div>
+                <div class="window-panel" style="background:#2a2a2a;"></div>
+                <div class="window-panel" style="background:#252522;"></div>
+              </div>
             </div>
           </div>
+          <div class="product-tag">
+            <span class="product-tag-dot"></span>
+            工具 · AI 诊断
+          </div>
+          <h2 class="product-name">Apple 日志分析工作台</h2>
+          <p class="product-desc">本地运行的 Apple 设备日志分析工具。支持多种日志格式，AI 辅助解析异常，帮你快速定位设备问题。</p>
+          <div class="product-features">
+            <span>多格式日志解析</span>
+            <span>AI 异常检测</span>
+            <span>本地运行 · 隐私安全</span>
+          </div>
+          <span class="product-btn">立即体验 →</span>
         </div>
-        <div class="product-tag">
-          <span class="product-tag-dot"></span>
-          工具 · AI 诊断
-        </div>
-        <h2 class="product-name">Apple 日志分析工作台</h2>
-        <p class="product-desc">本地运行的 Apple 设备日志分析工具。支持 Sysdiagnose、Sandbox、Powerlog 等多种日志格式，AI 辅助解析异常，帮你快速定位 iPhone / iPad / Mac 的性能与崩溃问题。</p>
-        <div class="product-features">
-          <span>多格式日志解析</span>
-          <span>AI 异常检测</span>
-          <span>本地运行 · 隐私安全</span>
-        </div>
-        <span class="product-btn">立即体验 →</span>
-      </div>
-    </a>
+      </a>
 
-    <!-- 音乐产品卡片 -->
-    <a href="https://163cn.tv/51b9bJa" target="_blank" class="product-card product-card-music" style="text-decoration:none;">
-      <div class="product-inner">
-        <div class="product-mockup">
-          <div class="music-qr-frame">
-            <div class="music-qr-label">网易云音乐</div>
-            <img src="music-qr.jpg" alt="音乐二维码" class="music-qr-img" />
-            <div class="music-qr-sub">歌手Déjà vu</div>
+      <!-- AI 音乐作品 -->
+      <a href="https://163cn.tv/51b9bJa" target="_blank" class="product-card product-card-music" style="text-decoration:none;">
+        <div class="product-inner">
+          <div class="product-mockup">
+            <div class="music-qr-frame">
+              <div class="music-qr-label">网易云音乐</div>
+              <img src="music-qr.jpg" alt="音乐二维码" class="music-qr-img" />
+              <div class="music-qr-sub">歌手Déjà vu</div>
+            </div>
           </div>
+          <div class="product-tag">
+            <span class="product-tag-dot product-tag-dot-music"></span>
+            音乐 · AI 创作
+          </div>
+          <h2 class="product-name">AI 音乐作品</h2>
+          <p class="product-desc">用 AI 探索声音的可能性。从旋律生成到词曲创作，探索人机协作的音乐美学。</p>
+          <div class="product-features">
+            <span>AI 作曲</span>
+            <span>原创词曲</span>
+            <span>多风格融合</span>
+          </div>
+          <span class="product-btn product-btn-music">扫码收听 →</span>
         </div>
-        <div class="product-tag">
-          <span class="product-tag-dot product-tag-dot-music"></span>
-          音乐 · AI 创作
-        </div>
-        <h2 class="product-name">AI 音乐作品</h2>
-        <p class="product-desc">用 AI 探索声音的可能性。从旋律生成到词曲创作，探索人机协作的音乐美学。扫描二维码前往网易云音乐收听完整作品。</p>
-        <div class="product-features">
-          <span>AI 作曲</span>
-          <span>原创词曲</span>
-          <span>多风格融合</span>
-        </div>
-        <span class="product-btn product-btn-music">扫码收听 →</span>
-      </div>
-    </a>
+      </a>
+    </div>
+    <!-- Mobile dot indicators -->
+    <div class="carousel-dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+    </div>
   </section>
 
   <footer class="footer">

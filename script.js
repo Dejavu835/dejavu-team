@@ -50,6 +50,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Navbar scroll effect ---
   const nav = document.querySelector('.nav');
+  // Carousel dot sync
+  const carousel = document.querySelector('.product-carousel');
+  const dots = document.querySelectorAll('.carousel-dots .dot');
+  if (carousel && dots.length) {
+    carousel.addEventListener('scroll', () => {
+      const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    }, { passive: true });
+  }
+
   window.addEventListener('scroll', () => {
     const currentScroll = window.pageYOffset;
     if (currentScroll > 80) {
