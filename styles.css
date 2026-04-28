@@ -596,15 +596,15 @@ body {
 
 /* === Music Icon Frame (product card) === */
 .music-icon-frame {
-  width: 120px;
-  height: 120px;
+  width: 280px;
+  height: 180px;
   border-radius: 28px;
   background: linear-gradient(135deg, #C20C0C 0%, #8B0000 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 16px 40px rgba(194, 12, 12, 0.3), 0 0 0 1px rgba(255,255,255,0.08) inset;
-  margin: 0 auto 24px;
+  margin: 0 auto 40px;
   transform: rotateX(8deg) rotateY(-4deg);
   transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
@@ -614,7 +614,7 @@ body {
 }
 
 .music-icon {
-  font-size: 3.5rem;
+  font-size: 4rem;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
 }
 
@@ -730,7 +730,7 @@ body {
   justify-content: center;
   width: 160px;
   height: 160px;
-  margin: 0 auto 24px;
+  margin: 0 auto 40px;
   background: #ffffff;
   border-radius: 16px;
   box-shadow:
@@ -756,8 +756,8 @@ body {
 }
 
 .music-qr-img {
-  width: 120px;
-  height: 120px;
+  width: 280px;
+  height: 180px;
   object-fit: contain;
   padding: 14px;
 }
@@ -967,10 +967,10 @@ body {
   }
 
   .music-icon-frame {
-    width: 100px;
-    height: 100px;
+    width: 160px;
+    height: 110px;
     border-radius: 22px;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
 
   .music-icon {
@@ -1027,7 +1027,7 @@ body {
   }
 
   .music-icon-frame {
-    width: 80px;
+    width: 120px;
     height: 80px;
     border-radius: 18px;
     margin-bottom: 14px;
