@@ -1080,6 +1080,10 @@ body {
   background-image: url('discog-2am.jpg');
 }
 
+.discog-goodnight {
+  background-image: url('discog-goodnight.jpg');
+}
+
 .discog-placeholder-img {
   background: linear-gradient(135deg, #e8e8ed 0%, #dddde5 100%);
   display: flex;
