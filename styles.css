@@ -610,16 +610,16 @@ body {
 
 /* === Music Product Modal === */
 .detail-card-music {
-  background: #1d1d1f;
+  background: #ffffff;
 }
 
 .detail-close-music {
-  background: rgba(255,255,255,0.1);
-  color: #f5f5f7;
+  background: rgba(0,0,0,0.06);
+  color: #1d1d1f;
 }
 
 .detail-close-music:hover {
-  background: rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.12);
 }
 
 .detail-qr-section {
@@ -1029,27 +1029,132 @@ body {
   }
 }
 
+/* === Music Modal Redesign === */
+.detail-card-music {
+  max-width: 720px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.detail-card-music .detail-layout {
+  display: block;
+  min-height: auto;
+}
+
+.music-modal-header {
+  padding: 40px 36px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.music-modal-header-left {
+  flex: 1;
+}
+
+.music-modal-name {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.music-modal-bio {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #515154;
+  max-width: 440px;
+}
+
+.music-modal-header-right {
+  flex-shrink: 0;
+}
+
+.music-netease-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #1d1d1f;
+  color: #f5f5f7;
+  border-radius: 40px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.music-netease-link:hover {
+  opacity: 0.85;
+}
+
+.music-netease-icon {
+  font-size: 1rem;
+}
+
+.music-netease-arrow {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* Abilities row */
+.music-modal-abilities {
+  display: flex;
+  gap: 8px;
+  padding: 0 36px 24px;
+  flex-wrap: wrap;
+}
+
+.ability-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #f5f5f7;
+  border-radius: 30px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #515154;
+}
+
+.ability-icon {
+  font-size: 0.9rem;
+}
+
+.ability-label {
+  font-size: 0.82rem;
+}
+
+/* Section title */
+.discog-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #86868b;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0 36px;
+  margin: 0 0 16px;
+}
+
 /* === Discography Grid === */
 .discography-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin: 0 0 32px;
-  padding: 0;
+  padding: 0 36px 36px;
 }
 
 .discog-card {
-  flex: 1 1 calc(50% - 8px);
-  min-width: 140px;
-  background: #f5f5f7;
+  background: #ffffff;
   border-radius: 14px;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.25s ease, box-shadow 0.3s ease;
+  border: 1px solid #e8e8ed;
 }
 
 .discog-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
 
 .discog-img {
@@ -1084,57 +1189,43 @@ body {
   background-image: url('discog-goodnight.jpg');
 }
 
-.discog-placeholder-img {
-  background: linear-gradient(135deg, #e8e8ed 0%, #dddde5 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.discog-placeholder-icon {
-  font-size: 2.5rem;
-  opacity: 0.6;
-}
-
 .discog-info {
   padding: 12px 14px 14px;
 }
 
 .discog-info h4 {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #1d1d1f;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   letter-spacing: -0.01em;
+  line-height: 1.3;
 }
 
 .discog-type {
-  display: inline-block;
   font-size: 0.65rem;
-  font-weight: 600;
-  color: #86868b;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.discog-tag {
-  display: inline-block;
-  font-size: 0.68rem;
   font-weight: 500;
-  color: #0071e3;
-  background: rgba(0,113,227,0.08);
-  padding: 2px 10px;
-  border-radius: 20px;
-  margin-left: 8px;
+  color: #86868b;
+  letter-spacing: 0.04em;
 }
 
 @media (max-width: 640px) {
-  .discography-grid {
-    gap: 12px;
+  .music-modal-header {
+    flex-direction: column;
+    padding: 28px 20px 16px;
   }
-  .discog-card {
-    flex: 1 1 calc(50% - 6px);
-    min-width: 0;
+  .music-modal-name {
+    font-size: 1.4rem;
+  }
+  .music-modal-abilities {
+    padding: 0 20px 20px;
+  }
+  .discog-section-title {
+    padding: 0 20px;
+  }
+  .discography-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 0 20px 28px;
   }
 }
