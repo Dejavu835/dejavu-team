@@ -1022,4 +1022,107 @@ body {
   .carousel-dots {
     display: flex;
   }
+
+  .discog-card {
+    min-width: 130px;
+    flex: 1 1 130px;
+  }
+}
+
+/* === Discography Grid === */
+.discography-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0 0 32px;
+  padding: 0;
+}
+
+.discog-card {
+  flex: 1 1 calc(50% - 8px);
+  min-width: 140px;
+  background: #f5f5f7;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.discog-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.discog-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.discog-departure {
+  background-image: url('discog-departure.jpg');
+}
+
+.discog-walls {
+  background-image: url('discog-walls.jpg');
+}
+
+.discog-goldenhour {
+  background-image: url('discog-goldenhour.jpg');
+}
+
+.discog-placeholder-img {
+  background: linear-gradient(135deg, #e8e8ed 0%, #dddde5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.discog-placeholder-icon {
+  font-size: 2.5rem;
+  opacity: 0.6;
+}
+
+.discog-info {
+  padding: 12px 14px 14px;
+}
+
+.discog-info h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.discog-type {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #86868b;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.discog-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #0071e3;
+  background: rgba(0,113,227,0.08);
+  padding: 2px 10px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+
+@media (max-width: 640px) {
+  .discography-grid {
+    gap: 12px;
+  }
+  .discog-card {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 0;
+  }
 }
