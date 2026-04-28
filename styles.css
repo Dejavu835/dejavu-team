@@ -355,6 +355,14 @@ body {
   box-shadow: 0 4px 14px rgba(194,12,12,0.35);
 }
 
+.detail-name-link-dark {
+  background: #1d1d1f;
+}
+
+.detail-name-link-dark:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+
 .detail-bio {
   font-size: 1rem;
   line-height: 1.6;
