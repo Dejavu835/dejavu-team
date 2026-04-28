@@ -856,6 +856,59 @@ body {
   .detail-content {
     padding: 28px 24px 32px;
   }
+
+  /* Force full-screen swipe on mobile */
+  .product-carousel {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    gap: 0 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0) !important;
+    padding: 0 !important;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .product-carousel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .product-card {
+    flex: 0 0 100% !important;
+    scroll-snap-align: start !important;
+    min-height: 520px;
+    padding: 48px 24px 40px;
+  }
+
+  .product-mockup {
+    width: 200px;
+    height: 130px;
+    margin-bottom: 20px;
+  }
+
+  .product-name {
+    font-size: 1.5rem;
+  }
+
+  .product-desc {
+    font-size: 0.88rem;
+  }
+
+  .music-icon-frame {
+    width: 100px;
+    height: 100px;
+    border-radius: 22px;
+    margin-bottom: 18px;
+  }
+
+  .music-icon {
+    font-size: 2.8rem;
+  }
+
+  .carousel-dots {
+    display: flex;
+  }
 }
 
 @media (max-width: 480px) {
@@ -877,63 +930,46 @@ body {
     width: 95%;
   }
 
-  /* Carousel: show both cards side by side on tablet */
+  /* Force full-screen swipe on small mobile */
   .product-carousel {
-    display: flex;
-    flex-direction: row;
-    overflow-x: visible;
-    scroll-snap-type: none;
-    gap: 20px;
-    padding: 0 22px;
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0) !important;
   }
 
   .product-card {
-    flex: 0 0 calc(50% - 10px);
-    min-height: 520px;
-    padding: 48px 28px 40px;
+    flex: 0 0 100% !important;
+    scroll-snap-align: start !important;
+    min-height: auto;
+    padding: 40px 24px 36px;
   }
 
   .product-mockup {
-    width: 200px;
-    height: 130px;
-    margin-bottom: 24px;
+    width: 160px;
+    height: 110px;
+    margin-bottom: 16px;
   }
 
   .product-name {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
 
-  .product-desc {
-    font-size: 0.88rem;
+  .music-icon-frame {
+    width: 80px;
+    height: 80px;
+    border-radius: 18px;
+    margin-bottom: 14px;
   }
 
-  .product-features {
-    justify-content: center;
-  }
-
-  .product-btn {
-    font-size: 0.9rem;
-    padding: 12px 22px;
-  }
-
-  .music-qr-frame {
-    width: 130px;
-    height: 130px;
-  }
-
-  .music-qr-img {
-    width: 96px;
-    height: 96px;
-    padding: 12px;
+  .music-icon {
+    font-size: 2.2rem;
   }
 
   .carousel-dots {
-    display: none;
-  }
-
-  /* Tablet: 2-column grid */
-  .product-carousel {
-    flex-wrap: wrap;
+    display: flex;
   }
 }
