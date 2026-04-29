@@ -69,6 +69,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (musicModalBackdrop) musicModalBackdrop.addEventListener('click', closeMusicModal);
   }
 
+  // --- Coming Soon card highlight when carousel scrolled to end ---
+  const carousel = document.querySelector('.product-carousel');
+  const comingSoonCard = document.getElementById('product-coming-soon');
+
+  if (carousel && comingSoonCard) {
+    const highlightComingSoon = () => {
+      const scrollLeft = carousel.scrollLeft;
+      const maxScroll = carousel.scrollWidth - carousel.clientWidth - 1;
+      if (scrollLeft >= maxScroll) {
+        comingSoonCard.classList.add('highlighted');
+      } else {
+        comingSoonCard.classList.remove('highlighted');
+      }
+    };
+
+    carousel.addEventListener('scroll', highlightComingSoon, { passive: true });
+    // Initial check
+    highlightComingSoon();
+  }
+
 
 
   window.addEventListener('scroll', () => {
