@@ -98,5 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       nav.style.background = 'rgba(245, 245, 247, 0.92)';
     }
-  });
+    // scroll progress bar
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (currentScroll / docHeight * 100) + '%' : '0%';
+    document.documentElement.style.setProperty('--scroll-progress', progress);
+  }, { passive: true });
 });
