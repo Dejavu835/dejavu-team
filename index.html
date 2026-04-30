@@ -185,46 +185,26 @@
               <span class="toolbar-sep"></span>
               <span class="toolbar-path">~/logs/analyzer</span>
             </div>
-            <!-- Clean Dashboard UI -->
-            <div class="win-dashboard">
-              <!-- Header stats -->
-              <div class="win-stats">
-                <div class="win-stat">
-                  <span class="win-stat-num">1,284</span>
-                  <span class="win-stat-label">entries</span>
-                </div>
-                <div class="win-stat-sep"></div>
-                <div class="win-stat">
-                  <span class="win-stat-num win-ok">0</span>
-                  <span class="win-stat-label">errors</span>
-                </div>
-                <div class="win-stat-sep"></div>
-                <div class="win-stat">
-                  <span class="win-stat-num win-warn">3</span>
-                  <span class="win-stat-label">warnings</span>
-                </div>
+            <!-- Clean Terminal Log UI -->
+            <div class="win-log">
+              <div class="win-log-line">
+                <span class="log-ts">09:14</span>
+                <span class="log-badge log-badge-info">INFO</span>
+                <span class="log-msg">Apple Diagnostic OK</span>
               </div>
-              <!-- Progress bar -->
-              <div class="win-progress-wrap">
-                <div class="win-progress-bar">
-                  <div class="win-progress-fill"></div>
-                </div>
-                <span class="win-progress-label">analyzing...</span>
+              <div class="win-log-line">
+                <span class="log-ts">09:14</span>
+                <span class="log-badge log-badge-warn">WARN</span>
+                <span class="log-msg">Thermal: 3 events</span>
               </div>
-              <!-- Mini chart bars -->
-              <div class="win-chart">
-                <div class="win-bar-item" style="height:40%"></div>
-                <div class="win-bar-item" style="height:65%"></div>
-                <div class="win-bar-item" style="height:30%"></div>
-                <div class="win-bar-item" style="height:90%"></div>
-                <div class="win-bar-item" style="height:55%"></div>
-                <div class="win-bar-item" style="height:75%"></div>
-                <div class="win-bar-item" style="height:45%"></div>
+              <div class="win-log-line">
+                <span class="log-ts">09:14</span>
+                <span class="log-badge log-badge-err">ERR</span>
+                <span class="log-msg">Battery: replace</span>
               </div>
-              <!-- Status row -->
-              <div class="win-status-row">
-                <span class="win-status-dot"></span>
-                <span class="win-status-text">AI summary ready</span>
+              <div class="win-log-line win-log-line-cursor">
+                <span class="log-ts">09:15</span>
+                <span class="log-cursor"></span>
               </div>
             </div>
           </div>
