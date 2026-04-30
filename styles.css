@@ -559,7 +559,7 @@ body {
 
 /* === Title Bar === */
 .window-bar {
-  height: 28px;
+  height: 24px;
   background: #2c2c2e;
   display: flex;
   align-items: center;
@@ -602,9 +602,9 @@ body {
 .window-title {
   flex: 1;
   text-align: center;
-  font-size: 7px;
+  font-size: 10px;
   font-weight: 500;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.4);
   letter-spacing: 0.02em;
   pointer-events: none;
   user-select: none;
@@ -618,7 +618,7 @@ body {
 
 /* === Window Toolbar === */
 .window-toolbar {
-  height: 22px;
+  height: 18px;
   background: #232326;
   display: flex;
   align-items: center;
@@ -629,9 +629,9 @@ body {
 }
 
 .toolbar-btn {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.07);
 }
 
@@ -643,8 +643,8 @@ body {
 }
 
 .toolbar-path {
-  font-size: 6px;
-  color: rgba(255,255,255,0.28);
+  font-size: 9px;
+  color: rgba(255,255,255,0.35);
   letter-spacing: 0.03em;
   font-family: 'SF Mono', 'Menlo', monospace;
 }
@@ -652,17 +652,17 @@ body {
 /* === Window Content (terminal) === */
 .window-content {
   flex: 1;
-  padding: 8px 10px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   overflow: hidden;
   background: #0d0d0d;
   position: relative;
 }
 
-/* Scanline overlay for depth */
-.window-content::after {
+/* Scanline overlay for depth — disabled on small mockup, kept for larger frames */
+.window-content.has-scanlines::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -670,8 +670,8 @@ body {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0,0,0,0.06) 2px,
-    rgba(0,0,0,0.06) 4px
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
   );
   pointer-events: none;
 }
@@ -684,10 +684,10 @@ body {
 .win-dashboard {
   flex: 1;
   background: #1e1e22;
-  padding: 8px 10px 6px;
+  padding: 5px 8px 4px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   overflow: hidden;
 }
 
@@ -709,7 +709,7 @@ body {
 }
 
 .win-stat-num {
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 700;
   color: #ffffff;
   line-height: 1;
@@ -717,7 +717,7 @@ body {
 }
 
 .win-stat-label {
-  font-size: 5px;
+  font-size: 7px;
   color: rgba(255,255,255,0.4);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -725,7 +725,7 @@ body {
 
 .win-stat-sep {
   width: 1px;
-  height: 16px;
+  height: 14px;
   background: rgba(255,255,255,0.1);
   flex-shrink: 0;
 }
@@ -743,7 +743,7 @@ body {
 
 .win-progress-bar {
   flex: 1;
-  height: 3px;
+  height: 2px;
   background: rgba(255,255,255,0.1);
   border-radius: 2px;
   overflow: hidden;
@@ -763,8 +763,8 @@ body {
 }
 
 .win-progress-label {
-  font-size: 5px;
-  color: rgba(255,255,255,0.35);
+  font-size: 7px;
+  color: rgba(255,255,255,0.4);
   white-space: nowrap;
   font-family: 'SF Mono', 'Menlo', monospace;
 }
@@ -773,7 +773,7 @@ body {
 .win-chart {
   display: flex;
   align-items: flex-end;
-  gap: 3px;
+  gap: 2px;
   flex: 1;
   padding: 0 2px;
 }
@@ -803,8 +803,8 @@ body {
 }
 
 .win-status-dot {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: #30d158;
   box-shadow: 0 0 4px rgba(48,209,88,0.6);
@@ -818,8 +818,8 @@ body {
 }
 
 .win-status-text {
-  font-size: 5.5px;
-  color: rgba(255,255,255,0.4);
+  font-size: 7px;
+  color: rgba(255,255,255,0.45);
   font-family: 'SF Mono', 'Menlo', monospace;
 }
 
