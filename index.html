@@ -169,19 +169,48 @@
       <a href="product/" class="product-card">
         <div class="product-mockup">
           <div class="product-window">
+            <!-- macOS Big Sur+ Title Bar -->
             <div class="window-bar">
               <span class="window-dot dot-red"></span>
               <span class="window-dot dot-yellow"></span>
               <span class="window-dot dot-green"></span>
+              <span class="window-title">Apple 日志分析</span>
+              <span class="window-bar-spacer"></span>
             </div>
+            <!-- Toolbar -->
+            <div class="window-toolbar">
+              <span class="toolbar-btn"></span>
+              <span class="toolbar-btn"></span>
+              <span class="toolbar-btn"></span>
+              <span class="toolbar-sep"></span>
+              <span class="toolbar-path">~/logs/analyzer</span>
+            </div>
+            <!-- Terminal Content -->
             <div class="window-content">
-              <div class="log-stream">
-                <div class="log-line"></div>
-                <div class="log-line"></div>
-                <div class="log-line"></div>
-                <div class="log-line"></div>
-                <div class="log-line"></div>
-                <div class="log-line"></div>
+              <div class="log-line">
+                <span class="log-ts">09:14:02</span>
+                <span class="log-lv log-lv-info">INFO</span>
+                <span class="log-msg">DeviceManager: scanning /var/log...</span>
+              </div>
+              <div class="log-line">
+                <span class="log-ts">09:14:03</span>
+                <span class="log-lv log-lv-ok">OK</span>
+                <span class="log-msg">Parsed 1,284 entries — 0 errors</span>
+              </div>
+              <div class="log-line">
+                <span class="log-ts">09:14:04</span>
+                <span class="log-lv log-lv-warn">WARN</span>
+                <span class="log-msg">Thermal event detected: core_4 @ 91°C</span>
+              </div>
+              <div class="log-line">
+                <span class="log-ts">09:14:05</span>
+                <span class="log-lv log-lv-err">ERR</span>
+                <span class="log-msg">GPU reset on displayport_0</span>
+              </div>
+              <div class="log-line">
+                <span class="log-ts">09:14:06</span>
+                <span class="log-lv log-lv-ok">OK</span>
+                <span class="log-msg">AI summary generated — 3 insights<span class="log-cursor"></span></span>
               </div>
             </div>
           </div>
