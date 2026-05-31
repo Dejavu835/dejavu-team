@@ -611,9 +611,15 @@ function drawStart(){
 function drawPaused(){
   ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,W,H);
   ctx.fillStyle='#fff';ctx.font='bold 36px monospace';ctx.textAlign='center';
-  ctx.fillText('PAUSED',W/2,H/2);
+  ctx.fillText('PAUSED',W/2,H/2-20);
   ctx.font='16px monospace';ctx.fillStyle='#888';
-  ctx.fillText('按 P 继续',W/2,H/2+40);ctx.textAlign='left';
+  ctx.fillText('按 P 继续',W/2,H/2+20);
+  // Draw resume button
+  const bw=140,bh=48,bx=W/2-bw/2,by=H/2+40;
+  ctx.fillStyle='rgba(48,209,88,0.25)';ctx.strokeStyle='#30d158';ctx.lineWidth=2;
+  ctx.beginPath();ctx.roundRect(bx,by,bw,bh,10);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#30d158';ctx.font='bold 16px monospace';
+  ctx.fillText('▶ 继续游戏',W/2,by+bh/2+6);ctx.textAlign='left';
 }
 
 function drawGameOver(){
@@ -707,6 +713,16 @@ canvas.addEventListener('click',e=>{
     return;
   }
   if(state==='gameover'){startGame();return;}
+  if(state==='paused'){
+    // Resume button on canvas: bw=140,bh=48,bx=W/2-bw/2,by=H/2+40
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=W/rect.width,scaleY=H/rect.height;
+    const mx=(e.clientX-rect.left)*scaleX;
+    const my=(e.clientY-rect.top)*scaleY;
+    const bw=140,bh=48,bx=W/2-bw/2,by=H/2+40;
+    if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh){state='playing';return;}
+    return;
+  }
   const rect=canvas.getBoundingClientRect();
   const scaleX=W/rect.width,scaleY=H/rect.height;
   const mx=(e.clientX-rect.left)*scaleX;
