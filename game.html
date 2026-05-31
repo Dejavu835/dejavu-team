@@ -22,11 +22,11 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
 #pause-btn{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);font-size:10px;font-family:monospace;letter-spacing:0.05em;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:flex;align-items:center;justify-content:center}
 #pause-btn:active{background:rgba(255,255,255,0.2)}
 #pause-label{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.05em;margin-top:2px}
-#start-btn{width:72px;height:72px;border-radius:50%;background:rgba(48,209,88,0.2);border:2.5px solid rgba(48,209,88,0.5);color:rgba(48,209,88,0.95);font-size:12px;font-weight:bold;letter-spacing:0.06em;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px}
+#start-btn{width:72px;height:72px;border-radius:50%;background:rgba(48,209,88,0.2);border:2.5px solid rgba(48,209,88,0.5);color:rgba(48,209,88,0.95);font-size:12px;font-weight:bold;letter-spacing:0.06em;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:none;align-items:center;justify-content:center;flex-direction:column;gap:2px}
 #pause-btn,#start-btn,#fire-btn{display:none}
-@media(max-width:540px),(max-height:600px){#controls{display:flex}#start-btn,#fire-btn,#pause-btn{display:flex!important}#pause-label{display:block!important}canvas{max-height:calc(100vh - 180px)}}
+@media(max-width:540px),(max-height:600px){#controls{display:flex}#start-btn,#fire-btn,#pause-btn{display:inline-block!important}#pause-label{display:block!important}canvas{max-height:calc(100vh - 180px)}}
 @media(orientation:portrait) and (max-width:540px){#wrapper{justify-content:flex-start;padding-top:10px}canvas{max-height:calc(100vh - 200px)}}
-@media(min-width:541px){#controls{display:flex!important}#start-btn{width:60px;height:60px}#fire-btn{width:60px;height:60px}#dpad .dpad-btn{width:46px;height:46px;font-size:18px}}
+@media(min-width:541px){#controls{display:flex!important}#start-btn{width:60px;height:60px;display:none}#fire-btn{width:60px;height:60px}#dpad .dpad-btn{width:46px;height:46px;font-size:18px}}
 </style>
 </head>
 <body>
@@ -88,6 +88,7 @@ const DIFF={
   nightmare:{label:'噩梦',hp:2.0, spd:1.6, fr:0.5, bHp:5, bossMult:2, scoreMult:2.0 },
 };
 const DIFF_KEYS=['easy','normal','hard','nightmare'];
+const WAVES_PER_STAGE=[2,2,2,2,3];
 
 // ─── Audio ────────────────────────────────────────────────
 let ac=null;
@@ -584,6 +585,7 @@ function drawStart(){
   ctx.fillStyle='#888';ctx.font='14px monospace';
   ctx.fillStyle='#555';ctx.font='12px monospace';
   ctx.fillText('方向键移动 | 空格射击 | P暂停',W/2,H/2-25);
+  updateStartBtn();
   // Difficulty selector
   ctx.fillStyle='#aaa';ctx.font='bold 13px monospace';
   ctx.fillText('选择难度',W/2,H/2+10);
@@ -672,8 +674,8 @@ function draw(){
 }
 
 function updateStartBtn(){
-  const show=window.matchMedia('(max-width:540px),(max-height:600px)').matches&&state==='start';
-  if(sBtn)sBtn.style.display=show?'flex':'none';
+  // Always show start-btn when in 'start' or 'gameover' state (desktop and mobile)
+  if(sBtn) sBtn.style.display = (state === 'start' || state === 'gameover') ? 'inline-block' : 'none';
 }
 function startGame(){
   if(state!=='start')return;
@@ -686,7 +688,25 @@ function startGame(){
 
 // Diff button clicks on start screen
 canvas.addEventListener('click',e=>{
-  if(state!=='start')return;
+  if(state==='start'){
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=W/rect.width,scaleY=H/rect.height;
+    const mx=(e.clientX-rect.left)*scaleX;
+    const my=(e.clientY-rect.top)*scaleY;
+    const btnW=72,btnH=32,btnGap=8;
+    const totalW=btnW*4+btnGap*3;
+    const startX=W/2-totalW/2;
+    const y=H/2+25;
+    // Check diff button clicks
+    DIFF_KEYS.forEach((k,i)=>{
+      const x=startX+i*(btnW+btnGap);
+      if(mx>=x&&mx<=x+btnW&&my>=y&&my<=y+btnH){diffKey=k;}
+    });
+    // Click anywhere on canvas start screen → start game
+    startGame();
+    return;
+  }
+  if(state==='gameover'){startGame();return;}
   const rect=canvas.getBoundingClientRect();
   const scaleX=W/rect.width,scaleY=H/rect.height;
   const mx=(e.clientX-rect.left)*scaleX;
