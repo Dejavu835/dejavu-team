@@ -324,31 +324,41 @@ function initStage(s){
   bullets=[];enemies=[];explosions=[];powerups=[];
   shieldTimer=0;freezeTimer=0;starTimer=0;starActive=false;
   spreadTimer=0;pierceTimer=0;spreadActive=false;pierceActive=false;
-  shovelTimer=0;killCount=0;hasBoss=false;hasEnhanced=false;enemiesSpawned=false;pendingSpawns=0;
+  shovelTimer=0;killCount=0;wave=1;hasBoss=false;hasEnhanced=false;enemiesSpawned=false;pendingSpawns=0;
   if(!player){player=new Tank(W/2-18,H-T*2+4,0,0);}
   else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
   diff=DIFF[diffKey];
-  const cnt0=[2,1,1,3,2,1,3,3,2,4,3,2,5,4,3];
-  const cnt1=[1,0,0,1,1,0,1,1,0,2,1,0,2,2,1];
-  const cnt2=[1,1,1,1,1,1,2,2,2,2,2,2,3,3,3];
-  const c0=cnt0[s]||0,c1=cnt1[s]||0,c2=cnt2[s]||0;
-  let delay=400;
-  for(let i=0;i<c0;i++){setTimeout(()=>spawnEnemy(1),delay);delay+=600;}
-  for(let i=0;i<c1;i++){setTimeout(()=>spawnEnemy(2),delay);delay+=600;}
-  for(let i=0;i<c2;i++){setTimeout(()=>spawnEnemy(3),delay);delay+=600;}
-  // Enhanced enemies from stage 1+
-  const cEnh=s>0?Math.min(s,3):0;
-  for(let i=0;i<cEnh;i++){setTimeout(()=>spawnEnemy([1,2,3][i%3],true),delay+1000+i*800);}
-  // Boss from stage 2
-  const cBoss=s>=2?1:0;
-  const cBoss2=s>=4?1:0;
-  if(s>=2){
-    const bossDelay=delay+1500;hasBoss=true;
-    setTimeout(()=>spawnBoss(),bossDelay);
-    if(s>=4){setTimeout(()=>spawnBoss(),bossDelay+3000);}
+  if(!player){player=new Tank(W/2-18,H-T*2+4,0,0);}
+  else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
+  diff=DIFF[diffKey];
+  const wps=WAVES_PER_STAGE[Math.min(s,4)]||2;
+  wave=1;enemiesSpawned=false;pendingSpawns=0;
+  const w0=[1,1,1,2,2,2,2,2,2,3,3,3,3,3,4];
+  const w1=[0,1,1,1,1,1,1,1,2,1,2,2,2,3,3];
+  const w2=[1,1,1,1,1,1,2,2,2,2,2,2,2,3,3];
+  const w0c=w0[s]||1,w1c=w1[s]||0,w2c=w2[s]||0;
+  let delay=200;
+  for(let i=0;i<w0c;i++){setTimeout(()=>spawnEnemy(1),delay);delay+=400;}
+  for(let i=0;i<w1c;i++){setTimeout(()=>spawnEnemy(2),delay);delay+=400;}
+  for(let i=0;i<w2c;i++){setTimeout(()=>spawnEnemy(3),delay);delay+=400;}
+  const cEnh=s>0&&wps>1?Math.min(s,2):0;
+  for(let i=0;i<cEnh;i++){setTimeout(()=>spawnEnemy([1,2,3][i%3],true),delay+500+i*500);}
+  const cBoss=s>=2&&wps>1?1:0;
+  if(s>=2){hasBoss=true;setTimeout(()=>spawnBoss(),delay+800);}
+  pendingSpawns=w0c+w1c+w2c+cEnh+cBoss;
+  // Wave 2
+  if(wps>=2){
+    const wave2Delay=delay+2500;
+    setTimeout(()=>{if(state!=='playing')return;wave=2;const w20=[1,1,2,2,2,2,2,2,3,3,3,3,3,3,4];const w21=[0,1,1,1,1,1,1,2,2,2,2,2,3,3,3];const w22=[1,1,1,1,1,1,2,2,2,2,2,2,2,3,3];let wd=0;for(let i=0;i<w20[s];i++){setTimeout(()=>spawnEnemy(1),wd);wd+=400;}for(let i=0;i<w21[s];i++){setTimeout(()=>spawnEnemy(2),wd);wd+=400;}for(let i=0;i<w22[s];i++){setTimeout(()=>spawnEnemy(3),wd);wd+=400;}if(s>0){setTimeout(()=>spawnEnemy([1,2,3][Math.floor(Math.random()*3)],true),wd+300);}if(s>=3){setTimeout(()=>spawnBoss(),wd+500);}},wave2Delay);
   }
-  // Mark enemies as spawned AFTER all enemies are in the array
-  pendingSpawns=c0+c1+c2+cEnh+cBoss+cBoss2;
+  // Wave 3
+  if(wps>=3){
+    setTimeout(()=>{if(state!=='playing')return;wave=3;for(let i=0;i<w2c;i++){setTimeout(()=>spawnEnemy(3),i*400);}if(s>=3){setTimeout(()=>spawnBoss(),500);}},delay+5500);
+  }
+  // Wave 4
+  if(wps>=4){
+    setTimeout(()=>{if(state!=='playing')return;wave=4;for(let i=0;i<w0c;i++){setTimeout(()=>spawnEnemy(1),i*300);}if(s>=4){setTimeout(()=>spawnBoss(),800);}},delay+9000);
+  }
 }
 
 // ─── Mobile Input ─────────────────────────────────────────
@@ -548,7 +558,7 @@ function drawMap(){
 function drawHUD(){
   ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,H,W,40);
   ctx.fillStyle=C.ui;ctx.font='bold 14px monospace';ctx.textAlign='left';
-  ctx.fillText(`STAGE ${stage+1}`,10,H+26);
+  ctx.fillText(`STAGE ${stage+1}-${wave}`,10,H+26);
   ctx.textAlign='center';ctx.fillText(`SCORE ${Math.round(score)}`,W/2,H+26);
   ctx.textAlign='right';ctx.fillText(`LIVES ${'♥'.repeat(lives)}`,W-10,H+26);
   // Difficulty tag
