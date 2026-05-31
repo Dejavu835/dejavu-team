@@ -771,6 +771,108 @@ body {
   50%       { opacity: 0; }
 }
 
+/* === Patrol Game Arena Window === */
+.patrol-window {
+  background: #0d0d0d;
+}
+
+.patrol-arena {
+  flex: 1;
+  position: relative;
+  background: #111116;
+  overflow: hidden;
+}
+
+.obstacle {
+  position: absolute;
+  background: #2a2a30;
+  border-radius: 2px;
+}
+
+.obs-1 { width: 18px; height: 14px; top: 20px; left: 20px; }
+.obs-2 { width: 14px; height: 18px; top: 60px; left: 80px; }
+.obs-3 { width: 20px; height: 12px; top: 30px; right: 30px; }
+.obs-4 { width: 12px; height: 20px; bottom: 30px; left: 55px; }
+
+
+.player-base {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 10px;
+  background: #0071e3;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(0,113,227,0.6);
+}
+
+.enemy-unit {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  opacity: 0.85;
+}
+
+.enemy-fast {
+  background: #ff453a;
+  box-shadow: 0 0 6px rgba(255,69,58,0.7);
+  top: 15px;
+  animation: patrolFast 3s ease-in-out infinite;
+}
+
+.enemy-med {
+  background: #ffd60a;
+  box-shadow: 0 0 6px rgba(255,214,10,0.7);
+  top: 55px;
+  animation: patrolMed 5s ease-in-out infinite;
+}
+
+.enemy-slow {
+  background: #30d158;
+  box-shadow: 0 0 6px rgba(48,209,88,0.7);
+  bottom: 22px;
+  animation: patrolSlow 7s ease-in-out infinite;
+}
+
+@keyframes patrolFast {
+  0%   { left: 10px; top: 15px; }
+  25%  { left: 90px; top: 15px; }
+  50%  { left: 90px; top: 80px; }
+  75%  { left: 10px; top: 80px; }
+  100% { left: 10px; top: 15px; }
+}
+
+@keyframes patrolMed {
+  0%   { left: 10px; top: 55px; }
+  33%  { left: 130px; top: 55px; }
+  66%  { left: 130px; top: 15px; }
+  100% { left: 10px; top: 55px; }
+}
+
+@keyframes patrolSlow {
+  0%   { left: 50px; bottom: 22px; }
+  40%  { left: 140px; bottom: 22px; }
+  70%  { left: 140px; bottom: 60px; }
+  100% { left: 50px; bottom: 22px; }
+}
+
+#patrol-game-card .product-mockup {
+  max-width: 200px;
+  height: 140px;
+}
+
+#patrol-game-card .patrol-window {
+  width: 200px;
+  height: 140px;
+  max-width: 100%;
+}
+
+#patrol-game-card .window-title {
+  font-size: 8px;
+}
+
 /* === Music Icon Frame === */
 .music-icon-frame {
   width: 140px;
