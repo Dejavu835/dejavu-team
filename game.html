@@ -41,7 +41,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
     <div></div><button class="dpad-btn" data-dir="down">▼</button><div></div>
   </div>
   <div id="fire-zone">
-    <button id="start-btn">▶ START<br>开始</button>
+    <button id="start-btn" style="display:none">▶ START<br>开始</button>
     <button id="fire-btn">FIRE<br>🔫</button>
     <button id="pause-btn">❚❚</button>
     <span id="pause-label" style="display:none">P 暂停</span>
@@ -516,6 +516,7 @@ function update(){
     state='stageclear';score+=1000+500*(stage+1);
     setTimeout(()=>{stage++;initStage(stage);state='playing';},2000);
   }
+  updateStartBtn();
 }
 
 // ─── Draw ────────────────────────────────────────────────
@@ -657,13 +658,17 @@ function draw(){
   if(state==='victory')drawVictory();
 }
 
+function updateStartBtn(){
+  const show=window.matchMedia('(max-width:540px),(max-height:600px)').matches&&state==='start';
+  if(sBtn)sBtn.style.display=show?'flex':'none';
+}
 function startGame(){
   if(state!=='start')return;
   diffKey=diffKey;diff=DIFF[diffKey];
   stage=0;score=0;lives=3;totalKills=0;
   initStage(stage);state='playing';
   try{if(ac)ac.resume();}catch(e){}
-  sBtn.style.display='none';
+  if(sBtn)sBtn.style.display='none';
 }
 
 // Diff button clicks on start screen
