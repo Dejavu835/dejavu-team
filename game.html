@@ -363,8 +363,10 @@ const pBtn=document.getElementById('pause-btn');
 pBtn.addEventListener('touchstart',e=>{e.preventDefault();if(state==='playing')state='paused';else if(state==='paused')state='playing';},{passive:false});
 pBtn.addEventListener('click',()=>{if(state==='playing')state='paused';else if(state==='paused')state='playing';});
 const sBtn=document.getElementById('start-btn');
-const st=(e)=>{e.preventDefault();startGame();};
-sBtn.addEventListener('touchstart',st,{passive:false});sBtn.addEventListener('click',()=>startGame());
+const st=(e)=>{e.preventDefault();e.stopPropagation();startGame();};
+sBtn.addEventListener('touchstart',st,{passive:false});
+sBtn.addEventListener('mousedown',(e)=>{e.preventDefault();e.stopPropagation();startGame();});
+sBtn.addEventListener('click',(e)=>{e.preventDefault();e.stopPropagation();startGame();});
 
 // ─── Keyboard Input ──────────────────────────────────────
 document.addEventListener('keydown',e=>{
@@ -656,9 +658,11 @@ function draw(){
 }
 
 function startGame(){
+  if(state!=='start')return;
   diffKey=diffKey;diff=DIFF[diffKey];
   stage=0;score=0;lives=3;totalKills=0;
   initStage(stage);state='playing';
+  try{if(ac)ac.resume();}catch(e){}
   sBtn.style.display='none';
 }
 
