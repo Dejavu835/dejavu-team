@@ -94,6 +94,7 @@ const WAVES_PER_STAGE=[2,2,2,2,3];
 let ac=null;
 function getAC(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();return ac;}
 function tone(f,t,dur,vol=0.15){
+  if(!soundOn)return;
   try{const a=getAC(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(vol,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+dur);o.start();o.stop(a.currentTime+dur);}catch(e){}
 }
 function soundShoot(){tone(800,'square',0.06,0.1);}
@@ -115,6 +116,8 @@ let spreadTimer=0,pierceTimer=0,spreadActive=false,pierceActive=false;
 let shovelTimer=0,frameCount=0,keys={},shootCooldown=0;
 let diffKey='normal',diff={},killCount=0,totalKills=0;
 let hasBoss=false,hasEnhanced=false,victory=false,enemiesSpawned=false,pendingSpawns=0;
+let soundOn=true;
+let highScores=JSON.parse(localStorage.getItem('tankBattleScores')||'[]');
 const ENEMY_BASE=[
   {color:C.enemyFast,speed:2.5,fireRate:2000,points:100},
   {color:C.enemyMed, speed:1.8,fireRate:3000,points:200},
@@ -636,7 +639,13 @@ function drawStart(){
   });
   ctx.fillStyle='#555';ctx.font='11px monospace';
   ctx.fillText('按 空格键 开始',W/2,H/2+75);
-  ctx.textAlign='left';
+  // Sound toggle button
+  const sbw=60,sbh=28,sbx=W/2-sbw/2,sby=H/2+100;
+  ctx.fillStyle=soundOn?'rgba(48,209,88,0.2)':'rgba(255,255,255,0.06)';
+  ctx.strokeStyle=soundOn?'#30d158':'rgba(255,255,255,0.2)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.roundRect(sbx,sby,sbw,sbh,6);ctx.fill();ctx.stroke();
+  ctx.fillStyle=soundOn?'#30d158':'#555';ctx.font='bold 12px monospace';
+  ctx.fillText(soundOn?'🔊 开':'🔇 关',W/2,sby+sbh/2+4);ctx.textAlign='left';
 }
 
 function drawPaused(){
@@ -656,13 +665,23 @@ function drawPaused(){
 function drawGameOver(){
   ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,W,H);
   ctx.fillStyle='#e83030';ctx.font='bold 44px monospace';ctx.textAlign='center';
-  ctx.fillText('GAME OVER',W/2,H/2-30);
+  ctx.fillText('GAME OVER',W/2,H/2-60);
   ctx.fillStyle='#f5c400';ctx.font='bold 24px monospace';
-  ctx.fillText(`SCORE  ${Math.round(score)}`,W/2,H/2+20);
+  ctx.fillText(`SCORE  ${Math.round(score)}`,W/2,H/2-15);
+  // High score
+  const top=max(0,Math.round(score));
+  let hsText='最高分: '+(highScores[0]||0);
+  ctx.fillStyle='#888';ctx.font='bold 16px monospace';
+  ctx.fillText(hsText,W/2,H/2+20);
+  if(top>0){highScores.push(top);highScores.sort((a,b)=>b-a);highScores=highScores.slice(0,5);localStorage.setItem('tankBattleScores',JSON.stringify(highScores));}
   ctx.fillStyle='#888';ctx.font='14px monospace';
   ctx.fillText(`击杀 ${totalKills} 个敌人`,W/2,H/2+50);
-  ctx.fillStyle='#555';ctx.font='14px monospace';
-  ctx.fillText('按 空格键 重来',W/2,H/2+80);ctx.textAlign='left';
+  // Replay button
+  const rbw=160,rbh=48,rbx=W/2-rbw/2,rby=H/2+75;
+  ctx.fillStyle='rgba(48,209,88,0.25)';ctx.strokeStyle='#30d158';ctx.lineWidth=2;
+  ctx.beginPath();ctx.roundRect(rbx,rby,rbw,rbh,10);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#30d158';ctx.font='bold 16px monospace';
+  ctx.fillText('▶ 再来一局',W/2,rby+rbh/2+6);ctx.textAlign='left';
 }
 
 function drawVictory(){
@@ -725,47 +744,36 @@ function startGame(){
 
 // Diff button clicks on start screen
 canvas.addEventListener('click',e=>{
-  if(state==='start'){
-    const rect=canvas.getBoundingClientRect();
-    const scaleX=W/rect.width,scaleY=H/rect.height;
-    const mx=(e.clientX-rect.left)*scaleX;
-    const my=(e.clientY-rect.top)*scaleY;
-    const btnW=72,btnH=32,btnGap=8;
-    const totalW=btnW*4+btnGap*3;
-    const startX=W/2-totalW/2;
-    const y=H/2+25;
-    // Check diff button clicks
-    DIFF_KEYS.forEach((k,i)=>{
-      const x=startX+i*(btnW+btnGap);
-      if(mx>=x&&mx<=x+btnW&&my>=y&&my<=y+btnH){diffKey=k;}
-    });
-    // Click anywhere on canvas start screen → start game
-    startGame();
-    return;
-  }
-  if(state==='gameover'){startGame();return;}
-  if(state==='paused'){
-    // Resume button on canvas: bw=140,bh=48,bx=W/2-bw/2,by=H/2+40
-    const rect=canvas.getBoundingClientRect();
-    const scaleX=W/rect.width,scaleY=H/rect.height;
-    const mx=(e.clientX-rect.left)*scaleX;
-    const my=(e.clientY-rect.top)*scaleY;
-    const bw=140,bh=48,bx=W/2-bw/2,by=H/2+40;
-    if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh){state='playing';return;}
-    return;
-  }
   const rect=canvas.getBoundingClientRect();
   const scaleX=W/rect.width,scaleY=H/rect.height;
   const mx=(e.clientX-rect.left)*scaleX;
   const my=(e.clientY-rect.top)*scaleY;
-  const btnW=72,btnH=32,btnGap=8;
-  const totalW=btnW*4+btnGap*3;
-  const startX=W/2-totalW/2;
-  const y=H/2+25;
-  DIFF_KEYS.forEach((k,i)=>{
-    const x=startX+i*(btnW+btnGap);
-    if(mx>=x&&mx<=x+btnW&&my>=y&&my<=y+btnH){diffKey=k;}
-  });
+
+  if(state==='start'){
+    // Sound toggle: sbw=60,sbh=28,sbx=W/2-sbw/2,sby=H/2+100
+    const sbw=60,sbh=28,sbx=W/2-sbw/2,sby=H/2+100;
+    if(mx>=sbx&&mx<=sbx+sbw&&my>=sby&&my<=sby+sbh){soundOn=!soundOn;return;}
+    const btnW=72,btnH=32,btnGap=8;
+    const totalW=btnW*4+btnGap*3;
+    const startX=W/2-totalW/2;
+    const y=H/2+25;
+    DIFF_KEYS.forEach((k,i)=>{
+      const x=startX+i*(btnW+btnGap);
+      if(mx>=x&&mx<=x+btnW&&my>=y&&my<=y+btnH){diffKey=k;}
+    });
+    startGame();return;
+  }
+  if(state==='gameover'){
+    // Replay button: rbw=160,rbh=48,rbx=W/2-rbw/2,rby=H/2+75
+    const rbw=160,rbh=48,rbx=W/2-rbw/2,rby=H/2+75;
+    if(mx>=rbx&&mx<=rbx+rbw&&my>=rby&&my<=rby+rbh){startGame();return;}
+    return;
+  }
+  if(state==='paused'){
+    const bw=140,bh=48,bx=W/2-bw/2,by=H/2+40;
+    if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh){state='playing';return;}
+    return;
+  }
 });
 
 function loop(){update();draw();requestAnimationFrame(loop);}
