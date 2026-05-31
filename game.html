@@ -113,7 +113,7 @@ let player=null,shieldTimer=0,freezeTimer=0,starTimer=0,starActive=false;
 let spreadTimer=0,pierceTimer=0,spreadActive=false,pierceActive=false;
 let shovelTimer=0,frameCount=0,keys={},shootCooldown=0;
 let diffKey='normal',diff={},killCount=0,totalKills=0;
-let hasBoss=false,hasEnhanced=false,victory=false;
+let hasBoss=false,hasEnhanced=false,victory=false,enemiesSpawned=false;
 const ENEMY_BASE=[
   {color:C.enemyFast,speed:2.5,fireRate:2000,points:100},
   {color:C.enemyMed, speed:1.8,fireRate:3000,points:200},
@@ -322,7 +322,7 @@ function initStage(s){
   bullets=[];enemies=[];explosions=[];powerups=[];
   shieldTimer=0;freezeTimer=0;starTimer=0;starActive=false;
   spreadTimer=0;pierceTimer=0;spreadActive=false;pierceActive=false;
-  shovelTimer=0;killCount=0;hasBoss=false;hasEnhanced=false;
+  shovelTimer=0;killCount=0;hasBoss=false;hasEnhanced=false;enemiesSpawned=false;
   if(!player){player=new Tank(W/2-18,H-T*2+4,0,0);}
   else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
   diff=DIFF[diffKey];
@@ -344,6 +344,8 @@ function initStage(s){
     setTimeout(()=>spawnBoss(),bossDelay);
     if(s>=4){setTimeout(()=>spawnBoss(),bossDelay+3000);}
   }
+  // Mark enemies as spawned
+  enemiesSpawned=true;
 }
 
 // ─── Mobile Input ─────────────────────────────────────────
@@ -511,7 +513,7 @@ function update(){
       }
     });
   }
-  if(enemies.length===0&&state==='playing'){
+  if(enemiesSpawned&&enemies.length===0&&state==='playing'){
     if(stage>=4&&!hasBoss){state='victory';score+=1000+500*(stage+1);soundWin();return;}
     state='stageclear';score+=1000+500*(stage+1);
     setTimeout(()=>{stage++;initStage(stage);state='playing';},2000);
