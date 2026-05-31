@@ -567,7 +567,6 @@ function drawStart(){
   ctx.fillStyle='#f5c400';ctx.font='bold 40px monospace';ctx.textAlign='center';
   ctx.fillText('TANK BATTLE',W/2,H/2-90);
   ctx.fillStyle='#888';ctx.font='14px monospace';
-  ctx.fillText('按 空格键 开始',W/2,H/2-50);
   ctx.fillStyle='#555';ctx.font='12px monospace';
   ctx.fillText('方向键移动 | 空格射击 | P暂停',W/2,H/2-25);
   // Difficulty selector
@@ -587,9 +586,8 @@ function drawStart(){
     ctx.fillStyle=sel?'#30d158':'#888';ctx.font='bold 12px monospace';
     ctx.fillText(DIFF[k].label,x+btnW/2,y+20);
   });
-  // Store button positions for click detection
   ctx.fillStyle='#555';ctx.font='11px monospace';
-  ctx.fillText('手机用下方 ▶ START 开始游戏',W/2,H/2+75);
+  ctx.fillText('按 空格键 开始',W/2,H/2+75);
   ctx.textAlign='left';
 }
 
