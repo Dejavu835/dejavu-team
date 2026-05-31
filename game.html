@@ -328,27 +328,27 @@ function initStage(s){
   if(!player){player=new Tank(W/2-18,H-T*2+4,0,0);}
   else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
   diff=DIFF[diffKey];
-  const cnt=[
-    [[2,1,1],[3,2,1],[3,3,2],[4,3,2],[5,4,3]],
-    [[1,0,0],[1,1,0],[1,1,0],[2,1,0],[2,2,1]],
-  ][Math.min(s,4)];
+  const cnt0=[2,1,1,3,2,1,3,3,2,4,3,2,5,4,3];
+  const cnt1=[1,0,0,1,1,0,1,1,0,2,1,0,2,2,1];
+  const cnt2=[1,1,1,1,1,1,2,2,2,2,2,2,3,3,3];
+  const c0=cnt0[s]||0,c1=cnt1[s]||0,c2=cnt2[s]||0;
   let delay=400;
-  for(let i=0;i<cnt[0];i++){setTimeout(()=>spawnEnemy(1),delay);delay+=600;}
-  for(let i=0;i<cnt[1];i++){setTimeout(()=>spawnEnemy(2),delay);delay+=600;}
-  for(let i=0;i<cnt[2];i++){setTimeout(()=>spawnEnemy(3),delay);delay+=600;}
+  for(let i=0;i<c0;i++){setTimeout(()=>spawnEnemy(1),delay);delay+=600;}
+  for(let i=0;i<c1;i++){setTimeout(()=>spawnEnemy(2),delay);delay+=600;}
+  for(let i=0;i<c2;i++){setTimeout(()=>spawnEnemy(3),delay);delay+=600;}
   // Enhanced enemies from stage 1+
-  if(s>0){
-    for(let i=0;i<Math.min(s,3);i++){setTimeout(()=>spawnEnemy([1,2,3][i%3],true),delay+1000+i*800);}
-  }
+  const cEnh=s>0?Math.min(s,3):0;
+  for(let i=0;i<cEnh;i++){setTimeout(()=>spawnEnemy([1,2,3][i%3],true),delay+1000+i*800);}
   // Boss from stage 2
+  const cBoss=s>=2?1:0;
+  const cBoss2=s>=4?1:0;
   if(s>=2){
     const bossDelay=delay+1500;hasBoss=true;
     setTimeout(()=>spawnBoss(),bossDelay);
     if(s>=4){setTimeout(()=>spawnBoss(),bossDelay+3000);}
   }
-  // Mark enemies as spawned AFTER all enemies are in the array (not before)
-  const totalEnemyCount = cnt[0]+cnt[1]+cnt[2]+(s>0?Math.min(s,3):0)+(s>=2?1:0)+(s>=4?1:0);
-  pendingSpawns = totalEnemyCount;
+  // Mark enemies as spawned AFTER all enemies are in the array
+  pendingSpawns=c0+c1+c2+cEnh+cBoss+cBoss2;
 }
 
 // ─── Mobile Input ─────────────────────────────────────────
