@@ -113,7 +113,7 @@ let player=null,shieldTimer=0,freezeTimer=0,starTimer=0,starActive=false;
 let spreadTimer=0,pierceTimer=0,spreadActive=false,pierceActive=false;
 let shovelTimer=0,frameCount=0,keys={},shootCooldown=0;
 let diffKey='normal',diff={},killCount=0,totalKills=0;
-let hasBoss=false,hasEnhanced=false,victory=false,enemiesSpawned=false;
+let hasBoss=false,hasEnhanced=false,victory=false,enemiesSpawned=false,pendingSpawns=0;
 const ENEMY_BASE=[
   {color:C.enemyFast,speed:2.5,fireRate:2000,points:100},
   {color:C.enemyMed, speed:1.8,fireRate:3000,points:200},
@@ -307,6 +307,8 @@ function spawnEnemy(type,enhanced=false){
   e.randomDir();
   if(enhanced){e.isEnhanced=true;e.hp=Math.ceil(e.hp*2);e.maxHp=e.hp;}
   enemies.push(e);
+  pendingSpawns = Math.max(0, pendingSpawns-1);
+  if(pendingSpawns===0)enemiesSpawned=true;
 }
 
 function spawnBoss(){
@@ -322,7 +324,7 @@ function initStage(s){
   bullets=[];enemies=[];explosions=[];powerups=[];
   shieldTimer=0;freezeTimer=0;starTimer=0;starActive=false;
   spreadTimer=0;pierceTimer=0;spreadActive=false;pierceActive=false;
-  shovelTimer=0;killCount=0;hasBoss=false;hasEnhanced=false;enemiesSpawned=false;
+  shovelTimer=0;killCount=0;hasBoss=false;hasEnhanced=false;enemiesSpawned=false;pendingSpawns=0;
   if(!player){player=new Tank(W/2-18,H-T*2+4,0,0);}
   else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
   diff=DIFF[diffKey];
@@ -344,8 +346,9 @@ function initStage(s){
     setTimeout(()=>spawnBoss(),bossDelay);
     if(s>=4){setTimeout(()=>spawnBoss(),bossDelay+3000);}
   }
-  // Mark enemies as spawned
-  enemiesSpawned=true;
+  // Mark enemies as spawned AFTER all enemies are in the array (not before)
+  const totalEnemyCount = cnt[0]+cnt[1]+cnt[2]+(s>0?Math.min(s,3):0)+(s>=2?1:0)+(s>=4?1:0);
+  pendingSpawns = totalEnemyCount;
 }
 
 // ─── Mobile Input ─────────────────────────────────────────
