@@ -379,14 +379,17 @@ document.addEventListener('keyup',e=>{keys[e.code]=false;});
 function handleInput(){
   if(!player)return;
   let dx=0,dy=0;
-  if(player.dir===0)dy=-3;else if(player.dir===2)dy=3;else if(player.dir===1)dx=3;else if(player.dir===3)dx=-3;
-  if((keys['ArrowUp']||keys['KeyW']||mk.up)&&player.dir!==0&&canPass(player.x,player.y-3,player.w,player.h))player.dir=0;
-  if((keys['ArrowDown']||keys['KeyS']||mk.down)&&player.dir!==2&&canPass(player.x,player.y+3,player.w,player.h))player.dir=2;
-  if((keys['ArrowLeft']||keys['KeyA']||mk.left)&&player.dir!==3&&canPass(player.x-3,player.y,player.w,player.h))player.dir=3;
-  if((keys['ArrowRight']||keys['KeyD']||mk.right)&&player.dir!==1&&canPass(player.x+3,player.y,player.w,player.h))player.dir=1;
-  dx=0;dy=0;
-  if(player.dir===0)dy=-3;else if(player.dir===2)dy=3;else if(player.dir===1)dx=3;else if(player.dir===3)dx=-3;
-  if(canPass(player.x+dx,player.y+dy,player.w,player.h)){player.x+=dx;player.y+=dy;}
+  // Only move while direction key is HELD (not auto-move)
+  if(keys['ArrowUp']||keys['KeyW']||mk.up){dy=-3;player.dir=0;}
+  else if(keys['ArrowDown']||keys['KeyS']||mk.down){dy=3;player.dir=2;}
+  else if(keys['ArrowLeft']||keys['KeyA']||mk.left){dx=-3;player.dir=3;}
+  else if(keys['ArrowRight']||keys['KeyD']||mk.right){dx=3;player.dir=1;}
+  // No key held = stop (no auto-forward movement)
+  if(dx!==0||dy!==0){
+    if(canPass(player.x+dx,player.y+dy,player.w,player.h)){player.x+=dx;player.y+=dy;}
+    else if(canPass(player.x+dx,player.y,player.w,player.h)){player.x+=dx;}
+    else if(canPass(player.x,player.y+dy,player.w,player.h)){player.y+=dy;}
+  }
   player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));
   shootCooldown--;
   if((keys['Space']||keys['Enter']||mk.fire)&&shootCooldown<=0){
