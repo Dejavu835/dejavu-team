@@ -153,10 +153,17 @@ class Tank{
     if(!this.collides(nx,ny)){this.x=nx;this.y=ny;}
     else if(!this.collides(nx,this.y)){this.x=nx;}
     else if(!this.collides(this.x,ny)){this.y=ny;}
-    else{if(this.type>0)this.randomDir();this.x=nx;this.y=ny;}
+    else{if(this.type>0)this.smartDir();this.x=nx;this.y=ny;}
     this.fireCooldown-=16.67;
     if(this.fireCooldown<=0&&this.type>0){
       this.fireCooldown=this.fireRate+Math.random()*500;
+      // Aim at player before shooting
+      if(player){
+        const px=player.x+player.w/2,py=player.y+player.h/2;
+        const ex=this.x+this.w/2,ey=this.y+this.h/2;
+        if(Math.abs(px-ex)>Math.abs(py-ey))this.dir=(px>ex)?1:3;
+        else this.dir=(py>ey)?2:0;
+      }
       this.shoot();
     }
     if(this.enhancedFlash>0)this.enhancedFlash--;
@@ -165,6 +172,30 @@ class Tank{
     const p=2;return isBlocked(x+p,y+p,this.w-p*2,this.h-p*2);
   }
   randomDir(){this.dir=Math.floor(Math.random()*4);}
+  smartDir(){
+    if(!player) return this.randomDir();
+    const px=player.x+player.w/2,py=player.y+player.h/2;
+    const ex=this.x+this.w/2,ey=this.y+this.h/2;
+    const dx=px-ex,dy=py-ey;
+    const dirs=[];
+    if(dx>10)dirs.push(1);
+    if(dx<-10)dirs.push(3);
+    if(dy>10)dirs.push(2);
+    if(dy<-10)dirs.push(0);
+    // 打乱，加随机性
+    for(let i=dirs.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [dirs[i],dirs[j]]=[dirs[j],dirs[i]];
+    }
+    // 尝试每个方向，能走就用
+    const orig=this.dir;
+    for(const d of dirs){
+      this.dir=d;
+      if(!this.collides(this.x,this.y))return;
+    }
+    this.dir=orig;
+    this.randomDir();
+  }
   shoot(){
     const bx=this.x+this.w/2-3,by=this.y+this.h/2-3;
     if(this.isBoss){
