@@ -141,6 +141,8 @@ canvas {
 }
 @media (max-width: 540px), (max-height: 600px) {
   #controls { display: flex; }
+  #start-btn, #fire-btn, #pause-btn { display: flex !important; }
+  #pause-label { display: block !important; }
   canvas { max-height: calc(100vh - 180px); }
 }
 @media (orientation: portrait) and (max-width: 540px) {
@@ -170,9 +172,10 @@ canvas {
       <div></div>
     </div>
     <div id="fire-zone">
-      <button id="fire-btn" class="dpad-btn">FIRE<br>🔫</button>
-      <button id="pause-btn">❚❚</button>
-      <span id="pause-label">P 暂停</span>
+      <button id="start-btn" class="dpad-btn" style="display:none;width:72px;height:72px;border-radius:50%;background:rgba(48,209,88,0.2);border:2.5px solid rgba(48,209,88,0.5);color:rgba(48,209,88,0.95);font-size:12px;font-weight:bold;letter-spacing:0.06em;flex-direction:column;align-items:center;justify-content:center;">▶ START<br>开始</button>
+      <button id="fire-btn" class="dpad-btn" style="display:none;">FIRE<br>🔫</button>
+      <button id="pause-btn" style="display:none;">❚❚</button>
+      <span id="pause-label" style="display:none;">P 暂停</span>
     </div>
   </div>
 </div>
@@ -185,7 +188,7 @@ const COLS = 13, ROWS = 12;
 
 function resize() {
   const controls = document.getElementById('controls');
-  const controlsH = controls.offsetHeight + controls.offsetHeight;
+  const controlsH = controls.offsetHeight;
   const maxW = window.innerWidth;
   const maxH = window.innerHeight - controlsH - 10;
   const scale = Math.min(maxW / BASE_W, maxH / BASE_H, 1);
@@ -501,6 +504,11 @@ pauseBtn.addEventListener('click',()=>{
 });
 pauseBtn.addEventListener('touchstart',e=>{e.preventDefault(); if(state==='playing')state='paused'; else if(state==='paused')state='playing'; },{passive:false});
 
+const startBtn=document.getElementById('start-btn');
+const startTouch=(e)=>{e.preventDefault();startGame();};
+startBtn.addEventListener('touchstart',startTouch,{passive:false});
+startBtn.addEventListener('click',()=>{ if(state==='start'||state==='gameover')startGame(); });
+
 // ─── Keyboard Input ──────────────────────────────────────────
 document.addEventListener('keydown',e=>{
   keys[e.code]=true;
@@ -714,7 +722,7 @@ function drawStart(){
   ctx.fillText('按 空格键 开始',W/2,H/2+70);
   ctx.fillStyle='#555'; ctx.font='13px monospace';
   ctx.fillText('方向键移动 | 空格射击 | P暂停',W/2,H/2+110);
-  ctx.fillText('手机用下方方向键和FIRE按钮',W/2,H/2+135);
+  ctx.fillText('手机用下方 ▶ START 开始游戏',W/2,H/2+135);
   ctx.textAlign='left';
 }
 
@@ -762,6 +770,7 @@ function draw(){
 function startGame(){
   stage=0;score=0;lives=3;
   initStage(stage); state='playing';
+  if(startBtn) startBtn.style.display='none';
 }
 
 function loop(){
