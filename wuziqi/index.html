@@ -246,95 +246,145 @@ const Game = (()=>{
    ============================================================ */
 const AI = (()=>{
   const{E,B,W}=Game.constants
-  const SC={FIVE:1e7,OPEN_FOUR:1e6,FOUR:1e5,OPEN_THREE:1e4,THREE:1e3,OPEN_TWO:100,TWO:10,ONE:1},DIRS=[[0,1],[1,0],[1,1],[1,-1]]
-  function cands(brd,sz,r2=1){
-    let cs=[],st=new Set,count=0
-    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){if(brd[r][c]!==E)count++}
-    let rad=count>40?r2:2
-    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
-      if(brd[r][c]!==E)continue
-      let near=false
-      for(let dr=-rad;dr<=rad&&!near;dr++)for(let dc=-rad;dc<=rad&&!near;dc++){if(!dr&&!dc)continue;let nr=r+dr,nc=c+dc;if(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]!==E)near=true}
-      if(near){let k=r*sz+c;if(!st.has(k)){st.add(k);cs.push({r,c})}}
-    }
-    return cs
+  const WIN_SCORE=1e9
+  const S={
+    FIVE:WIN_SCORE,
+    OPEN_FOUR:1e6,
+    FOUR:1e5,
+    OPEN_THREE:1e4,
+    THREE:1e3,
+    OPEN_TWO:100,
+    TWO:10,
+    ONE:1
   }
-  function sw(w,col,opp){
+  const DIRS=[[0,1],[1,0],[1,1],[1,-1]]
+  // 形状评分: 严格优先级
+  function shapeScore(line,col,opp){
     let me=0,en=0,em=0
-    for(let v of w){if(v===col)me++;else if(v===opp)en++;else em++}
-    if(en>0)return 0
-    switch(me){case 5:return SC.FIVE;case 4:return em===1?SC.OPEN_FOUR:SC.FOUR;case 3:return em===2?SC.OPEN_THREE:em===1?SC.THREE:0;case 2:return em===3?SC.OPEN_TWO:em===2?SC.TWO:0;case 1:return em===4?SC.ONE:0;default:return 0}
+    for(const v of line){if(v===col)me++;else if(v===opp)en++;else em++}
+    if(en>0&&me<5)return{type:'none',score:0}
+    if(me>=5)return{type:'five',score:S.FIVE}
+    // 检查两端:0=空 1=边界/对方
+    const left=line[0],right=line[line.length-1]
+    const openL=left===E,openR=right===E
+    const openEnds=(openL?1:0)+(openR?1:0)
+    if(me===4){
+      if(openEnds===2)return{type:'openFour',score:S.OPEN_FOUR}
+      if(openEnds===1)return{type:'four',score:S.FOUR}
+      return{type:'blocked',score:0}
+    }
+    if(me===3){
+      if(openEnds===2)return{type:'openThree',score:S.OPEN_THREE}
+      if(openEnds===1)return{type:'three',score:S.THREE}
+      return{type:'blocked',score:0}
+    }
+    if(me===2){
+      if(openEnds===2)return{type:'openTwo',score:S.OPEN_TWO}
+      if(openEnds===1)return{type:'two',score:S.TWO}
+      return{type:'blocked',score:0}
+    }
+    if(me===1){
+      if(openEnds===2)return{type:'one',score:S.ONE}
+      return{type:'blocked',score:0}
+    }
+    return{type:'none',score:0}
   }
-  function evalB(brd,sz,my){
-    let mx=0,en=0,myOpenThree=0,enOpenThree=0,myFour=0,enFour=0
+  // 评估局面:我方总分 - 对方总分
+  function evalBoard(brd,sz,my){
+    let myScore=0,enScore=0
+    const opp=my===B?W:B
     for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
-      let v=brd[r][c];if(v===E)continue
-      for(let[dR,dC]of DIRS){
-        let pr=r-dR,pc=c-dC
+      const v=brd[r][c];if(v===E)continue
+      for(const[dR,dC]of DIRS){
+        const pr=r-dR,pc=c-dC
         if(!(pr<0||pr>=sz||pc<0||pc>=sz||brd[pr][pc]!==v))continue
         for(let k=0;k<5;k++){
-          let nr=r+dR*k,nc=c+dC*k;if(nr<0||nr>=sz||nc<0||nc>=sz)break
-          let w=[],ok=true
-          for(let i=0;i<5;i++){let wr=nr+dR*i,wc=nc+dC*i;if(wr<0||wr>=sz||wc<0||wc>=sz){ok=false;break};w.push(brd[wr][wc])}
-          if(!ok)continue
-          let s=sw(w,v,v===B?W:B)
-          if(v===my){
-            mx+=s
-            if(s>=SC.OPEN_FOUR)myFour++
-            else if(s>=SC.OPEN_THREE)myOpenThree++
-          }else{
-            en+=s
-            if(s>=SC.OPEN_FOUR)enFour++
-            else if(s>=SC.OPEN_THREE)enOpenThree++
+          const nr=r+dR*k,nc=c+dC*k
+          if(nr<0||nr>=sz||nc<0||nc>=sz)break
+          const line=[],ok=true
+          for(let i=0;i<5;i++){
+            const wr=nr+dR*i,wc=nc+dC*i
+            if(wr<0||wr>=sz||wc<0||wc>=sz){ok=false;break}
+            line.push(brd[wr][wc])
           }
+          if(!ok)continue
+          const s=shapeScore(line,v,v===B?W:B)
+          if(s.type==='five')return v===my?WIN_SCORE:-WIN_SCORE
+          if(v===my)myScore+=s.score
+          else enScore+=s.score
         }
       }
     }
-    // 双重威胁大幅加权：双活三 / 双冲四 / 活四+活三 / 活四+冲四 都几乎是必胜
-    if(myOpenThree+myFour>=2)mx+=SC.OPEN_FOUR*0.8
-    if(enOpenThree+enFour>=2)en+=SC.OPEN_FOUR*0.8
-    if(myFour>=1&&myOpenThree>=1)mx+=SC.FOUR*0.5
-    if(enFour>=1&&enOpenThree>=1)en+=SC.FOUR*0.5
-    return mx-en
+    return myScore-enScore
   }
-  function hMove(brd,sz,r,c,col){
-    let opp=col===B?W:B,my=0,en=0
-    for(let[dR,dC]of DIRS){
-      let w=[];for(let i=-4;i<=4;i++){let nr=r+dR*i,nc=c+dC*i;if(nr<0||nr>=sz||nc<0||nc>=sz)w.push(-1);else w.push(brd[nr][nc])}
-      let wo=w.slice();wo[4]=col;my+=sw(wo,col,opp)
-      let wt=w.slice();wt[4]=opp;en+=sw(wt,opp,col)
+  // 候选
+  function cands(brd,sz){
+    const cs=[],seen=new Set()
+    let cnt=0
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++)if(brd[r][c]!==E)cnt++
+    const rad=cnt>40?1:2
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
+      if(brd[r][c]!==E)continue
+      let near=false
+      for(let dr=-rad;dr<=rad&&!near;dr++)for(let dc=-rad;dc<=rad&&!near;dc++){
+        if(!dr&&!dc)continue
+        const nr=r+dr,nc=c+dc
+        if(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]!==E)near=true
+      }
+      if(near){
+        const k=r*sz+c
+        if(!seen.has(k)){seen.add(k);cs.push({r,c})}
+      }
     }
-    let myAtk=Math.max(my,0),enDef=Math.max(en,0)
-    return myAtk+enDef*1.15
+    return cs
   }
+  // 启发式:单步分
+  function hMove(brd,sz,r,c,col){
+    const opp=col===B?W:B
+    let sc=0
+    for(const[dR,dC]of DIRS){
+      const w=[];for(let i=-4;i<=4;i++){
+        const nr=r+dR*i,nc=c+dC*i
+        if(nr<0||nr>=sz||nc<0||nc>=sz)w.push(-1)
+        else w.push(brd[nr][nc])
+      }
+      const wo=w.slice();wo[4]=col
+      sc+=shapeScore(wo,col,opp).score
+    }
+    return sc
+  }
+  // 中心偏好
   function centerBias(sz,r,c){
-    let m=Math.floor(sz/2),d=Math.abs(r-m)+Math.abs(c-m)
+    const m=Math.floor(sz/2),d=Math.abs(r-m)+Math.abs(c-m)
     return Math.max(0,15-d*0.6)
   }
-  function cloneB(brd,sz){let nb=new Array(sz);for(let r=0;r<sz;r++)nb[r]=brd[r].slice();return nb}
-  // 检测某手是否“战术手”（会产生冲四以上、或能拦对手冲四以上）
+  // 复制
+  function cloneB(brd,sz){
+    const nb=new Array(sz)
+    for(let r=0;r<sz;r++)nb[r]=brd[r].slice()
+    return nb
+  }
+  // 检测某点是否"战术手"
   function isTactical(brd,sz,r,c,col){
     if(brd[r][c]!==E)return false
     const opp=col===B?W:B
-    // 1. 走我方后是否形成四/五
+    // 我方落子能成 4/5?
     brd[r][c]=col
-    for(let[dR,dC]of DIRS){
-      let line=[{r,c}],nr=r+dR,nc=c+dC
+    for(const[dR,dC]of DIRS){
+      const line=[{r,c}]
+      let nr=r+dR,nc=c+dC
       while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===col){line.push({r:nr,c:nc});nr+=dR;nc+=dC}
       nr=r-dR;nc=c-dC
       while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===col){line.unshift({r:nr,c:nc});nr-=dR;nc-=dC}
-      let openEnds=0
-      if(r-dR>=0&&r-dR<sz&&c-dC>=0&&c-dC<sz&&brd[r-dR][c-dC]===E)openEnds++
-      if(r+dR>=0&&r+dR<sz&&c+dC>=0&&c+dC<sz&&brd[r+dR][c+dC]===E)openEnds++
-      if(line.length>=4)return true
-      if(line.length===3&&openEnds>=1)return true
+      if(line.length>=4){brd[r][c]=E;return true}
     }
     brd[r][c]=E
-    // 2. 走该点后是否拦住对手的冲四/活四
+    // 拦对方 4?
     brd[r][c]=opp
-    for(let[dR,dC]of DIRS){
-      let line=[{r,c}],nr=r+dR,nc=c+dC
-      while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){line.push({r:nr,c:nc});nr+=dR;nc+=dC}
+    for(const[dR,dC]of DIRS){
+      const line=[{r,c}]
+      let nr=r+dR,nc=c+dC
+      while(nr>=0&&nr<sz&&nc<0+nc<sz&&brd[nr][nc]===opp){line.push({r:nr,c:nc});nr+=dR;nc+=dC}
       nr=r-dR;nc=c-dC
       while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){line.unshift({r:nr,c:nc});nr-=dR;nc-=dC}
       if(line.length>=4){brd[r][c]=E;return true}
@@ -342,46 +392,269 @@ const AI = (()=>{
     brd[r][c]=E
     return false
   }
-  // 静态搜索：只在“战术手”中延伸搜索
+  // VCF 搜索: 我是否能通过连续冲四必杀
+  // 简化: 检查每手我方成 4,对手是否能同时封两处
+  function vcfSearch(brd,sz,my,maxDepth){
+    const opp=my===B?W:B
+    const myFours=[] // 能成冲四的位置
+    const cs=cands(brd,sz)
+    for(const c of cs){
+      brd[c.r][c.c]=my
+      // 检查任一方向是否成 4
+      let isFour=false
+      for(const[dR,dC]of DIRS){
+        let cnt=1
+        let nr=c.r+dR,nc=c.c+dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===my){cnt++;nr+=dR;nc+=dC}
+        nr=c.r-dR;nc=c.c-dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===my){cnt++;nr-=dR;nc-=dC}
+        if(cnt===4)isFour=true
+      }
+      if(isFour)myFours.push(c)
+      brd[c.r][c.c]=E
+    }
+    if(myFours.length===0)return null
+    if(myFours.length>=2)return myFours[0] // 双冲四必胜
+    // 单冲四:对手必须封,封了之后继续冲四
+    const myFour=myFours[0]
+    brd[myFour.r][myFour.c]=my
+    // 对手所有可能 5 必封
+    const oppMoves=[]
+    for(const c of cs){
+      if(c.r===myFour.r&&c.c===myFour.c)continue
+      brd[c.r][c.c]=opp
+      // 检查 opp 是否成 5
+      let isFive=false
+      for(const[dR,dC]of DIRS){
+        let cnt=1
+        let nr=c.r+dR,nc=c.c+dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){cnt++;nr+=dR;nc+=dC}
+        nr=c.r-dR;nc=c.c-dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){cnt++;nr-=dR;nc-=dC}
+        if(cnt===5)isFive=true
+      }
+      if(isFive)oppMoves.push(c)
+      brd[c.r][c.c]=E
+    }
+    if(oppMoves.length===0)return myFour // 对手无法封
+    if(oppMoves.length>=2)return null // 对手能封两处
+    if(maxDepth<=0){brd[myFour.r][myFour.c]=E;return null}
+    // 对手封了 → 我再继续 VCF
+    brd[oppMoves[0].r][oppMoves[0].c]=opp
+    const cont=vcfSearch(brd,sz,my,maxDepth-1)
+    brd[oppMoves[0].r][oppMoves[0].c]=E
+    brd[myFour.r][myFour.c]=E
+    return cont
+  }
+  // 静态搜索(qsearch)
   function qsearch(brd,sz,al,bt,mx,my,qdp){
-    if(qdp<=0)return evalB(brd,sz,my)
-    let cur=mx?my:(my===B?W:B)
-    let tcs=[]
+    if(qdp<=0)return evalBoard(brd,sz,my)
+    const cur=mx?my:(my===B?W:B)
+    const tcs=[]
     for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
       if(isTactical(brd,sz,r,c,cur))tcs.push({r,c})
     }
-    if(!tcs.length)return evalB(brd,sz,my)
+    if(tcs.length===0)return evalBoard(brd,sz,my)
     tcs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,cur))
     tcs.sort((a,b)=>b.h-a.h)
-    let lm=Math.min(tcs.length,10)
-    if(mx){let b=-Infinity;for(let i=0;i<lm;i++){let c=tcs[i];brd[c.r][c.c]=cur;let v=qsearch(brd,sz,al,bt,false,my,qdp-1);brd[c.r][c.c]=E;b=Math.max(b,v);al=Math.max(al,v);if(bt<=al)break}return b}
-    else{let b=Infinity;for(let i=0;i<lm;i++){let c=tcs[i];brd[c.r][c.c]=cur;let v=qsearch(brd,sz,al,bt,true,my,qdp-1);brd[c.r][c.c]=E;b=Math.min(b,v);bt=Math.min(bt,v);if(bt<=al)break}return b}
+    const lm=Math.min(tcs.length,8)
+    if(mx){
+      let best=-Infinity
+      for(let i=0;i<lm;i++){
+        const c=tcs[i]
+        brd[c.r][c.c]=cur
+        const v=qsearch(brd,sz,al,bt,false,my,qdp-1)
+        brd[c.r][c.c]=E
+        best=Math.max(best,v)
+        al=Math.max(al,v)
+        if(bt<=al)break
+      }
+      return best
+    }else{
+      let best=Infinity
+      for(let i=0;i<lm;i++){
+        const c=tcs[i]
+        brd[c.r][c.c]=cur
+        const v=qsearch(brd,sz,al,bt,true,my,qdp-1)
+        brd[c.r][c.c]=E
+        best=Math.min(best,v)
+        bt=Math.min(bt,v)
+        if(bt<=al)break
+      }
+      return best
+    }
   }
-  function search(brd,sz,dp,al,bt,mx,my){
-    let sc=evalB(brd,sz,my);if(Math.abs(sc)>=SC.FIVE||dp===0)return qsearch(brd,sz,al,bt,mx,my,3)
-    let cs=cands(brd,sz,1);if(!cs.length)return sc
-    let cur=mx?my:(my===B?W:B)
-    cs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,cur))
+  // 迭代加深 + alpha-beta
+  function searchDeep(brd,sz,depth,al,bt,mx,my,killers){
+    const cur=mx?my:(my===B?W:B)
+    const sc=evalBoard(brd,sz,my)
+    if(sc>=WIN_SCORE)return WIN_SCORE
+    if(sc<=-WIN_SCORE)return-WIN_SCORE
+    if(depth===0)return qsearch(brd,sz,al,bt,mx,my,3)
+    const cs=cands(brd,sz)
+    if(cs.length===0)return sc
+    // 杀手启发:先搜 killer moves
+    cs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,cur)+centerBias(sz,c.r,c.c)*0.3)
+    if(killers&&killers.length){
+      for(const k of killers){
+        const m=cs.find(c=>c.r===k.r&&c.c===k.c)
+        if(m)m.h+=1e5
+      }
+    }
     cs.sort((a,b)=>b.h-a.h)
-    let lm=Math.min(cs.length,dp>=5?8:dp>=3?12:18)
-    if(mx){let b=-Infinity;for(let i=0;i<lm;i++){let c=cs[i];brd[c.r][c.c]=cur;let v=search(brd,sz,dp-1,al,bt,false,my);brd[c.r][c.c]=E;b=Math.max(b,v);al=Math.max(al,v);if(bt<=al)break}return b}
-    else{let b=Infinity;for(let i=0;i<lm;i++){let c=cs[i];brd[c.r][c.c]=cur;let v=search(brd,sz,dp-1,al,bt,true,my);brd[c.r][c.c]=E;b=Math.min(b,v);bt=Math.min(bt,v);if(bt<=al)break}return b}
+    const lim=Math.min(cs.length,depth>=5?10:depth>=3?14:18)
+    if(mx){
+      let best=-Infinity
+      for(let i=0;i<lim;i++){
+        const c=cs[i]
+        brd[c.r][c.c]=cur
+        const v=searchDeep(brd,sz,depth-1,al,bt,false,my,killers)
+        brd[c.r][c.c]=E
+        if(v>best)best=v
+        if(v>al)al=v
+        if(bt<=al)break
+      }
+      return best
+    }else{
+      let best=Infinity
+      for(let i=0;i<lim;i++){
+        const c=cs[i]
+        brd[c.r][c.c]=cur
+        const v=searchDeep(brd,sz,depth-1,al,bt,true,my,killers)
+        brd[c.r][c.c]=E
+        if(v<best)best=v
+        if(v<bt)bt=v
+        if(bt<=al)break
+      }
+      return best
+    }
   }
-  function bestMove(brd,sz,my,diff='mid'){
-    let dp=diff==='easy'?2:diff==='mid'?3:6,cs=cands(brd,sz,1)
-    if(!cs.length)return{r:Math.floor(sz/2),c:Math.floor(sz/2)}
-    cs.forEach(c=>{c.h=hMove(brd,sz,c.r,c.c,my)+centerBias(sz,c.r,c.c)*0.5})
-    cs.sort((a,b)=>b.h-a.h)
-    let opp=my===B?W:B
-    for(let c of cs){brd[c.r][c.c]=my;let l=Game.checkWin(brd,c.r,c.c,my);brd[c.r][c.c]=E;if(l)return c}
-    for(let c of cs){brd[c.r][c.c]=opp;let l=Game.checkWin(brd,c.r,c.c,opp);brd[c.r][c.c]=E;if(l)return c}
-    let sb=cloneB(brd,sz),best=cs[0],bestVal=-Infinity,lm=Math.min(cs.length,dp>=5?8:dp>=3?10:14)
-    for(let i=0;i<lm;i++){let c=cs[i];sb[c.r][c.c]=my;let v=search(sb,sz,dp-1,-Infinity,Infinity,false,my);sb[c.r][c.c]=E;if(v>bestVal){bestVal=v;best=c}}
-    if(!best||best.h===undefined)best=cs[0]
-    return best
+  // 候选排序:我方五 > 封对手五 > VCF
+  function orderCandidates(brd,sz,cs,my){
+    const opp=my===B?W:B
+    const order=[]
+    for(const c of cs){
+      brd[c.r][c.c]=my
+      let myFive=false
+      for(const[dR,dC]of DIRS){
+        let cnt=1,nr=c.r+dR,nc=c.c+dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===my){cnt++;nr+=dR;nc+=dC}
+        nr=c.r-dR;nc=c.c-dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===my){cnt++;nr-=dR;nc-=dC}
+        if(cnt===5)myFive=true
+      }
+      brd[c.r][c.c]=E
+      if(myFive)order.push({c,prio:0})
+    }
+    for(const c of cs){
+      brd[c.r][c.c]=opp
+      let oppFive=false
+      for(const[dR,dC]of DIRS){
+        let cnt=1,nr=c.r+dR,nc=c.c+dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){cnt++;nr+=dR;nc+=dC}
+        nr=c.r-dR;nc=c.c-dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){cnt++;nr-=dR;nc-=dC}
+        if(cnt===5)oppFive=true
+      }
+      brd[c.r][c.c]=E
+      if(oppFive)order.push({c,prio:1})
+    }
+    const sb=cloneB(brd,sz)
+    const vcf=vcfSearch(sb,sz,my,8)
+    if(vcf)order.push({c:vcf,prio:2})
+    for(const c of cs){
+      if(!order.find(o=>o.c.r===c.r&&o.c.c===c.c))order.push({c,prio:3})
+    }
+    order.sort((a,b)=>a.prio-b.prio)
+    return order.map(o=>o.c)
   }
-  return{getBestMove:bestMove}
+  // 开局库(简化):前 2 手落中心区域
+  const OPENINGS={}
+  function openingMove(brd,sz,my,count){
+    if(count>=4)return null
+    const m=Math.floor(sz/2)
+    if(count===0)return{r:m,c:m}
+    if(count===1){
+      // 选中心 3x3 区域里离对手最近空格
+      const opp=my===B?W:B
+      for(let r=m-1;r<=m+1;r++)for(let c=m-1;c<=m+1;c++){
+        if(brd[r][c]===E)return{r,c}
+      }
+    }
+    if(count===2||count===3){
+      // 选中心 5x5 区域里 hMove 最高的
+      let best=null,bestSc=-Infinity
+      for(let r=m-2;r<=m+2;r++)for(let c=m-2;c<=m+2;c++){
+        if(brd[r][c]!==E)continue
+        const sc=hMove(brd,sz,r,c,my)
+        if(sc>bestSc){bestSc=sc;best={r,c}}
+      }
+      return best
+    }
+    return null
+  }
+  // 入口
+  function getBestMove(brd,sz,my,diff='mid',deadline){
+    if(deadline===undefined)deadline=performance.now()+(diff==='easy'?100:diff==='mid'?400:diff==='hard'?1500:3000)
+    // 数已落子
+    let cnt=0
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++)if(brd[r][c]!==E)cnt++
+    // 开局库(仅 hard+)
+    if(diff==='hard'||diff==='nightmare'){
+      const opMove=openingMove(brd,sz,my,cnt)
+      if(opMove)return opMove
+    }
+    if(cnt===0)return{r:Math.floor(sz/2),c:Math.floor(sz/2)}
+    const cs=cands(brd,sz)
+    if(cs.length===0)return{r:Math.floor(sz/2),c:Math.floor(sz/2)}
+    // 即时威胁:五/封五
+    const opp=my===B?W:B
+    for(const c of cs){
+      brd[c.r][c.c]=my
+      const l=Game.checkWin(brd,c.r,c.c,my)
+      brd[c.r][c.c]=E
+      if(l)return c
+    }
+    for(const c of cs){
+      brd[c.r][c.c]=opp
+      const l=Game.checkWin(brd,c.r,c.c,opp)
+      brd[c.r][c.c]=E
+      if(l)return c
+    }
+    // VCF(hard+ 才做)
+    if(diff!=='easy'){
+      const sb=cloneB(brd,sz)
+      const vcf=vcfSearch(sb,sz,my,diff==='hard'?10:12)
+      if(vcf)return vcf
+    }
+    // 候选排序(必杀+五优先)
+    const ordered=orderCandidates(brd,sz,cs,my)
+    // 迭代加深
+    const maxDepth=diff==='easy'?2:diff==='mid'?4:diff==='hard'?6:8
+    let bestMove=ordered[0]
+    let bestVal=-Infinity
+    let killers=[]
+    for(let d=2;d<=maxDepth;d+=2){
+      if(performance.now()>deadline)break
+      let curBest=null,curVal=-Infinity
+      for(const c of ordered){
+        if(performance.now()>deadline)break
+        brd[c.r][c.c]=my
+        const v=searchDeep(brd,sz,d-1,-Infinity,Infinity,false,my,killers)
+        brd[c.r][c.c]=E
+        if(v>curVal){curVal=v;curBest=c}
+      }
+      if(curBest){
+        if(curVal>bestVal){bestVal=curVal;bestMove=curBest}
+        killers=[curBest]
+        if(Math.abs(bestVal)>=WIN_SCORE)break
+      }
+    }
+    return bestMove||ordered[0]
+  }
+  return{getBestMove}
 })();
+
 
 /* ==============================================================
    board.js — 棋盘渲染 / 落子绘制 / 鼠标交互 (自适应屏幕)
