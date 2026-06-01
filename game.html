@@ -10,7 +10,7 @@ html,body{width:100%;height:100%;background:#0a0a0a;overflow:hidden;touch-action
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:monospace}
 #wrapper{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;gap:0}
 canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid #333;box-shadow:0 0 30px rgba(0,0,0,0.9);max-width:100vw;max-height:calc(100vh - 180px)}
-#controls{display:none;width:100%;max-width:520px;padding:8px 12px;justify-content:space-between;align-items:center;gap:8px;flex-shrink:0}
+#controls{display:flex;width:100%;max-width:640px;padding:10px 14px;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0;margin:0 auto}
 #dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:4px}
 .dpad-btn{background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.7);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;transition:background 0.1s}
 .dpad-btn:active,.dpad-btn.pressed{background:rgba(255,255,255,0.25)}
@@ -22,11 +22,32 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
 #pause-btn{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);font-size:10px;font-family:monospace;letter-spacing:0.05em;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:flex;align-items:center;justify-content:center}
 #pause-btn:active{background:rgba(255,255,255,0.2)}
 #pause-label{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.05em;margin-top:2px}
-#start-btn{width:72px;height:72px;border-radius:50%;background:rgba(48,209,88,0.2);border:2.5px solid rgba(48,209,88,0.5);color:rgba(48,209,88,0.95);font-size:12px;font-weight:bold;letter-spacing:0.06em;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:none;align-items:center;justify-content:center;flex-direction:column;gap:2px}
-#pause-btn,#start-btn,#fire-btn{display:none}
-@media(max-width:540px),(max-height:600px){#controls{display:flex}#start-btn,#fire-btn,#pause-btn{display:inline-block!important}#pause-label{display:block!important}canvas{max-height:calc(100vh - 180px)}}
+#start-btn{width:72px;height:72px;border-radius:50%;background:rgba(48,209,88,0.2);border:2.5px solid rgba(48,209,88,0.5);color:#30d158;font-size:12px;font-weight:bold;letter-spacing:0.06em;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;flex-shrink:0}
+#pause-btn,#start-btn,#fire-btn{display:flex}
+#pause-btn{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);font-size:10px;font-family:monospace;letter-spacing:0.05em;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;align-items:center;justify-content:center;flex-shrink:0}
+#pause-btn:active{background:rgba(255,255,255,0.2)}
+/* 桌面：控件紧凑 */
+@media(min-width:541px){
+  #dpad .dpad-btn{width:44px;height:44px;font-size:18px}
+  #fire-btn{width:60px;height:60px;font-size:10px}
+  #start-btn{width:58px;height:58px;font-size:10px}
+  #pause-btn{width:44px;height:44px;font-size:9px}
+  canvas{max-height:calc(100vh - 160px)}
+}
+/* 超宽屏：控件限位避免被拉太开 */
+@media(min-width:1100px){
+  #controls{max-width:540px}
+}
+/* 手机小屏 */
+@media(max-width:540px),(max-height:600px){
+  #dpad .dpad-btn{width:48px;height:48px;font-size:18px}
+  #fire-btn{width:64px;height:64px}
+  #start-btn{width:64px;height:64px}
+  #pause-btn{width:48px;height:48px}
+  #pause-label{display:block!important}
+  canvas{max-height:calc(100vh - 180px)}
+}
 @media(orientation:portrait) and (max-width:540px){#wrapper{justify-content:flex-start;padding-top:10px}canvas{max-height:calc(100vh - 200px)}}
-@media(min-width:541px){#controls{display:flex!important}#start-btn{width:60px;height:60px;display:none}#fire-btn{width:60px;height:60px}#dpad .dpad-btn{width:46px;height:46px;font-size:18px}}
 </style>
 </head>
 <body>
@@ -41,7 +62,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
     <div></div><button class="dpad-btn" data-dir="down">▼</button><div></div>
   </div>
   <div id="fire-zone">
-    <button id="start-btn" style="display:none">▶ START<br>开始</button>
+    <button id="start-btn">▶ START<br>开始</button>
     <button id="fire-btn">FIRE<br>🔫</button>
     <button id="pause-btn">❚❚</button>
     <span id="pause-label" style="display:none">P 暂停</span>
@@ -67,6 +88,7 @@ const C={
   bg:'#111111',brick:'#c8712a',brickDark:'#8b4513',steel:'#7a7a8a',steelDark:'#555560',
   water:'#1a5f9a',water2:'#2285c0',tree:'#2d7a2d',eagle:'#e83030',eagleY:'#f5c400',
   player:'#f5c400',enemyFast:'#e83030',enemyMed:'#f5c400',enemySlow:'#30d158',
+  enemySniper:'#9933ff',enemyCharger:'#ff8800',enemyHeavy:'#1a8a8a',
   boss:'#9933ff',bossDark:'#6600cc',enhanced:'#ff8800',bullet:'#ffffd0',
   ui:'#ffffff',uiDim:'#888888',
 };
@@ -120,10 +142,19 @@ let hasBoss=false,hasEnhanced=false,victory=false,enemiesSpawned=false,pendingSp
 let soundOn=true;
 let highScores=JSON.parse(localStorage.getItem('tankBattleScores')||'[]');
 const ENEMY_BASE=[
-  {color:C.enemyFast,speed:2.5,fireRate:2000,points:100},
-  {color:C.enemyMed, speed:1.8,fireRate:3000,points:200},
-  {color:C.enemySlow,speed:1.2,fireRate:4000,points:300},
+  {color:C.enemyFast,  speed:2.5,fireRate:2000,points:100,bulletSpd:4,hpMul:1},
+  {color:C.enemyMed,   speed:1.8,fireRate:3000,points:200,bulletSpd:4,hpMul:1},
+  {color:C.enemySlow,  speed:1.2,fireRate:4000,points:300,bulletSpd:4,hpMul:1},
+  {color:C.enemySniper,speed:1.0,fireRate:2200,points:400,bulletSpd:7,hpMul:1},
+  {color:C.enemyCharger,speed:3.5,fireRate:2500,points:350,bulletSpd:4,hpMul:1},
+  {color:C.enemyHeavy, speed:0.7,fireRate:2800,points:500,bulletSpd:5,hpMul:3},
 ];
+// enemyTactics: 定义高级 AI 行为
+const ENEMY_TACTICS={
+  4:'sniper',  // 4号狙击手：保持距离、超精确
+  5:'charger', // 5号冲锋者：直线冲撞
+  6:'heavy',   // 6号重甲：高血量、可穿身
+};
 
 // ─── Bullet types ────────────────────────────────────────
 const BT={normal:0,double:1,spread:2,pierce:3};
@@ -140,7 +171,8 @@ class Tank{
     }else if(type){
       const eb=ENEMY_BASE[type];
       this.speed=eb.speed*d.spd;this.fireRate=eb.fireRate*d.fr;this.color=eb.color;
-      this.w=36;this.h=36;this.hp=Math.ceil(d.hp);this.maxHp=this.hp;
+      this.bulletSpd=eb.bulletSpd||4;this.tactic=ENEMY_TACTICS[type]||null;
+      this.w=36;this.h=36;this.hp=Math.ceil(d.hp*(eb.hpMul||1));this.maxHp=this.hp;
       this.isEnhanced=false;
     }else{
       this.speed=3;this.fireRate=400;this.color=C.player;this.w=36;this.h=36;this.hp=1;
@@ -179,6 +211,26 @@ class Tank{
     if(bestDir!==this.dir){this.dir=bestDir;return true}
     return false
   }
+  // 各类型特殊 AI
+  doTactic(){
+    if(!this.tactic||!player)return
+    const ex=this.x+this.w/2,ey=this.y+this.h/2
+    const px=player.x+player.w/2,py=player.y+player.h/2
+    const dx=px-ex,dy=py-ey,dist=Math.hypot(dx,dy)
+    if(this.tactic==='sniper'){
+      // 狙击手：保持中距离(120-200px)，太近后退、远了靠近
+      if(dist<120)this.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?3:1):(dy>0?0:2)
+      else if(dist>200)this.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0)
+    }else if(this.tactic==='charger'){
+      // 冲锋者：始终朝玩家方向，遇堵随机
+      if(Math.random()<0.1)this.randomDir()
+    }else if(this.tactic==='heavy'){
+      // 重甲：直行不偏，遇堵才转
+      if(this._stuckFrames==null)this._stuckFrames=0
+      if(!this.collides(this.x,this.y))this._stuckFrames=0
+      else{this._stuckFrames++;if(this._stuckFrames>15){this._stuckFrames=0;this.randomDir()}}
+    }
+  }
   update(){
     if(this.type>0&&freezeTimer>0)return;
     let dx=0,dy=0;
@@ -191,6 +243,7 @@ class Tank{
     else if(!this.collides(this.x,ny)){this.y=ny;}
     else{if(this.type>0)this.smartDir();this.x=nx;this.y=ny;}
     if(this.type>=2&&Math.random()<0.35)this.dodgeBullet();
+    this.doTactic();
     this.fireCooldown-=16.67;
     if(this.fireCooldown<=0&&this.type>0){
       this.fireCooldown=this.fireRate+Math.random()*500;
@@ -251,7 +304,8 @@ class Tank{
       let bdx=0,bdy=0;
       if(this.dir===0)bdy=-5;else if(this.dir===2)bdy=5;
       else if(this.dir===1)bdx=5;else bdx=-5;
-      bullets.push(new Bullet(bx,by,bdx,bdy,this.type>0?4:6,this.type>0,this.isEnhanced));
+      const bsp=this.bulletSpd||(this.type>0?4:6);
+      bullets.push(new Bullet(bx,by,bdx,bdy,bsp,this.type>0,this.isEnhanced));
     }
     soundShoot();
   }
@@ -272,6 +326,14 @@ class Tank{
       ctx.fillStyle=this.type>0?'#aa2020':'#c8a000';
       ctx.fillRect(-7,-7,14,14);ctx.fillStyle=col;
       ctx.fillRect(-3,-22,6,12);
+      // 新类型特殊标记：狙击手开缺口示镜、冲锋者画箭头、重甲画粗框
+      if(this.tactic==='sniper'){
+        ctx.fillStyle='#000';ctx.fillRect(-14,-2,28,4);ctx.fillRect(-2,-14,4,28);
+      }else if(this.tactic==='charger'){
+        ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(0,-22);ctx.lineTo(-4,-12);ctx.lineTo(4,-12);ctx.fill();
+      }else if(this.tactic==='heavy'){
+        ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(-12,-12,24,24);
+      }
     }
     // Enhanced glow ring
     if(this.isEnhanced&&!this.isBoss){
@@ -415,9 +477,10 @@ function initStage(s){
   const w0c=w0[s]||1,w1c=w1[s]||0,w2c=w2[s]||0;
   const diffDelay=diffKey==='nightmare'?250:diffKey==='hard'?320:400;
   let delay=200;
-  for(let i=0;i<w0c;i++){setTimeout(()=>spawnEnemy(1),delay);delay+=diffDelay;}
-  for(let i=0;i<w1c;i++){setTimeout(()=>spawnEnemy(2),delay);delay+=diffDelay;}
-  for(let i=0;i<w2c;i++){setTimeout(()=>spawnEnemy(3),delay);delay+=diffDelay;}
+  // s>=3 混入新类型：狙击手/冲锋者/重甲
+  for(let i=0;i<w0c;i++){const t=(s>=3&&Math.random()<0.25)?([4,5,6][Math.floor(Math.random()*3)]):1;setTimeout(()=>spawnEnemy(t),delay);delay+=diffDelay;}
+  for(let i=0;i<w1c;i++){const t=(s>=4&&Math.random()<0.2)?([4,5,6][Math.floor(Math.random()*3)]):2;setTimeout(()=>spawnEnemy(t),delay);delay+=diffDelay;}
+  for(let i=0;i<w2c;i++){const t=(s>=5&&Math.random()<0.15)?([4,5,6][Math.floor(Math.random()*3)]):3;setTimeout(()=>spawnEnemy(t),delay);delay+=diffDelay;}
   const cEnh=s>0&&wps>1?Math.min(s,2):0;
   for(let i=0;i<cEnh;i++){setTimeout(()=>spawnEnemy([1,2,3][i%3],true),delay+500+i*500);}
   const cBoss=s>=2&&wps>1?1:0;
@@ -426,17 +489,17 @@ function initStage(s){
   // Wave 2
   if(wps>=2){
     const wave2Delay=delay+(diffKey==='nightmare'?1500:diffKey==='hard'?2000:2500);
-    setTimeout(()=>{if(state!=='playing')return;wave=2;const w20=[1,1,2,2,2,2,2,2,3,3,3,3,3,3,4];const w21=[0,1,1,1,1,1,1,2,2,2,2,2,3,3,3];const w22=[1,1,1,1,1,1,2,2,2,2,2,2,2,3,3];let wd=0;for(let i=0;i<w20[s];i++){setTimeout(()=>spawnEnemy(1),wd);wd+=diffDelay;}for(let i=0;i<w21[s];i++){setTimeout(()=>spawnEnemy(2),wd);wd+=diffDelay;}for(let i=0;i<w22[s];i++){setTimeout(()=>spawnEnemy(3),wd);wd+=diffDelay;}if(s>0){setTimeout(()=>spawnEnemy([1,2,3][Math.floor(Math.random()*3)],true),wd+300);}if(s>=3){setTimeout(()=>spawnBoss(),wd+500);}},wave2Delay);
+    setTimeout(()=>{if(state!=='playing')return;wave=2;const w20=[1,1,2,2,2,2,2,2,3,3,3,3,3,3,4];const w21=[0,1,1,1,1,1,1,2,2,2,2,2,3,3,3];const w22=[1,1,1,1,1,1,2,2,2,2,2,2,2,3,3];let wd=0;for(let i=0;i<w20[s];i++){const t=(s>=3&&Math.random()<0.3)?([4,5,6][Math.floor(Math.random()*3)]):1;setTimeout(()=>spawnEnemy(t),wd);wd+=diffDelay;}for(let i=0;i<w21[s];i++){const t=(s>=4&&Math.random()<0.25)?([4,5,6][Math.floor(Math.random()*3)]):2;setTimeout(()=>spawnEnemy(t),wd);wd+=diffDelay;}for(let i=0;i<w22[s];i++){const t=(s>=5&&Math.random()<0.2)?([4,5,6][Math.floor(Math.random()*3)]):3;setTimeout(()=>spawnEnemy(t),wd);wd+=diffDelay;}if(s>0){setTimeout(()=>spawnEnemy([1,2,3,4,5,6][Math.floor(Math.random()*6)],true),wd+300);}if(s>=3){setTimeout(()=>spawnBoss(),wd+500);}},wave2Delay);
   }
   // Wave 3
   if(wps>=3){
     const w3Delay=delay+(diffKey==='nightmare'?3500:diffKey==='hard'?4500:5500);
-    setTimeout(()=>{if(state!=='playing')return;wave=3;for(let i=0;i<w2c;i++){setTimeout(()=>spawnEnemy(3),i*diffDelay);}if(s>=3){setTimeout(()=>spawnBoss(),500);}},w3Delay);
+    setTimeout(()=>{if(state!=='playing')return;wave=3;for(let i=0;i<w2c;i++){const t=(s>=3)?([3,4,5,6][Math.floor(Math.random()*4)]):3;setTimeout(()=>spawnEnemy(t),i*diffDelay);}if(s>=3){setTimeout(()=>spawnBoss(),500);}},w3Delay);
   }
   // Wave 4
   if(wps>=4){
     const w4Delay=delay+(diffKey==='nightmare'?6000:diffKey==='hard'?7500:9000);
-    setTimeout(()=>{if(state!=='playing')return;wave=4;for(let i=0;i<w0c;i++){setTimeout(()=>spawnEnemy(1),i*(diffDelay-50));}if(s>=4){setTimeout(()=>spawnBoss(),800);}},w4Delay);
+    setTimeout(()=>{if(state!=='playing')return;wave=4;for(let i=0;i<w0c;i++){const t=(s>=3)?([1,4,5,6][Math.floor(Math.random()*4)]):1;setTimeout(()=>spawnEnemy(t),i*(diffDelay-50));}if(s>=4){setTimeout(()=>spawnBoss(),800);}},w4Delay);
   }
 }
 
