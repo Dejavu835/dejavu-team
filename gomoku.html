@@ -3,47 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>五子棋 · dejavu team</title>
+<title>五子棋 · Gomoku · dejavu team</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚫</text></svg>">
-<link rel="stylesheet" href="gomoku.css">
+<style>
+/* ===== Reset ===== */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","Helvetica Neue",Arial,sans-serif;background:#f5f5f7;color:#1d1d1f;min-height:100vh;overflow-x:hidden}
+
+/* ===== 顶栏 ===== */
+.g-nav{position:sticky;top:0;z-index:100;height:52px;background:rgba(245,245,247,0.85);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,0.08)}
+.g-nav-inner{max-width:1280px;margin:0 auto;height:100%;display:flex;align-items:center;justify-content:space-between;padding:0 22px;gap:18px}
+.g-nav-logo{font-size:14px;font-weight:600;letter-spacing:-0.01em;color:#1d1d1f;text-decoration:none;white-space:nowrap}
+.g-nav-fade{color:#86868b;font-weight:400}
+.g-nav-title{font-size:13px;font-weight:500;color:#515154}
+.g-nav-back{font-size:13px;color:#515154;text-decoration:none;transition:color 0.15s;white-space:nowrap}
+.g-nav-back:hover{color:#0071e3}
+@media(max-width:480px){.g-nav-title{display:none}.g-nav{padding:0 8px}}
+
+/* ===== 主区 ===== */
+.g-main{max-width:1280px;margin:0 auto;padding:24px 22px 40px;display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
+@media(max-width:880px){.g-main{grid-template-columns:1fr;padding:16px 14px 30px;gap:18px}}
+
+/* ===== 棋盘 ===== */
+.g-board-wrap{display:flex;justify-content:center;align-items:flex-start;width:100%}
+.g-board-frame{position:relative;padding:18px;background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.05);width:100%;max-width:min(660px,calc(100vw - 40px))}
+#board{display:block;border-radius:8px;cursor:pointer;width:100%;height:auto;background:#dcb35c;box-shadow:inset 0 0 20px rgba(0,0,0,0.08);transition:background 0.3s,box-shadow 0.3s;touch-action:manipulation}
+#board[data-theme=jade]{background:linear-gradient(135deg,#d6e5d3 0%,#b6cdb1 100%);box-shadow:inset 0 0 24px rgba(0,0,0,0.06)}
+#board[data-theme=minimal]{background:#f9f9f9;box-shadow:none;border:1px solid #e8e8ed}
+#board.dragging{cursor:grabbing}
+.g-board-overlay{position:absolute;inset:0;pointer-events:none;border-radius:18px}
+
+/* ===== 侧栏 ===== */
+.g-side{display:flex;flex-direction:column;gap:14px}
+.g-card{background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.04)}
+.g-card-title{font-size:11px;font-weight:600;letter-spacing:0.08em;color:#86868b;text-transform:uppercase;margin-bottom:10px}
+
+/* ===== 段控件 ===== */
+.g-seg{display:flex;background:#f5f5f7;border-radius:9px;padding:3px;gap:2px}
+.g-seg-btn{flex:1;padding:7px 8px;font-size:13px;font-weight:500;color:#515154;background:transparent;border:none;border-radius:7px;cursor:pointer;transition:all 0.2s;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.g-seg-btn:hover{color:#1d1d1f}
+.g-seg-btn.active{background:#fff;color:#1d1d1f;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+
+/* ===== 信息卡 ===== */
+.g-turn{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.g-turn-label{font-size:12px;color:#86868b}
+.g-turn-name{font-size:16px;font-weight:600;color:#1d1d1f}
+.g-stone{display:inline-block;width:18px;height:18px;border-radius:50%;flex-shrink:0}
+.g-stone-black{background:radial-gradient(circle at 30% 30%,#555 0%,#1a1a1a 70%);box-shadow:0 1px 2px rgba(0,0,0,0.3)}
+.g-stone-white{background:radial-gradient(circle at 30% 30%,#fff 0%,#e0e0e0 80%);box-shadow:0 1px 2px rgba(0,0,0,0.15),inset 0 0 0 1px rgba(0,0,0,0.05)}
+.g-meta{display:flex;gap:18px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06)}
+.g-meta-item{display:flex;flex-direction:column;gap:2px;flex:1}
+.g-meta-label{font-size:11px;color:#86868b}
+.g-meta-val{font-size:20px;font-weight:700;color:#1d1d1f;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+
+/* ===== 按钮 ===== */
+.g-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.g-btn{padding:8px 10px;font-size:13px;font-weight:500;font-family:inherit;color:#1d1d1f;background:#f5f5f7;border:1px solid rgba(0,0,0,0.06);border-radius:8px;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+.g-btn:hover{background:#e8e8ed}
+.g-btn:active{transform:scale(0.97)}
+.g-btn-primary{background:#1d1d1f;color:#fff;border-color:#1d1d1f}
+.g-btn-primary:hover{background:#2c2c2e}
+
+/* ===== 主题选择 ===== */
+.g-themes{display:flex;gap:10px}
+.g-theme{width:32px;height:32px;border-radius:50%;border:2px solid transparent;background:#dcb35c;cursor:pointer;transition:all 0.15s;padding:0;-webkit-tap-highlight-color:transparent}
+.g-theme-jade{background:linear-gradient(135deg,#d6e5d3 0%,#b6cdb1 100%)}
+.g-theme-minimal{background:#f8f8f8;border:2px solid #d2d2d7}
+.g-theme:hover{transform:scale(1.1)}
+.g-theme.active{border-color:#0071e3;box-shadow:0 0 0 2px rgba(0,113,227,0.25)}
+
+/* ===== 落子记录 ===== */
+.g-card-log{max-height:220px}
+.g-log{display:flex;flex-wrap:wrap;gap:4px;max-height:160px;overflow-y:auto;font-size:11px;color:#515154}
+.g-log-step{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;background:#f5f5f7;border-radius:6px;font-variant-numeric:tabular-nums;line-height:1}
+.g-log-step .g-log-stone{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.g-log-stone-black{background:#1a1a1a}
+.g-log-stone-white{background:#fff;border:1px solid #d2d2d7}
+.g-log-empty{font-size:12px;color:#86868b;text-align:center;width:100%;padding:20px 0}
+
+/* ===== 胜利横幅 ===== */
+.g-banner{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.g-banner.show{display:flex;animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.g-banner-inner{background:#fff;padding:32px 40px;border-radius:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes popIn{from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1}}
+.g-banner-title{font-size:26px;font-weight:700;letter-spacing:-0.02em;color:#1d1d1f;margin-bottom:4px}
+.g-banner-sub{font-size:14px;color:#86868b;margin-bottom:20px}
+
+/* ===== 规则说明 ===== */
+.g-rules{max-width:900px;margin:0 auto 40px;padding:0 22px}
+.g-rules summary{font-size:13px;color:#515154;cursor:pointer;padding:12px 0;text-align:center;user-select:none;transition:color 0.15s}
+.g-rules summary:hover{color:#0071e3}
+.g-rules-inner{background:#fff;padding:20px 24px;border-radius:12px;font-size:13px;line-height:1.7;color:#515154;margin-top:8px}
+.g-rules-inner p{margin-bottom:8px}
+.g-rules-inner p:last-child{margin-bottom:0}
+.g-rules-inner strong{color:#1d1d1f}
+
+/* ===== 五连高亮与落子动画 ===== */
+@keyframes winPulse{0%,100%{filter:drop-shadow(0 0 0 rgba(255,59,48,0))}50%{filter:drop-shadow(0 0 12px rgba(255,59,48,0.8))}}
+.win-stone{animation:winPulse 1.2s ease-in-out infinite}
+@keyframes stonePop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.stone-anim{animation:stonePop 0.25s cubic-bezier(0.34,1.56,0.64,1)}
+
+/* ===== 移动端微调 ===== */
+@media(max-width:880px){.g-card-log{max-height:180px}}
+@media(max-width:480px){.g-board-frame{padding:12px;border-radius:14px}.g-card{padding:12px 14px}.g-banner-inner{padding:24px 28px;margin:0 16px}.g-banner-title{font-size:22px}.g-turn-name{font-size:14px}.g-meta-val{font-size:18px}}
+</style>
 </head>
 <body>
 
-<!-- 顶栏 -->
 <header class="g-nav">
   <div class="g-nav-inner">
-    <a class="g-nav-logo" href="index.html" aria-label="返回首页">
-      <span>dejavu<span class="g-nav-fade"> team</span></span>
-    </a>
+    <a class="g-nav-logo" href="index.html" aria-label="返回首页"><span>dejavu<span class="g-nav-fade"> team</span></span></a>
     <div class="g-nav-title">五子棋 · Gomoku</div>
     <a class="g-nav-back" href="index.html">← 返回</a>
   </div>
 </header>
 
-<!-- 主区 -->
 <main class="g-main">
-
-  <!-- 左：棋盘 -->
   <section class="g-board-wrap">
     <div class="g-board-frame">
       <canvas id="board" width="660" height="660"></canvas>
-      <div class="g-board-overlay" id="overlay"></div>
+      <div class="g-board-overlay"></div>
     </div>
   </section>
-
-  <!-- 右：侧栏 -->
   <aside class="g-side">
-
-    <!-- 模式 -->
     <div class="g-card">
       <h3 class="g-card-title">模式</h3>
-      <div class="g-seg" id="seg-mode" role="tablist">
-        <button class="g-seg-btn active" data-mode="pvp" role="tab">双人对战</button>
-        <button class="g-seg-btn" data-mode="pve" role="tab">人机对战</button>
+      <div class="g-seg" id="seg-mode">
+        <button class="g-seg-btn active" data-mode="pvp">双人对战</button>
+        <button class="g-seg-btn" data-mode="pve">人机对战</button>
       </div>
     </div>
-
-    <!-- 难度 / 先手 (动态) -->
     <div class="g-card" id="card-ai" hidden>
       <h3 class="g-card-title">AI 难度</h3>
       <div class="g-seg" id="seg-diff">
@@ -57,27 +149,17 @@
         <button class="g-seg-btn" data-side="white">玩家执白</button>
       </div>
     </div>
-
-    <!-- 信息 -->
     <div class="g-card g-card-info">
       <div class="g-turn">
-        <span class="g-turn-label">当前轮</span>
+        <span class="g-turn-label">当前</span>
         <span class="g-stone g-stone-black" id="turn-stone"></span>
         <span class="g-turn-name" id="turn-name">黑方</span>
       </div>
       <div class="g-meta">
-        <div class="g-meta-item">
-          <span class="g-meta-label">步数</span>
-          <span class="g-meta-val" id="moves">0</span>
-        </div>
-        <div class="g-meta-item">
-          <span class="g-meta-label">计时</span>
-          <span class="g-meta-val" id="timer">00:00</span>
-        </div>
+        <div class="g-meta-item"><span class="g-meta-label">步数</span><span class="g-meta-val" id="moves">0</span></div>
+        <div class="g-meta-item"><span class="g-meta-label">计时</span><span class="g-meta-val" id="timer">00:00</span></div>
       </div>
     </div>
-
-    <!-- 操作 -->
     <div class="g-card">
       <h3 class="g-card-title">操作</h3>
       <div class="g-actions">
@@ -86,8 +168,6 @@
         <button class="g-btn" id="btn-hint">提示</button>
       </div>
     </div>
-
-    <!-- 主题 -->
     <div class="g-card">
       <h3 class="g-card-title">主题</h3>
       <div class="g-themes">
@@ -96,19 +176,15 @@
         <button class="g-theme g-theme-minimal" data-theme="minimal" title="极简"></button>
       </div>
     </div>
-
-    <!-- 记录 -->
     <div class="g-card g-card-log">
-      <h3 class="g-card-title">落子记录</h3>
+      <h3 class="g-card-title">记录</h3>
       <div class="g-log" id="log">
         <div class="g-log-empty">暂无落子</div>
       </div>
     </div>
-
   </aside>
 </main>
 
-<!-- 胜利横幅 -->
 <div class="g-banner" id="banner">
   <div class="g-banner-inner">
     <div class="g-banner-title" id="banner-title">黑方胜！</div>
@@ -117,21 +193,319 @@
   </div>
 </div>
 
-<!-- 规则说明 -->
 <details class="g-rules">
   <summary>规则说明</summary>
   <div class="g-rules-inner">
-    <p>黑白双方交替落子，黑先。在横、竖、斜任意方向上先连成 5 子（或更多）的一方获胜。</p>
-    <p><strong>悔棋：</strong>点击「悔棋」按钮可撤销最近一步（人机对战会同时撤销 AI 一步）。</p>
+    <p>黑白双方交替落子，黑先。在横、竖、斜任意方向上先连成 5 子的一方获胜。</p>
+    <p><strong>悔棋：</strong>撤销最近一步（人机对战会同时撤销 AI 一步）。</p>
     <p><strong>提示：</strong>高亮 AI 推荐的最佳落点。</p>
     <p><strong>计时：</strong>从首子落盘开始计时。</p>
   </div>
 </details>
 
-<script src="js/board.js"></script>
-<script src="js/game.js"></script>
-<script src="js/ai.js"></script>
-<script src="js/ui.js"></script>
-<script src="gomoku.js"></script>
+<script>
+/* ==============================================================
+   game.js — 游戏状态机 / 胜负判断 / 悔棋
+   ============================================================ */
+const Game = (()=>{
+  const E=0,B=1,W=2
+  let st={size:15,board:[],cur:B,winner:null,winLine:null,moves:0,hist:[],startAt:null}
+  function rs(sz=15){st={size:sz,board:Array.from({length:sz},()=>Array(sz).fill(E)),cur:B,winner:null,winLine:null,moves:0,hist:[],startAt:null}}
+  function mv(r,c){
+    if(st.winner)return{ok:false}
+    if(st.board[r][c]!==E)return{ok:false}
+    st.board[r][c]=st.cur;st.hist.push({r,c,color:st.cur});st.moves++
+    if(!st.startAt)st.startAt=Date.now()
+    let line=chk(st.board,r,c,st.cur)
+    if(line){st.winner=st.cur;st.winLine=line;return{ok:true,win:true,line}}
+    if(st.moves===st.size*st.size){st.winner='draw';return{ok:true,draw:true}}
+    st.cur=st.cur===B?W:B;return{ok:true}
+  }
+  function und(steps=1){
+    if(!st.hist.length)return false
+    for(let i=0;i<steps&&st.hist.length;i++){let l=st.hist.pop();st.board[l.r][l.c]=E;st.cur=l.color;st.moves--}
+    st.winner=null;st.winLine=null;return true
+  }
+  function chk(brd,r,c,col){
+    let dirs=[[0,1],[1,0],[1,1],[1,-1]]
+    for(let[dR,dC]of dirs){
+      let line=[{r,c}]
+      let nr=r+dR,nc=c+dC
+      while(nr>=0&&nr<st.size&&nc>=0&&nc<st.size&&brd[nr][nc]===col){line.push({r:nr,c:nc});nr+=dR;nc+=dC}
+      nr=r-dR;nc=c-dC
+      while(nr>=0&&nr<st.size&&nc>=0&&nc<st.size&&brd[nr][nc]===col){line.unshift({r:nr,c:nc});nr-=dR;nc-=dC}
+      if(line.length>=5)return line
+    }
+    return null
+  }
+  return{reset:rs,getState:()=>st,getSize:()=>st.size,getCurrent:()=>st.cur,getWinner:()=>st.winner,getWinningLine:()=>st.winLine,getMoves:()=>st.moves,getHistory:()=>st.hist,move:mv,undo:und,checkWin:chk,constants:{E,B,W}}
+})();
+
+/* ==============================================================
+   ai.js — AI 引擎 (评分 + alpha-beta)
+   ============================================================ */
+const AI = (()=>{
+  const{E,B,W}=Game.constants
+  const SC={FIVE:1e7,OPEN_FOUR:1e6,FOUR:1e5,OPEN_THREE:1e4,THREE:1e3,OPEN_TWO:100,TWO:10,ONE:1},DIRS=[[0,1],[1,0],[1,1],[1,-1]]
+  function cands(brd,sz,r2=1){
+    let cs=[],st=new Set
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
+      if(brd[r][c]!==E)continue
+      let near=false
+      for(let dr=-r2;dr<=r2&&!near;dr++)for(let dc=-r2;dc<=r2&&!near;dc++){if(!dr&&!dc)continue;let nr=r+dr,nc=c+dc;if(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]!==E)near=true}
+      if(near){let k=r*sz+c;if(!st.has(k)){st.add(k);cs.push({r,c})}}
+    }
+    return cs
+  }
+  function sw(w,col,opp){
+    let me=0,en=0,em=0
+    for(let v of w){if(v===col)me++;else if(v===opp)en++;else em++}
+    if(en>0)return 0
+    switch(me){case 5:return SC.FIVE;case 4:return em===1?SC.OPEN_FOUR:SC.FOUR;case 3:return em===2?SC.OPEN_THREE:em===1?SC.THREE:0;case 2:return em===3?SC.OPEN_TWO:em===2?SC.TWO:0;case 1:return em===4?SC.ONE:0;default:return 0}
+  }
+  function evalB(brd,sz,my){
+    let mx=0,en=0
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
+      let v=brd[r][c];if(v===E)continue
+      for(let[dR,dC]of DIRS){
+        let pr=r-dR,pc=c-dC
+        if(!(pr<0||pr>=sz||pc<0||pc>=sz||brd[pr][pc]!==v))continue
+        for(let k=0;k<5;k++){
+          let nr=r+dR*k,nc=c+dC*k;if(nr<0||nr>=sz||nc<0||nc>=sz)break
+          let w=[],ok=true
+          for(let i=0;i<5;i++){let wr=nr+dR*i,wc=nc+dC*i;if(wr<0||wr>=sz||wc<0||wc>=sz){ok=false;break};w.push(brd[wr][wc])}
+          if(!ok)continue
+          let s=sw(w,v,v===B?W:B);if(v===my)mx+=s;else en+=s
+        }
+      }
+    }
+    return mx-en
+  }
+  function hMove(brd,sz,r,c,col){
+    let opp=col===B?W:B,sc=0
+    for(let[dR,dC]of DIRS){
+      let w=[];for(let i=-4;i<=4;i++){let nr=r+dR*i,nc=c+dC*i;if(nr<0||nr>=sz||nc<0||nc>=sz)w.push(-1);else w.push(brd[nr][nc])}
+      w[4]=col;sc+=sw(w,col,opp)
+    }
+    return sc
+  }
+  function cloneB(brd,sz){let nb=new Array(sz);for(let r=0;r<sz;r++)nb[r]=brd[r].slice();return nb}
+  function search(brd,sz,dp,al,bt,mx,my){
+    let sc=evalB(brd,sz,my);if(Math.abs(sc)>=SC.FIVE||dp===0)return sc
+    let cs=cands(brd,sz,1);if(!cs.length)return sc
+    let cur=mx?my:(my===B?W:B)
+    cs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,cur))
+    cs.sort((a,b)=>b.h-a.h)
+    let lm=Math.min(cs.length,dp>=3?12:18)
+    if(mx){let b=-Infinity;for(let i=0;i<lm;i++){let c=cs[i];brd[c.r][c.c]=cur;let v=search(brd,sz,dp-1,al,bt,false,my);brd[c.r][c.c]=E;b=Math.max(b,v);al=Math.max(al,v);if(bt<=al)break}return b}
+    else{let b=Infinity;for(let i=0;i<lm;i++){let c=cs[i];brd[c.r][c.c]=cur;let v=search(brd,sz,dp-1,al,bt,true,my);brd[c.r][c.c]=E;b=Math.min(b,v);bt=Math.min(bt,v);if(bt<=al)break}return b}
+  }
+  function bestMove(brd,sz,my,diff='mid'){
+    let dp=diff==='easy'?1:diff==='mid'?2:4,cs=cands(brd,sz,1)
+    if(!cs.length)return{r:Math.floor(sz/2),c:Math.floor(sz/2)}
+    cs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,my));cs.sort((a,b)=>b.h-a.h)
+    let opp=my===B?W:B
+    for(let c of cs){brd[c.r][c.c]=my;let l=Game.checkWin(brd,c.r,c.c,my);brd[c.r][c.c]=E;if(l)return c}
+    for(let c of cs){brd[c.r][c.c]=opp;let l=Game.checkWin(brd,c.r,c.c,opp);brd[c.r][c.c]=E;if(l)return c}
+    let sb=cloneB(brd,sz),best=cs[0],bestVal=-Infinity,lm=Math.min(cs.length,dp>=3?10:14)
+    for(let i=0;i<lm;i++){let c=cs[i];sb[c.r][c.c]=my;let v=search(sb,sz,dp-1,-Infinity,Infinity,false,my);sb[c.r][c.c]=E;if(v>bestVal){bestVal=v;best=c}}
+    return best
+  }
+  return{getBestMove:bestMove}
+})();
+
+/* ==============================================================
+   board.js — 棋盘渲染 / 落子绘制 / 鼠标交互 (自适应屏幕)
+   ============================================================ */
+const Board = (()=>{
+  const PD=28,SRF=0.42,SSB=4
+  let cv,ctx,dpr=1,sz=15,cell=0,ox=0,oy=0,bpx=0
+  let stones=[],lastM=null,winL=null,hover=null,thm='wood',onClk=()=>{},_animStones=[]
+
+  function init(el,op={}){
+    cv=el;ctx=cv.getContext('2d');sz=op.size||15;onClk=op.onCellClick||(()=>{});thm=op.theme||'wood'
+    dpr=window.devicePixelRatio||1
+    rs();rz()
+    window.addEventListener('resize',()=>{rz();dr()})
+    cv.addEventListener('mousemove',e=>{let p=pc(e.clientX,e.clientY);if(JSON.stringify(p)!==JSON.stringify(hover)){hover=p;dr()}})
+    cv.addEventListener('mouseleave',()=>{if(hover){hover=null;dr()}})
+    cv.addEventListener('click',e=>{let p=pc(e.clientX,e.clientY);if(p)onClk(p.r,p.c)})
+    cv.addEventListener('touchstart',e=>{e.preventDefault();if(!e.touches.length)return;let t=e.touches[0],p=pc(t.clientX,t.clientY);if(p)onClk(p.r,p.c)},{passive:false})
+  }
+
+  function rz(){
+    let r=cv.getBoundingClientRect(),w=r.width;if(w<10)w=300
+    cv.width=Math.floor(w*dpr);cv.height=Math.floor(w*dpr)
+    ctx.setTransform(dpr,0,0,dpr,0,0)
+    bpx=w;cell=(bpx-PD*2)/(sz-1);ox=PD;oy=PD
+  }
+
+  function rs(ns){if(ns)sz=ns;stones=Array.from({length:sz},()=>Array(sz).fill(0));lastM=null;winL=null;hover=null;_animStones=[];rz()}
+  function gSt(){return stones}
+  function gSz(){return sz}
+  function sSt(r,c,col){stones[r][c]=col;lastM={r,c};if(!winL)dr()}
+  function rSt(r,c){stones[r][c]=0;dr()}
+  function sLM(p){lastM=p;dr()}
+  function sWL(l){winL=l;dr()}
+  function sHv(p){hover=p;dr()}
+  function sTh(t){thm=t;dr()}
+  function cXY(r,c){return{x:ox+c*cell,y:oy+r*cell}}
+
+  function pc(cx,cy){
+    let r=cv.getBoundingClientRect(),x=cx-r.left,y=cy-r.top
+    let c=Math.round((x-ox)/cell),rr=Math.round((y-oy)/cell)
+    if(rr<0||rr>=sz||c<0||c>=sz)return null
+    let dx=x-(ox+c*cell),dy=y-(oy+rr*cell)
+    if(Math.hypot(dx,dy)>cell*0.5)return null
+    return{r:rr,c}
+  }
+
+  function dr(){
+    drawBoard();drawStones();if(winL)drawWinLine()
+    if(hover&&!stones[hover.r][hover.c]&&!winL)drawHover()
+    if(lastM&&!winL)drawLastMark()
+  }
+  function drawBoard(){
+    ctx.clearRect(0,0,bpx,bpx)
+    ctx.strokeStyle=thm==='minimal'?'#d2d2d7':'rgba(0,0,0,0.45)';ctx.lineWidth=1
+    for(let i=0;i<sz;i++){
+      let p=cXY(0,i);ctx.beginPath();ctx.moveTo(p.x,p.y);p=cXY(sz-1,i);ctx.lineTo(p.x,p.y);ctx.stroke()
+      p=cXY(i,0);ctx.beginPath();ctx.moveTo(p.x,p.y);p=cXY(i,sz-1);ctx.lineTo(p.x,p.y);ctx.stroke()
+    }
+    if(sz>=13&&sz%2===1){
+      let st=sz===15?[[3,3],[3,11],[11,3],[11,11],[7,7]]:[[Math.floor(sz/2),Math.floor(sz/2)]]
+      ctx.fillStyle=thm==='minimal'?'#86868b':'rgba(0,0,0,0.55)'
+      for(let[r,c]of st){let p=cXY(r,c);ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fill()}
+    }
+  }
+  function drawStones(){
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
+      let v=stones[r][c];if(!v)continue;let win=winL&&winL.some(p=>p.r===r&&p.c===c);drawStone(r,c,v,win)
+    }
+  }
+  function drawStone(r,c,col,win){
+    let{x,y}=cXY(r,c),rad=cell*SRF;ctx.save()
+    ctx.shadowColor='rgba(0,0,0,0.25)';ctx.shadowBlur=SSB;ctx.shadowOffsetY=1.5
+    let gr=ctx.createRadialGradient(x-rad*0.35,y-rad*0.35,rad*0.1,x,y,rad)
+    if(col===1){gr.addColorStop(0,'#5a5a5a');gr.addColorStop(0.7,'#1a1a1a');gr.addColorStop(1,'#000')}
+    else{gr.addColorStop(0,'#fff');gr.addColorStop(0.7,'#f0f0f0');gr.addColorStop(1,'#d8d8d8')}
+    ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();ctx.restore()
+    if(col===2){ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=0.6;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.stroke()}
+    if(win){ctx.save();ctx.shadowColor='#ff3b30';ctx.shadowBlur=14;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();ctx.restore()}
+  }
+  function drawLastMark(){
+    if(!lastM)return;let{x,y}=cXY(lastM.r,lastM.c),rad=cell*SRF*0.32
+    ctx.fillStyle='#ff3b30';ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill()
+  }
+  function drawHover(){
+    if(!hover)return;let{x,y}=cXY(hover.r,hover.c),rad=cell*SRF*0.32
+    ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.stroke()
+  }
+  function drawWinLine(){
+    if(!winL||winL.length<2)return;let f=cXY(winL[0].r,winL[0].c),l=cXY(winL[winL.length-1].r,winL[winL.length-1].c)
+    ctx.save();ctx.strokeStyle='rgba(255,59,48,0.85)';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(f.x,f.y);ctx.lineTo(l.x,l.y);ctx.stroke();ctx.restore()
+  }
+  return{init,reset:rs,setSize:rs,getSize:gSz,getStones:gSt,setStone:sSt,removeStone:rSt,setLastMove:sLM,setWinningLine:sWL,setHover:sHv,setTheme:sTh,draw:dr,cellToXY:cXY}
+})();
+
+/* ==============================================================
+   ui.js — 侧栏控件 / 状态同步
+   ============================================================ */
+const UI = (()=>{
+  let hn={onNew(){}}
+  function init(h){hn=h
+    let $=id=>document.getElementById(id)
+    bindSeg($('seg-mode'),'data-mode',v=>{hn.onMode(v);$('card-ai').hidden=v!=='pve'})
+    bindSeg($('seg-diff'),'data-diff',v=>hn.onDiff(v))
+    bindSeg($('seg-side'),'data-side',v=>hn.onSide(v))
+    bindTheme()
+    $('btn-new').addEventListener('click',()=>{hideBanner();hn.onNew()})
+    $('btn-undo').addEventListener('click',hn.onUndo)
+    $('btn-hint').addEventListener('click',hn.onHint)
+    $('banner-again').addEventListener('click',()=>{hideBanner();hn.onNew()})
+    let b=$('banner');b.addEventListener('click',e=>{if(e.target===b){hideBanner();hn.onNew()}})
+    hn.hideBanner=hideBanner;hn.showBanner=showBanner;hideBanner()
+  }
+  function bindSeg(ct,attr,cb){if(!ct)return;let bs=ct.querySelectorAll('button');bs.forEach(b=>b.addEventListener('click',()=>{bs.forEach(x=>x.classList.remove('active'));b.classList.add('active');cb(b.getAttribute(attr))}))}
+  function bindTheme(){document.querySelectorAll('.g-theme').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.g-theme').forEach(x=>x.classList.remove('active'));b.classList.add('active');hn.onTheme(b.getAttribute('data-theme'))}))}
+  function setTurn(c){
+    let s=document.getElementById('turn-stone'),n=document.getElementById('turn-name')
+    if(c===1){s.className='g-stone g-stone-black';n.textContent='黑方'}
+    else if(c===2){s.className='g-stone g-stone-white';n.textContent='白方'}
+    else{n.textContent='—'}
+  }
+  function setMoves(n){document.getElementById('moves').textContent=n}
+  function setTimer(sec){let m=Math.floor(sec/60).toString().padStart(2,'0'),s=(sec%60).toString().padStart(2,'0');document.getElementById('timer').textContent=m+':'+s}
+  function setLog(hist){
+    let lg=document.getElementById('log')
+    if(!hist.length){lg.innerHTML='<div class="g-log-empty">暂无落子</div>';return}
+    lg.innerHTML=hist.map((m,i)=>{let st=m.color===1?'g-log-stone-black':'g-log-stone-white',cl=String.fromCharCode(65+m.c);return'<span class="g-log-step"><span class="g-log-stone '+st+'"></span>'+(i+1)+'. '+cl+(m.r+1)+'</span>'}).join('')
+    lg.scrollTop=lg.scrollHeight
+  }
+  function showBanner(t,s){document.getElementById('banner-title').textContent=t;document.getElementById('banner-sub').textContent=s;document.getElementById('banner').classList.add('show')}
+  function hideBanner(){document.getElementById('banner').classList.remove('show')}
+  function setBoardTheme(t){document.getElementById('board').setAttribute('data-theme',t)}
+  return{init,setTurn,setMoves,setTimer,setLog,showBanner,hideBanner,setBoardTheme}
+})();
+
+/* ==============================================================
+   gomoku.js — 入口，串联所有模块
+   ============================================================ */
+(function(){
+  const{B,W}=Game.constants
+  let st={mode:'pvp',diff:'mid',side:B,thm:'wood',thinking:false,ti:null}
+
+  function init(){
+    Game.reset(15)
+    Board.init(document.getElementById('board'),{size:15,theme:st.thm,onCellClick:handleClick})
+    UI.init({onMode:v=>{st.mode=v;newG()},onDiff:v=>{st.diff=v},onSide:v=>{st.side=v==='black'?B:W;newG()},onNew:newG,onUndo:handleUndo,onHint:handleHint,onTheme:t=>{st.thm=t;Board.setTheme(t);UI.setBoardTheme(t)}})
+    UI.setBoardTheme(st.thm)
+    ref()
+    startTimer()
+  }
+
+  function ref(){let g=Game.getState();UI.setTurn(g.cur);UI.setMoves(g.moves);UI.setLog(g.hist)}
+  function startTimer(){stopTimer();st.ti=setInterval(()=>{let g=Game.getState();if(!g.startAt||g.winner)return;UI.setTimer(Math.floor((Date.now()-g.startAt)/1000))},500)}
+  function stopTimer(){if(st.ti){clearInterval(st.ti);st.ti=null}}
+
+  function handleClick(r,c){
+    if(st.thinking)return;let g=Game.getState();if(g.winner)return
+    if(st.mode==='pve'&&g.cur!==st.side)return
+    place(r,c)
+    if(st.mode==='pve'&&!Game.getWinner())runAI()
+  }
+
+  function place(r,c){
+    let res=Game.move(r,c);if(!res.ok)return
+    let g=Game.getState();Board.setStone(r,c,g.board[r][c]);ref();afterMove(res)
+  }
+
+  function runAI(){
+    if(Game.getWinner())return;let g=Game.getState(),ai=g.cur;st.thinking=true;UI.setTurn(0)
+    setTimeout(()=>{
+      let m=AI.getBestMove(Game.getState().board,Game.getSize(),ai,st.diff)
+      st.thinking=false
+      if(m){let res=Game.move(m.r,m.c);if(res.ok){Board.setStone(m.r,m.c,Game.getState().board[m.r][m.c]);ref();afterMove(res)}}
+    },150)
+  }
+
+  function afterMove(res){
+    if(res.win){let n=Game.getWinner()===B?'黑方':'白方';UI.showBanner(n+'胜！','连成 5 子 · 共 '+Game.getMoves()+' 步');Board.setWinningLine(res.line);stopTimer()}
+    else if(res.draw){UI.showBanner('和棋','棋盘下满 · '+Game.getMoves()+' 步');stopTimer()}
+  }
+
+  function newG(){stopTimer();UI.hideBanner();Game.reset(15);Board.reset(15);ref();startTimer()}
+  function handleUndo(){if(st.thinking)return;let g=Game.getState();if(!g.hist.length)return;Game.undo(st.mode==='pve'?2:1);Board.reset(Game.getSize())
+    let s=Game.getState();for(let r=0;r<s.size;r++)for(let c=0;c<s.size;c++)if(s.board[r][c])Board.setStone(r,c,s.board[r][c])
+    Board.setLastMove(s.hist.length?s.hist[s.hist.length-1]:null);ref()
+  }
+  function handleHint(){
+    if(st.thinking)return;let g=Game.getState();if(g.winner)return
+    let m=AI.getBestMove(g.board,Game.getSize(),g.cur,'mid')
+    if(m){Board.setHover(m.r,m.c);setTimeout(()=>Board.setHover(null),2500)}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init()
+})();
+</script>
 </body>
 </html>
