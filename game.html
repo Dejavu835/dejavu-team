@@ -145,6 +145,10 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
       <button class="toggle" data-key="soundOn" type="button">开</button>
     </div>
     <div class="modal-row">
+      <label>震动</label>
+      <button class="toggle" data-key="vibration" type="button">开</button>
+    </div>
+    <div class="modal-row">
       <label>难度</label>
       <div class="seg">
         <button data-diff="easy" type="button">简单</button>
@@ -316,6 +320,17 @@ function soundDie(){tone(200,'sawtooth',0.4,0.2);setTimeout(()=>tone(100,'sawtoo
 function soundBoss(){tone(150,'sawtooth',0.5,0.25);setTimeout(()=>tone(300,'sawtooth',0.4,0.2),200);setTimeout(()=>tone(450,'sawtooth',0.3,0.2),400);}
 function soundWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.3,0.2),i*150));}
 
+// ─── Vibration (navigator.vibrate) ────────────────────────
+// 移动端震动反馈。桌面无 navigator.vibrate → 自动 noop，不报错。
+let vibrateEnabled=true;   // 由 settings.vibration 控制
+function vibrate(pattern){
+  // pattern: number（ms）或 [ms, gap, ms, gap, ...]
+  if(!vibrateEnabled)return;
+  if(typeof navigator==='undefined')return;
+  if(!navigator.vibrate)return;  // 桌面/iOS Safari 自动 noop
+  try{navigator.vibrate(pattern);}catch(e){}
+}
+
 // ─── State ────────────────────────────────────────────────
 let state='start',stage=0,score=0,lives=3;
 
@@ -343,11 +358,13 @@ let highScores=JSON.parse(localStorage.getItem('tankBattleScores')||'[]');
 // ─── Settings (localStorage 持久化) ──────────────────────
 // settings.joystickStyle: 'round' 圆形遥杆（默认）| 'cross' 十字 D-Pad
 // settings.soundOn: 声音开关
+// settings.vibration: 震动反馈开关
 // settings.diffKey: 难度 (easy/normal/hard/nightmare)
 const SETTINGS_KEY='tank_v3_settings';
 const settings={
   joystickStyle:'round',  // 'round' | 'cross'
   soundOn:true,
+  vibration:true,         // 默认开
   diffKey:'normal',
 };
 function saveSettings(){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}catch(e){}}
@@ -358,9 +375,11 @@ function loadSettings(){
   }catch(e){}
   if(!['round','cross'].includes(settings.joystickStyle))settings.joystickStyle='round';
   if(typeof settings.soundOn!=='boolean')settings.soundOn=true;
+  if(typeof settings.vibration!=='boolean')settings.vibration=true;
   if(!['easy','normal','hard','nightmare'].includes(settings.diffKey))settings.diffKey='normal';
 }
 function applySoundSetting(){soundOn=settings.soundOn;}
+function applyVibrationSetting(){vibrateEnabled=settings.vibration;}
 function applyJoystickStyle(){
   const joyEl=document.getElementById('joystick');
   const dpadEl=document.getElementById('dpad-fallback');
@@ -389,6 +408,8 @@ function updateSettingsUI(){
   });
   const sndBtn=document.querySelector('button.toggle[data-key="soundOn"]');
   if(sndBtn){sndBtn.classList.toggle('on',settings.soundOn);sndBtn.textContent=settings.soundOn?'开':'关';}
+  const vibBtn=document.querySelector('button.toggle[data-key="vibration"]');
+  if(vibBtn){vibBtn.classList.toggle('on',settings.vibration);vibBtn.textContent=settings.vibration?'开':'关';}
 }
 function openSettings(){
   const m=document.getElementById('settings-modal');if(!m)return;
@@ -835,7 +856,8 @@ class Powerup{
   collect(){
     soundPowerup();
     const t=this.key;
-    if(t==='SHIELD'){addBuff('SHIELD');pickFlash={text:'🛡 无敌 10s',timer:800};}
+    // 震动反馈：分类处理
+    if(t==='SHIELD'){addBuff('SHIELD');pickFlash={text:'🛡 无敌 10s',timer:800};vibrate(30);}  // A 类 buff 拾取
     else if(t==='SHOVEL'){
       addBuff('SHOVEL');
       const[er,ec]=getEagleTile();
@@ -843,18 +865,19 @@ class Powerup{
         if(r>=0&&r<ROWS&&c>=0&&c<COLS&&(map[r][c]===B||map[r][c]===E))map[r][c]=S;
       }
       pickFlash={text:'🚧 围墙钢化 10s',timer:800};
+      vibrate(30);
     }
-    else if(t==='FREEZE'){addBuff('FREEZE');pickFlash={text:'❄ 冰冻 10s',timer:800};}
-    else if(t==='SPREAD'){addBuff('SPREAD');pickFlash={text:'💨 散射 8s',timer:800};}
-    else if(t==='PIERCE'){addBuff('PIERCE');pickFlash={text:'🎯 穿甲 10s',timer:800};}
-    else if(t==='STAR'){collectStar();}
-    else if(t==='LIFE'){collectLife();}
+    else if(t==='FREEZE'){addBuff('FREEZE');pickFlash={text:'❄ 冰冻 10s',timer:800};vibrate(30);}
+    else if(t==='SPREAD'){addBuff('SPREAD');pickFlash={text:'💨 散射 8s',timer:800};vibrate(30);}
+    else if(t==='PIERCE'){addBuff('PIERCE');pickFlash={text:'🎯 穿甲 10s',timer:800};vibrate(30);}
+    else if(t==='STAR'){collectStar();vibrate([50,30,50]);}  // ⭐ 升级
+    else if(t==='LIFE'){collectLife();vibrate(30);}
     else if(t==='BOMB'){
-      if(addToInv('BOMB'))pickFlash={text:'💣 获得炸弹',timer:800};
+      if(addToInv('BOMB')){pickFlash={text:'💣 获得炸弹',timer:800};vibrate([30,30,30]);}  // BOMB 拾取
       else pickFlash={text:'道具栏已满',timer:800};
     }
     else if(t==='SHIELD_C'){
-      if(addToInv('SHIELD_C'))pickFlash={text:'🛡 获得盾牌',timer:800};
+      if(addToInv('SHIELD_C')){pickFlash={text:'🛡 获得盾牌',timer:800};vibrate([20,20,20]);}  // SHIELD 拾取
       else pickFlash={text:'道具栏已满',timer:800};
     }
   }
@@ -916,9 +939,11 @@ function activateInvSlot(slot){
     killCount+=killed;totalKills+=killed;
     bombFlash=400;
     soundExplode();
+    vibrate(200);  // 激活 BOMB
   }else if(key==='SHIELD_C'){
     // 立即激活 5s 无敌
     addBuff('SHIELD');
+    vibrate(8);
   }
   item.count--;
   if(item.count<=0)INV.slots[slot]=null;
@@ -975,6 +1000,7 @@ function spawnBoss(){
   const e=new Tank(sc*T,sr*T,2,0,true);
   enemies.push(e);
   soundBoss();
+  vibrate(80);  // Boss 出现
 }
 
 function initStage(s){
@@ -1155,6 +1181,7 @@ initJoystick();
 // ─── Settings 初始化（必须在 initJoystick 之后才能 applyJoystickStyle） ──
 loadSettings();
 applySoundSetting();
+applyVibrationSetting();
 applyJoystickStyle();
 updateSettingsBtn();
 updateSettingsUI();
@@ -1186,6 +1213,7 @@ updateSettingsUI();
       saveSettings();
       applyJoystickStyle();
       updateSettingsUI();
+      vibrate(3);
     };
     btn.addEventListener('touchstart',handler,{passive:false});
     btn.addEventListener('mousedown',handler);
@@ -1200,6 +1228,7 @@ updateSettingsUI();
       diff=DIFF[diffKey];
       saveSettings();
       updateSettingsUI();
+      vibrate(3);
     };
     btn.addEventListener('touchstart',handler,{passive:false});
     btn.addEventListener('mousedown',handler);
@@ -1214,10 +1243,27 @@ updateSettingsUI();
       soundOn=settings.soundOn;
       saveSettings();
       updateSettingsUI();
+      vibrate(3);
     };
     sndBtn.addEventListener('touchstart',handler,{passive:false});
     sndBtn.addEventListener('mousedown',handler);
     sndBtn.addEventListener('click',handler);
+  }
+  // 震动开关
+  const vibBtn=document.querySelector('button.toggle[data-key="vibration"]');
+  if(vibBtn){
+    const handler=(e)=>{
+      e.preventDefault();e.stopPropagation();
+      settings.vibration=!settings.vibration;
+      applyVibrationSetting();
+      saveSettings();
+      updateSettingsUI();
+      // 切换时给个反馈（即使要关，也会响一下）
+      if(vibrateEnabled)vibrate(8);
+    };
+    vibBtn.addEventListener('touchstart',handler,{passive:false});
+    vibBtn.addEventListener('mousedown',handler);
+    vibBtn.addEventListener('click',handler);
   }
 })();
 
@@ -1273,6 +1319,7 @@ function bindSlot(i,el){
     e.preventDefault();e.stopPropagation();
     if(state!=='playing')return;
     INV.selected=i;
+    vibrate(8);  // 道具栏激活
     activateInvSlot(i);
     updateInvBar();
   };
@@ -1284,8 +1331,8 @@ document.querySelectorAll('.inv-slot').forEach(el=>{
   bindSlot(slot,el);
 });
 function _togglePause(){
-  if(state==='playing')state='paused';
-  else if(state==='paused'){state='playing';_resetInput();}
+  if(state==='playing'){state='paused';vibrate(5);}
+  else if(state==='paused'){state='playing';vibrate(5);_resetInput();}
 }
 const pBtn=document.getElementById('pause-btn');
 pBtn.addEventListener('touchstart',(e)=>{e.preventDefault();e.stopPropagation();_togglePause();},{passive:false});
@@ -1303,11 +1350,11 @@ document.addEventListener('keydown',e=>{
   keysLastTs=performance.now();
   // 选车界面快捷键
   if(state==='start'){
-    if(e.code==='Digit1'||e.code==='Numpad1'){e.preventDefault();selectedTank=0;}
-    else if(e.code==='Digit2'||e.code==='Numpad2'){e.preventDefault();selectedTank=1;}
-    else if(e.code==='Digit3'||e.code==='Numpad3'){e.preventDefault();selectedTank=2;}
-    else if(e.code==='ArrowLeft'||e.code==='KeyA'){e.preventDefault();selectedTank=(selectedTank+2)%3;}
-    else if(e.code==='ArrowRight'||e.code==='KeyD'){e.preventDefault();selectedTank=(selectedTank+1)%3;}
+    if(e.code==='Digit1'||e.code==='Numpad1'){e.preventDefault();if(selectedTank!==0){selectedTank=0;vibrate(5);}}
+    else if(e.code==='Digit2'||e.code==='Numpad2'){e.preventDefault();if(selectedTank!==1){selectedTank=1;vibrate(5);}}
+    else if(e.code==='Digit3'||e.code==='Numpad3'){e.preventDefault();if(selectedTank!==2){selectedTank=2;vibrate(5);}}
+    else if(e.code==='ArrowLeft'||e.code==='KeyA'){e.preventDefault();selectedTank=(selectedTank+2)%3;vibrate(5);}
+    else if(e.code==='ArrowRight'||e.code==='KeyD'){e.preventDefault();selectedTank=(selectedTank+1)%3;vibrate(5);}
   }
   if((e.code==='Space'||e.code==='Enter')&&(state==='start'||state==='gameover')){e.preventDefault();startGame();}
   if(e.code==='KeyP'){
@@ -1419,6 +1466,7 @@ function handleInput(){
       }
     }
     soundShoot();
+    vibrate(10);  // 玩家发射子弹
   }
 }
 
@@ -1464,6 +1512,7 @@ function update(){
       setTile(c,r,E);
       // 砖墙被击毁：小火星 + 5% 掉补给 — wallDrop
       explosions.push(new Explosion(c*T+T/2,r*T+T/2,false));
+      if(!b.isEnemy)vibrate(8);  // 玩家击中砖墙
       if(!b.isEnemy && Math.random()<0.05){
         // 70% SHIELD_C（消耗品）/ 30% SPREAD/PIERCE（时限）
         const key=Math.random()<0.7?'SHIELD_C':(Math.random()<0.5?'SPREAD':'PIERCE');
@@ -1480,8 +1529,10 @@ function update(){
         b.pierceLeft--;
         setTile(c,r,E);
         explosions.push(new Explosion(c*T+T/2,r*T+T/2,true));
+        if(!b.isEnemy)vibrate(25);  // 玩家穿甲击中钢墙
         return b.pierceLeft>0;
       }
+      if(!b.isEnemy)vibrate(25);  // 玩家击中钢墙（被弹开）
       return false;
     }
     return true;
@@ -1528,6 +1579,7 @@ function update(){
               setTimeout(()=>{if(state==='playing')spawnEnemy([1,2,3][Math.floor(Math.random()*3)],true);},2000);
             }
           }
+          if(e.isBoss)vibrate([150,80,150,80,200]);  // Boss 死亡
           enemies.splice(i,1);return false;
         }
         if(b.pierceLeft>0){b.pierceLeft--;}else return false;
@@ -1543,17 +1595,23 @@ function update(){
         explosions.push(new Explosion(player.x+player.w/2,player.y+player.h/2,false));
         if(player.hp<=0){
           soundDie();lives--;
+          vibrate([100,50,100]);  // 玩家死亡
           if(lives<=0){state='gameover';}
           else{respawnShield=120;player.hp=player.maxHp;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
         }else{
           respawnShield=30;  // 0.5s 短无敌
+          vibrate(50);  // 玩家被击中
           // 闪红
           player.enhancedFlash=10;
         }
         return false;
       }
       const[er,ec]=getEagleTile(),ex=ec*T,ey=er*T;
-      if(rectOverlap(b.x,b.y,b.w,b.h,ex,ey,T,T)){state='gameover';soundDie();return false;}
+      if(rectOverlap(b.x,b.y,b.w,b.h,ex,ey,T,T)){
+        state='gameover';soundDie();
+        vibrate(300);  // 基地被毁
+        return false;
+      }
       return true;
     });
   }
@@ -1576,10 +1634,12 @@ function update(){
         explosions.push(new Explosion(player.x+player.w/2,player.y+player.h/2,false));
         if(player.hp<=0){
           soundDie();lives--;
+          vibrate([100,50,100]);  // 玩家死亡
           if(lives<=0)state='gameover';
           else{respawnShield=120;player.hp=player.maxHp;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
         }else{
           respawnShield=30;player.enhancedFlash=10;
+          vibrate(50);  // 玩家被撞
         }
       }
     });
@@ -1587,6 +1647,7 @@ function update(){
   if(enemiesSpawned&&enemies.length===0&&state==='playing'){
     if(stage>=4&&!hasBoss){state='victory';score+=1000+500*(stage+1);soundWin();return;}
     state='stageclear';score+=1000+500*(stage+1);
+    vibrate([40,30,40]);  // 关卡切换
     setTimeout(()=>{stage++;initStage(stage);state='playing';updateInvBar();},2000);
   }
   updateStartBtn();
@@ -1870,6 +1931,7 @@ function startGame(){
   try{if(ac)ac.resume();}catch(e){}
   if(sBtn)sBtn.style.display='none';
   updateInvBar();
+  vibrate([30,30,30]);  // 启动游戏
 }
 
 // ─── 道具栏 UI 联动 ─────────────────────────────────────
@@ -1924,7 +1986,7 @@ canvas.addEventListener('click',e=>{
     const cardY=120;
     TANK_TYPES.forEach((tk,i)=>{
       const cx=cardStartX+i*(cardW+cardGap);
-      if(mx>=cx&&mx<=cx+cardW&&my>=cardY&&my<=cardY+cardH){selectedTank=i;}
+      if(mx>=cx&&mx<=cx+cardW&&my>=cardY&&my<=cardY+cardH){if(selectedTank!==i){selectedTank=i;vibrate(5);}}
     });
     // Sound toggle
     const sbw=60,sbh=26,sbx=W/2-sbw/2,sby=315;
