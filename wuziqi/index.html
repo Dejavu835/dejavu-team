@@ -266,7 +266,7 @@ const AI = (()=>{
     switch(me){case 5:return SC.FIVE;case 4:return em===1?SC.OPEN_FOUR:SC.FOUR;case 3:return em===2?SC.OPEN_THREE:em===1?SC.THREE:0;case 2:return em===3?SC.OPEN_TWO:em===2?SC.TWO:0;case 1:return em===4?SC.ONE:0;default:return 0}
   }
   function evalB(brd,sz,my){
-    let mx=0,en=0
+    let mx=0,en=0,myOpenThree=0,enOpenThree=0,myFour=0,enFour=0
     for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
       let v=brd[r][c];if(v===E)continue
       for(let[dR,dC]of DIRS){
@@ -277,10 +277,24 @@ const AI = (()=>{
           let w=[],ok=true
           for(let i=0;i<5;i++){let wr=nr+dR*i,wc=nc+dC*i;if(wr<0||wr>=sz||wc<0||wc>=sz){ok=false;break};w.push(brd[wr][wc])}
           if(!ok)continue
-          let s=sw(w,v,v===B?W:B);if(v===my)mx+=s;else en+=s
+          let s=sw(w,v,v===B?W:B)
+          if(v===my){
+            mx+=s
+            if(s>=SC.OPEN_FOUR)myFour++
+            else if(s>=SC.OPEN_THREE)myOpenThree++
+          }else{
+            en+=s
+            if(s>=SC.OPEN_FOUR)enFour++
+            else if(s>=SC.OPEN_THREE)enOpenThree++
+          }
         }
       }
     }
+    // 双重威胁大幅加权：双活三 / 双冲四 / 活四+活三 / 活四+冲四 都几乎是必胜
+    if(myOpenThree+myFour>=2)mx+=SC.OPEN_FOUR*0.8
+    if(enOpenThree+enFour>=2)en+=SC.OPEN_FOUR*0.8
+    if(myFour>=1&&myOpenThree>=1)mx+=SC.FOUR*0.5
+    if(enFour>=1&&enOpenThree>=1)en+=SC.FOUR*0.5
     return mx-en
   }
   function hMove(brd,sz,r,c,col){
@@ -298,8 +312,53 @@ const AI = (()=>{
     return Math.max(0,15-d*0.6)
   }
   function cloneB(brd,sz){let nb=new Array(sz);for(let r=0;r<sz;r++)nb[r]=brd[r].slice();return nb}
+  // 检测某手是否“战术手”（会产生冲四以上、或能拦对手冲四以上）
+  function isTactical(brd,sz,r,c,col){
+    if(brd[r][c]!==E)return false
+    const opp=col===B?W:B
+    // 1. 走我方后是否形成四/五
+    brd[r][c]=col
+    for(let[dR,dC]of DIRS){
+      let line=[{r,c}],nr=r+dR,nc=c+dC
+      while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===col){line.push({r:nr,c:nc});nr+=dR;nc+=dC}
+      nr=r-dR;nc=c-dC
+      while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===col){line.unshift({r:nr,c:nc});nr-=dR;nc-=dC}
+      let openEnds=0
+      if(r-dR>=0&&r-dR<sz&&c-dC>=0&&c-dC<sz&&brd[r-dR][c-dC]===E)openEnds++
+      if(r+dR>=0&&r+dR<sz&&c+dC>=0&&c+dC<sz&&brd[r+dR][c+dC]===E)openEnds++
+      if(line.length>=4)return true
+      if(line.length===3&&openEnds>=1)return true
+    }
+    brd[r][c]=E
+    // 2. 走该点后是否拦住对手的冲四/活四
+    brd[r][c]=opp
+    for(let[dR,dC]of DIRS){
+      let line=[{r,c}],nr=r+dR,nc=c+dC
+      while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){line.push({r:nr,c:nc});nr+=dR;nc+=dC}
+      nr=r-dR;nc=c-dC
+      while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){line.unshift({r:nr,c:nc});nr-=dR;nc-=dC}
+      if(line.length>=4){brd[r][c]=E;return true}
+    }
+    brd[r][c]=E
+    return false
+  }
+  // 静态搜索：只在“战术手”中延伸搜索
+  function qsearch(brd,sz,al,bt,mx,my,qdp){
+    if(qdp<=0)return evalB(brd,sz,my)
+    let cur=mx?my:(my===B?W:B)
+    let tcs=[]
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
+      if(isTactical(brd,sz,r,c,cur))tcs.push({r,c})
+    }
+    if(!tcs.length)return evalB(brd,sz,my)
+    tcs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,cur))
+    tcs.sort((a,b)=>b.h-a.h)
+    let lm=Math.min(tcs.length,10)
+    if(mx){let b=-Infinity;for(let i=0;i<lm;i++){let c=tcs[i];brd[c.r][c.c]=cur;let v=qsearch(brd,sz,al,bt,false,my,qdp-1);brd[c.r][c.c]=E;b=Math.max(b,v);al=Math.max(al,v);if(bt<=al)break}return b}
+    else{let b=Infinity;for(let i=0;i<lm;i++){let c=tcs[i];brd[c.r][c.c]=cur;let v=qsearch(brd,sz,al,bt,true,my,qdp-1);brd[c.r][c.c]=E;b=Math.min(b,v);bt=Math.min(bt,v);if(bt<=al)break}return b}
+  }
   function search(brd,sz,dp,al,bt,mx,my){
-    let sc=evalB(brd,sz,my);if(Math.abs(sc)>=SC.FIVE||dp===0)return sc
+    let sc=evalB(brd,sz,my);if(Math.abs(sc)>=SC.FIVE||dp===0)return qsearch(brd,sz,al,bt,mx,my,3)
     let cs=cands(brd,sz,1);if(!cs.length)return sc
     let cur=mx?my:(my===B?W:B)
     cs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,cur))
@@ -309,7 +368,7 @@ const AI = (()=>{
     else{let b=Infinity;for(let i=0;i<lm;i++){let c=cs[i];brd[c.r][c.c]=cur;let v=search(brd,sz,dp-1,al,bt,true,my);brd[c.r][c.c]=E;b=Math.min(b,v);bt=Math.min(bt,v);if(bt<=al)break}return b}
   }
   function bestMove(brd,sz,my,diff='mid'){
-    let dp=diff==='easy'?2:diff==='mid'?3:5,cs=cands(brd,sz,1)
+    let dp=diff==='easy'?2:diff==='mid'?3:6,cs=cands(brd,sz,1)
     if(!cs.length)return{r:Math.floor(sz/2),c:Math.floor(sz/2)}
     cs.forEach(c=>{c.h=hMove(brd,sz,c.r,c.c,my)+centerBias(sz,c.r,c.c)*0.5})
     cs.sort((a,b)=>b.h-a.h)
