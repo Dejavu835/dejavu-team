@@ -69,24 +69,42 @@ document.addEventListener('DOMContentLoaded', () => {
     if (musicModalBackdrop) musicModalBackdrop.addEventListener('click', closeMusicModal);
   }
 
-  // --- Coming Soon card highlight when carousel scrolled to end ---
-  const carousel = document.querySelector('.product-carousel');
-  const comingSoonCard = document.getElementById('product-coming-soon');
+  // --- Games menu modal (product-games) ---
+  const gamesTrigger = document.getElementById('product-games');
+  const gamesModal = document.getElementById('games-menu-modal');
 
-  if (carousel && comingSoonCard) {
-    const highlightComingSoon = () => {
-      const scrollLeft = carousel.scrollLeft;
-      const maxScroll = carousel.scrollWidth - carousel.clientWidth - 1;
-      if (scrollLeft >= maxScroll) {
-        comingSoonCard.classList.add('highlighted');
-      } else {
-        comingSoonCard.classList.remove('highlighted');
-      }
+  if (gamesTrigger && gamesModal) {
+    const openGames = (e) => {
+      if (e) e.preventDefault();
+      gamesModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
     };
+    const closeGames = () => {
+      gamesModal.classList.remove('active');
+      document.body.style.overflow = '';
+    };
+    gamesTrigger.addEventListener('click', openGames);
+    const gamesCloseBtn = gamesModal.querySelector('.detail-close-games');
+    const gamesBackdrop = gamesModal.querySelector('.detail-backdrop');
+    if (gamesCloseBtn) gamesCloseBtn.addEventListener('click', closeGames);
+    if (gamesBackdrop) gamesBackdrop.addEventListener('click', closeGames);
 
-    carousel.addEventListener('scroll', highlightComingSoon, { passive: true });
-    // Initial check
-    highlightComingSoon();
+    // Menu items: jump to game URL (stage B: hardcoded; stage D: from games.json)
+    const gameUrlMap = {
+      tank: 'games/tank/index.html',
+      wuziqi: 'games/wuziqi/index.html',
+      'wuziqi-skill': null  // 暂未上线
+    };
+    gamesModal.querySelectorAll('.games-menu-item[data-game]').forEach(item => {
+      item.addEventListener('click', () => {
+        const game = item.dataset.game;
+        const url = gameUrlMap[game];
+        if (url) {
+          window.open(url, '_blank', 'noopener');
+          closeGames();
+        }
+      });
+    });
   }
 
 

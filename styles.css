@@ -1542,3 +1542,177 @@ body {
 /* === New Product CTAs === */
 .product-cta-tank    { color: #2ba85a; }
 .product-cta-wuziqi  { color: #5a8eff; }
+
+/* === Games Card Mockup === */
+.product-card-games {
+  cursor: pointer;
+}
+
+.games-mockup {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 16px;
+  background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%);
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.game-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  font-size: 32px;
+  aspect-ratio: 1;
+  transition: background 0.2s;
+}
+
+.game-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.game-thumb-more {
+  font-size: 28px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.product-tag-dot-games {
+  background: linear-gradient(90deg, #3ddc84, #5a8eff);
+}
+
+.product-cta-games {
+  color: #5a8eff;
+}
+
+/* === Games Menu Modal === */
+.detail-card-games {
+  max-width: 380px;
+}
+
+.detail-card-games .detail-close {
+  font-size: 1.4rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f7;
+  border-radius: 50%;
+  top: 16px;
+  right: 16px;
+}
+
+.detail-card-header {
+  padding: 24px 24px 12px;
+  border-bottom: 1px solid #f0f0f2;
+}
+
+.detail-card-header h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.games-menu-list {
+  list-style: none;
+  padding: 12px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.games-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+}
+
+.games-menu-item:hover {
+  background: rgba(90, 142, 255, 0.08);
+  border-left-color: #5a8eff;
+}
+
+.games-menu-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.games-menu-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.games-menu-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.games-menu-tag {
+  font-size: 11px;
+  color: #86868b;
+}
+
+.games-menu-badge {
+  font-size: 10px;
+  background: #3ddc84;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.games-menu-badge-soon {
+  background: rgba(0, 0, 0, 0.06);
+  color: #86868b;
+}
+
+.games-menu-item-more {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.games-menu-item-more:hover {
+  background: transparent;
+  border-left-color: transparent;
+}
+
+/* Mobile: bottom drawer */
+@media (max-width: 640px) {
+  #games-menu-modal {
+    align-items: flex-end;
+  }
+  .detail-card-games {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 80vh;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+}

@@ -462,16 +462,28 @@
         <span class="product-cta product-cta-wuziqi">开始游戏 →</span>
       </a>
 
-      <!-- 更多产品即将上线 -->
-      <div class="product-card product-coming-soon" id="product-coming-soon">
-        <div class="coming-soon-icon">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="20" cy="20" r="18" stroke="#d2d2d7" stroke-width="1.5"/>
-            <path d="M20 12v10M20 26v2" stroke="#d2d2d7" stroke-width="2" stroke-linecap="round"/>
-          </svg>
+      <!-- 小游戏（二级菜单入口） -->
+      <div class="product-card product-card-games" id="product-games" data-toggle="games-menu">
+        <div class="product-mockup">
+          <div class="games-mockup">
+            <div class="game-thumb" data-game="tank">🎯</div>
+            <div class="game-thumb" data-game="wuziqi">⚫</div>
+            <div class="game-thumb" data-game="wuziqi-skill">✨</div>
+            <div class="game-thumb game-thumb-more">+</div>
+          </div>
         </div>
-        <div class="coming-soon-label">更多产品即将上线</div>
-        <p class="coming-soon-desc">持续探索 AI 创作的边界<br>音乐 · 视觉 · 产品 并行进化中</p>
+        <div class="product-tag">
+          <span class="product-tag-dot product-tag-dot-games"></span>
+          小游戏 · 多款
+        </div>
+        <h2 class="product-name">小游戏</h2>
+        <p class="product-desc">坦克大战、五子棋、技能五子棋…更多游戏开发中。</p>
+        <div class="product-features">
+          <span>坦克</span>
+          <span>五子棋</span>
+          <span>更多</span>
+        </div>
+        <span class="product-cta product-cta-games">展开菜单 →</span>
       </div>
     </div>
   </section>
@@ -566,6 +578,50 @@
           </div>
         </a>
       </div>
+    </div>
+  </section>
+
+  <!-- Games Menu Modal -->
+  <section class="detail-view" id="games-menu-modal">
+    <div class="detail-backdrop"></div>
+    <div class="detail-card detail-card-games">
+      <button class="detail-close detail-close-games" type="button" aria-label="关闭">×</button>
+      <div class="detail-card-header">
+        <h3>🎮 小游戏</h3>
+      </div>
+      <ul class="games-menu-list">
+        <li class="games-menu-item" data-game="tank">
+          <span class="games-menu-icon">🎯</span>
+          <div class="games-menu-info">
+            <span class="games-menu-name">坦克大战</span>
+            <span class="games-menu-tag">射击 · v3</span>
+          </div>
+          <span class="games-menu-badge">新</span>
+        </li>
+        <li class="games-menu-item" data-game="wuziqi">
+          <span class="games-menu-icon">⚫</span>
+          <div class="games-menu-info">
+            <span class="games-menu-name">五子棋</span>
+            <span class="games-menu-tag">策略 · AI</span>
+          </div>
+          <span class="games-menu-badge">新</span>
+        </li>
+        <li class="games-menu-item" data-game="wuziqi-skill">
+          <span class="games-menu-icon">✨</span>
+          <div class="games-menu-info">
+            <span class="games-menu-name">技能五子棋</span>
+            <span class="games-menu-tag">策略 · 即将上线</span>
+          </div>
+          <span class="games-menu-badge games-menu-badge-soon">敬请期待</span>
+        </li>
+        <li class="games-menu-item games-menu-item-more">
+          <span class="games-menu-icon">➕</span>
+          <div class="games-menu-info">
+            <span class="games-menu-name">更多游戏</span>
+            <span class="games-menu-tag">开发中…</span>
+          </div>
+        </li>
+      </ul>
     </div>
   </section>
 
