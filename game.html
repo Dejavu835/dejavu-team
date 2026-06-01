@@ -866,11 +866,17 @@ function initStage(s){
       if(r>=0&&r<ROWS&&c>=0&&c<COLS&&(map[r][c]===B||map[r][c]===E))map[r][c]=S;
     }
   }
+  // 玩家坦克：首次创建，后续关卡只重置位置和战斗状态（保留 tankType）
   if(!player){player=new Tank(W/2-18,H-T*2+4,0,0);}
-  else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
-  diff=DIFF[diffKey];
-  if(!player){player=new Tank(W/2-18,H-T*2+4,0,0);}
-  else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
+  else{
+    player.x=W/2-18;player.y=H-T*2+4;player.dir=0;
+    playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;
+    player.x=Math.max(0,Math.min(W-player.w,player.x));
+    player.y=Math.max(0,Math.min(H-player.h,player.y));
+    // 重置战斗瞬时状态，避免跨关/跨局残留
+    player.hp=player.maxHp;player.fireCooldown=0;player.enhancedFlash=0;
+    if(player.healTimer!==undefined)player.healTimer=0;
+  }
   diff=DIFF[diffKey];
   const wps=WAVES_PER_STAGE[Math.min(s,4)]||2;
   wave=1;enemiesSpawned=false;pendingSpawns=0;
@@ -1616,7 +1622,7 @@ function updateStartBtn(){
 }
 function startGame(){
   if(state!=='start'&&state!=='gameover')return;
-  diffKey=diffKey;diff=DIFF[diffKey];
+  diff=DIFF[diffKey];
   // 每次新一局：刷新 runSeed → 同 stage 也会有新地形
   runSeed=(runSeed*1664525+1013904223+Date.now())>>>0;
   stage=0;score=0;lives=3;totalKills=0;
@@ -1624,6 +1630,11 @@ function startGame(){
   // 重置道具栏 + 限时 buff
   INV.slots=[null,null,null,null,null];INV.selected=0;
   activeBuffs=[];pickFlash=null;invFullFlash=0;bombFlash=0;respawnShield=0;
+  // 关键：清空输入状态，避免上一局的按键/摇杆/开火按钮残留
+  if(typeof _resetInput==='function')_resetInput();
+  if(fBtn)fBtn.classList.remove('pressed');
+  // 清空可能仍在飞的子弹（initStage 也会清，这里兜底）
+  if(!Array.isArray(bullets))bullets=[];
   initStage(stage);state='playing';
   try{if(ac)ac.resume();}catch(e){}
   if(sBtn)sBtn.style.display='none';
@@ -1631,17 +1642,30 @@ function startGame(){
 }
 
 // ─── 道具栏 UI 联动 ─────────────────────────────────────
+// 性能优化：缓存上一次写入的 innerHTML 和选中状态，相同则跳过 DOM 写入
+// 之前每帧 60 次×5 格 innerHTML 重写，是连开 3-5 局后卡顿的最大根因
+const _invCache={hash:'',display:''};
+function _slotHash(item,sel){
+  // 用 type+count+selected 计算一个指纹；没变就不重写 DOM
+  return (item?item.type+'|'+item.count:'null')+(sel?'|S':'|.');
+}
 function updateInvBar(){
   const el=document.getElementById('inv-bar');if(!el)return;
   // gameover/victory 状态不显示
-  if(state==='gameover'||state==='victory'||state==='start'){
-    el.style.display='none';return;
-  }
-  el.style.display='flex';
+  const wantHide=(state==='gameover'||state==='victory'||state==='start');
+  const wantDisplay=wantHide?'none':'flex';
+  if(_invCache.display!==wantDisplay){el.style.display=wantDisplay;_invCache.display=wantDisplay;}
+  if(wantHide)return;
+  // 计算整体 hash
   const slots=el.querySelectorAll('.inv-slot');
+  let hash='';
+  for(let i=0;i<INV.slots.length;i++)hash+=_slotHash(INV.slots[i],i===INV.selected)+';';
+  if(hash===_invCache.hash)return;  // 状态未变 → 完全跳过 DOM 操作
+  _invCache.hash=hash;
   slots.forEach((s,i)=>{
     const item=INV.slots[i];
-    s.classList.toggle('selected',i===INV.selected);
+    const sel=(i===INV.selected);
+    s.classList.toggle('selected',sel);
     s.classList.toggle('empty',!item);
     if(item){
       const def=POWERUP_DEF[item.type];
