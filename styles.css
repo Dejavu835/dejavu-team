@@ -771,324 +771,24 @@ body {
   50%       { opacity: 0; }
 }
 
-/* === Patrol Game Arena Window === */
-.patrol-window {
-  background: #0d0d0d;
-}
-
-.patrol-arena {
-  flex: 1;
-  position: relative;
-  background: #111116;
-  overflow: hidden;
-}
-
-.obstacle {
-  position: absolute;
-  background: #2a2a30;
-  border-radius: 2px;
-}
-
-.obs-1 { width: 18px; height: 14px; top: 20px; left: 20px; }
-.obs-2 { width: 14px; height: 18px; top: 60px; left: 80px; }
-.obs-3 { width: 20px; height: 12px; top: 30px; right: 30px; }
-.obs-4 { width: 12px; height: 20px; bottom: 30px; left: 55px; }
-
-
-.player-base {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 22px;
-  height: 10px;
-  background: #0071e3;
-  border-radius: 2px;
-  box-shadow: 0 0 6px rgba(0,113,227,0.6);
-}
-
-.enemy-unit {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  opacity: 0.85;
-}
-
-.enemy-fast {
-  background: #ff453a;
-  box-shadow: 0 0 6px rgba(255,69,58,0.7);
-  top: 15px;
-  animation: patrolFast 3s ease-in-out infinite;
-}
-
-.enemy-med {
-  background: #ffd60a;
-  box-shadow: 0 0 6px rgba(255,214,10,0.7);
-  top: 55px;
-  animation: patrolMed 5s ease-in-out infinite;
-}
-
-.enemy-slow {
-  background: #30d158;
-  box-shadow: 0 0 6px rgba(48,209,88,0.7);
-  bottom: 22px;
-  animation: patrolSlow 7s ease-in-out infinite;
-}
-
-@keyframes patrolFast {
-  0%   { left: 10px; top: 15px; }
-  25%  { left: 90px; top: 15px; }
-  50%  { left: 90px; top: 80px; }
-  75%  { left: 10px; top: 80px; }
-  100% { left: 10px; top: 15px; }
-}
-
-@keyframes patrolMed {
-  0%   { left: 10px; top: 55px; }
-  33%  { left: 130px; top: 55px; }
-  66%  { left: 130px; top: 15px; }
-  100% { left: 10px; top: 55px; }
-}
-
-@keyframes patrolSlow {
-  0%   { left: 50px; bottom: 22px; }
-  40%  { left: 140px; bottom: 22px; }
-  70%  { left: 140px; bottom: 60px; }
-  100% { left: 50px; bottom: 22px; }
-}
-
-#patrol-game-card .product-mockup {
-  max-width: 200px;
-  height: 140px;
-}
-
-#patrol-game-card .patrol-window {
-  width: 200px;
-  height: 140px;
-  max-width: 100%;
-}
-
-#patrol-game-card .window-title {
-  font-size: 8px;
-}
-
-/* === Gomoku Arena Window === */
-.gomoku-window {
-  background: #f5e6c5;
-}
-
-.gomoku-arena {
-  flex: 1;
-  position: relative;
-  background:
-    radial-gradient(circle at 30% 30%, #e8d4a4 0%, #d4b67e 100%);
-  overflow: hidden;
-}
-
-.g-grid {
-  position: absolute;
-  inset: 12% 8%;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0 1px, transparent 1px calc(100% / 14)),
-    repeating-linear-gradient(90deg, rgba(0,0,0,0.18) 0 1px, transparent 1px calc(100% / 14));
-}
-
-.g-piece {
-  position: absolute;
-  width: 9%;
-  height: 0;
-  padding-bottom: 9%;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-}
-
-.g-piece-b {
-  background: radial-gradient(circle at 30% 30%, #4a4a4a 0%, #0a0a0a 75%);
-}
-
-.g-piece-w {
-  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #d8d8d8 80%);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.15), inset 0 0 0 0.5px rgba(0,0,0,0.08);
-}
-
-.g-win-line {
-  position: absolute;
-  top: 38%;
-  left: 38%;
-  width: 30%;
-  height: 0;
-  border-top: 2px solid rgba(255, 59, 48, 0.85);
-  transform: rotate(35deg);
-  transform-origin: left center;
-  filter: drop-shadow(0 0 4px rgba(255, 59, 48, 0.7));
-  animation: gomokuWin 2s ease-in-out infinite;
-}
-
-@keyframes gomokuWin {
-  0%, 100% { opacity: 0.8; }
-  50%      { opacity: 1; }
-}
-
-#gomoku-card .product-mockup {
-  max-width: 200px;
-  height: 140px;
-}
-
-#gomoku-card .gomoku-window {
-  width: 200px;
-  height: 140px;
-  max-width: 100%;
-}
-
-#gomoku-card .window-title {
-  font-size: 8px;
-}
-
 /* === Music Icon Frame === */
 .music-icon-frame {
   width: 140px;
   height: 140px;
   border-radius: 22px;
-  background: linear-gradient(145deg, #C20C0C 0%, #9B0000 55%, #6B0000 100%);
+  background: linear-gradient(135deg, #C20C0C 0%, #8B0000 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow:
     0 8px 32px rgba(194, 12, 12, 0.25),
-    inset 0 1px 0 rgba(255,255,255,0.12),
-    inset 0 -1px 0 rgba(0,0,0,0.18);
+    inset 0 1px 0 rgba(255,255,255,0.12);
   position: relative;
   overflow: hidden;
-  transition: box-shadow 0.5s ease;
 }
 
-/* Glow ring — subtle breathing border inside the frame */
-.music-glow-ring {
-  position: absolute;
-  inset: 5px;
-  border-radius: 17px;
-  border: 1.5px solid rgba(255,255,255,0.1);
-  pointer-events: none;
-  z-index: 1;
-  animation: glowRingPulse 3.2s ease-in-out infinite;
-}
-
-@keyframes glowRingPulse {
-  0%, 100% {
-    border-color: rgba(255,255,255,0.07);
-    box-shadow: inset 0 0 16px rgba(255,255,255,0);
-  }
-  50% {
-    border-color: rgba(255,255,255,0.22);
-    box-shadow: inset 0 0 22px rgba(255,255,255,0.07);
-  }
-}
-
-/* EQ spectrum bars */
-.music-eq-bars {
-  position: absolute;
-  bottom: 16px;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 5px;
-  padding: 0 26px;
-  height: 44px;
-  z-index: 0;
-}
-
-.eq-bar {
-  flex: 1;
-  max-width: 4px;
-  min-width: 2px;
-  height: 100%;
-  border-radius: 4px 4px 0 0;
-  background: linear-gradient(to top, rgba(255,255,255,0.9), rgba(255,255,255,0.3));
-  box-shadow: 0 0 10px rgba(255,255,255,0.2);
-  transform-origin: bottom;
-  animation: eqBounce 1.5s ease-in-out infinite;
-}
-
-.eq-bar:nth-child(1) { animation-delay: 0.00s; }
-.eq-bar:nth-child(2) { animation-delay: 0.12s; }
-.eq-bar:nth-child(3) { animation-delay: 0.24s; }
-.eq-bar:nth-child(4) { animation-delay: 0.36s; }
-.eq-bar:nth-child(5) { animation-delay: 0.48s; }
-.eq-bar:nth-child(6) { animation-delay: 0.60s; }
-.eq-bar:nth-child(7) { animation-delay: 0.72s; }
-
-@keyframes eqBounce {
-  0%, 100% { transform: scaleY(0.12); opacity: 0.35; }
-  30%       { transform: scaleY(1);   opacity: 1; }
-  65%       { transform: scaleY(0.45); opacity: 0.6; }
-}
-
-/* Center note icon */
-.music-note-icon {
-  position: relative;
-  z-index: 2;
-  width: 52px;
-  height: 52px;
-  filter: drop-shadow(0 3px 10px rgba(0,0,0,0.2));
-  animation: noteFloat 3.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-  margin-top: -6px;
-}
-
-@keyframes noteFloat {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  30%       { transform: translateY(-5px) rotate(1.5deg); }
-  70%       { transform: translateY(3px) rotate(-1deg); }
-}
-
-/* Floating particles */
-.music-particle {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.75);
-  pointer-events: none;
-  z-index: 1;
-  animation: particleRise 3.2s ease-in infinite;
-}
-
-.music-particle.p1 { bottom: 22%; left: 16%; animation-delay: 0.0s; }
-.music-particle.p2 { bottom: 16%; right: 18%; animation-delay: 1.1s; }
-.music-particle.p3 { bottom: 28%; left: 52%; animation-delay: 2.2s; }
-
-@keyframes particleRise {
-  0%   { transform: translateY(0) scale(1); opacity: 0; }
-  10%  { opacity: 0.9; }
-  45%  { opacity: 0.35; }
-  100% { transform: translateY(-38px) scale(0.2); opacity: 0; }
-}
-
-/* Hover intensifies all animations */
-.product-card:hover .music-glow-ring {
-  animation-duration: 1.8s;
-}
-
-.product-card:hover .eq-bar {
-  animation-duration: 0.9s;
-}
-
-.product-card:hover .music-note-icon {
-  animation-duration: 2s;
-}
-
-.product-card:hover .music-particle {
-  animation-duration: 2s;
-}
-
-.product-card:hover .music-icon-frame {
-  box-shadow:
-    0 14px 44px rgba(194, 12, 12, 0.38),
-    inset 0 1px 0 rgba(255,255,255,0.16),
-    inset 0 -1px 0 rgba(0,0,0,0.2);
+.music-icon {
+  font-size: 3rem;
 }
 
 /* === Product Tag === */
@@ -1499,27 +1199,8 @@ body {
     border-radius: 18px;
   }
 
-  .music-glow-ring {
-    border-radius: 13px;
-    inset: 4px;
-  }
-
-  .music-note-icon {
-    width: 40px;
-    height: 40px;
-    margin-top: -4px;
-  }
-
-  .music-eq-bars {
-    bottom: 13px;
-    padding: 0 20px;
-    height: 36px;
-    gap: 4px;
-  }
-
-  .music-particle {
-    width: 3px;
-    height: 3px;
+  .music-icon {
+    font-size: 2.5rem;
   }
 
   .discog-card {
@@ -1732,4 +1413,132 @@ body {
   }
 }
 
-/* === (Sound wave bars replaced by EQ spectrum — see Music Icon Frame section) === */
+/* === Sound wave bars (music card) === */
+@keyframes waveRise {
+  0%, 100% { height: 6px;  opacity: 0.4; }
+  50%       { height: 28px; opacity: 1;   }
+}
+
+.wave-bar {
+  position: absolute;
+  bottom: 0;
+  width: 4px;
+  background: rgba(255,255,255,0.65);
+  border-radius: 4px 4px 0 0;
+  animation: waveRise 1.3s ease-in-out infinite;
+}
+
+.wave-bar:nth-child(1) { left: 28%; animation-delay: 0.00s; }
+.wave-bar:nth-child(2) { left: 38%; animation-delay: 0.18s; }
+.wave-bar:nth-child(3) { left: 48%; animation-delay: 0.36s; }
+.wave-bar:nth-child(4) { left: 58%; animation-delay: 0.54s; }
+.wave-bar:nth-child(5) { left: 68%; animation-delay: 0.72s; }
+
+/* === Tank Card Mockup === */
+.product-card-tank .tank-mockup {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.tank-mockup .tank-ground {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 26%;
+  background: #0a0a0a;
+  border-top: 1px solid #2c2c2c;
+}
+.tank-mockup .tank-bricks span {
+  position: absolute;
+  width: 6px; height: 6px;
+  background: #8B4513;
+  border: 1px solid #654321;
+  box-sizing: border-box;
+}
+.tank-mockup .tank-base {
+  position: absolute;
+  left: 46%; bottom: 12%;
+  width: 8%; height: 8%;
+  background: #3ddc84;
+  border: 1px solid #2ba85a;
+  box-shadow: 0 0 6px rgba(61,220,132,0.5);
+}
+/* player tank — small rotating tank */
+@keyframes tankPlayerDrive {
+  0%   { left: 18%; top: 52%; transform: rotate(0deg); }
+  20%  { left: 56%; top: 52%; transform: rotate(0deg); }
+  25%  { left: 56%; top: 52%; transform: rotate(90deg); }
+  45%  { left: 56%; top: 70%; transform: rotate(90deg); }
+  50%  { left: 56%; top: 70%; transform: rotate(180deg); }
+  70%  { left: 18%; top: 70%; transform: rotate(180deg); }
+  75%  { left: 18%; top: 70%; transform: rotate(270deg); }
+  95%  { left: 18%; top: 52%; transform: rotate(270deg); }
+  100% { left: 18%; top: 52%; transform: rotate(360deg); }
+}
+.tank-mockup .tank-player,
+.tank-mockup .tank-enemy {
+  position: absolute;
+  width: 14px; height: 14px;
+  background: #3ddc84;
+  border: 1.5px solid #2ba85a;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  animation: tankPlayerDrive 6s linear infinite;
+}
+.tank-mockup .tank-player::before,
+.tank-mockup .tank-enemy::before {
+  content: '';
+  position: absolute;
+  width: 2px; height: 8px;
+  background: #3ddc84;
+  top: 3px; left: 9px;
+}
+.tank-mockup .tank-enemy {
+  background: #ff5252;
+  border-color: #c62828;
+  animation-delay: -3s;
+}
+.tank-mockup .tank-enemy::before { background: #ff5252; }
+.tank-mockup .tank-enemy.enemy-1 { transform: scale(0.85); }
+.tank-mockup .tank-enemy.enemy-2 { transform: scale(0.7); }
+@keyframes tankBullet1 {
+  0%   { left: 20%; top: 56%; opacity: 1; }
+  90%  { left: 70%; top: 56%; opacity: 1; }
+  100% { left: 70%; top: 56%; opacity: 0; }
+}
+@keyframes tankBullet2 {
+  0%   { left: 70%; top: 50%; opacity: 1; }
+  10%  { left: 70%; top: 30%; opacity: 1; }
+  100% { left: 70%; top: 10%; opacity: 0; }
+}
+.tank-mockup .tank-bullet {
+  position: absolute;
+  width: 3px; height: 3px;
+  background: #ffd700;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(255,215,0,0.8);
+}
+.tank-mockup .tank-bullet.bullet-1 { animation: tankBullet1 1.6s linear infinite; }
+.tank-mockup .tank-bullet.bullet-2 { animation: tankBullet2 1.6s linear infinite; animation-delay: -0.8s; }
+
+/* === Wuziqi Card Mockup === */
+.product-card-wuziqi .wuziqi-mockup {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #deb887 0%, #d2a679 100%);
+  border-radius: 8px;
+  display: block;
+}
+.wuziqi-mockup .grid line { stroke: #5c3a1e; stroke-width: 0.5; }
+.wuziqi-mockup .stone-black { fill: #0a0a0a; stroke: #fff; stroke-width: 0.5; }
+.wuziqi-mockup .stone-white { fill: #fafafa; stroke: #333; stroke-width: 0.5; }
+
+/* === New Product Tag Dots === */
+.product-tag-dot-tank    { background: #3ddc84; }
+.product-tag-dot-wuziqi  { background: #5a8eff; }
+
+/* === New Product CTAs === */
+.product-cta-tank    { color: #2ba85a; }
+.product-cta-wuziqi  { color: #5a8eff; }
