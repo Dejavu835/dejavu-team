@@ -873,6 +873,79 @@ body {
   font-size: 8px;
 }
 
+/* === Gomoku Arena Window === */
+.gomoku-window {
+  background: #f5e6c5;
+}
+
+.gomoku-arena {
+  flex: 1;
+  position: relative;
+  background:
+    radial-gradient(circle at 30% 30%, #e8d4a4 0%, #d4b67e 100%);
+  overflow: hidden;
+}
+
+.g-grid {
+  position: absolute;
+  inset: 12% 8%;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0 1px, transparent 1px calc(100% / 14)),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.18) 0 1px, transparent 1px calc(100% / 14));
+}
+
+.g-piece {
+  position: absolute;
+  width: 9%;
+  height: 0;
+  padding-bottom: 9%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.g-piece-b {
+  background: radial-gradient(circle at 30% 30%, #4a4a4a 0%, #0a0a0a 75%);
+}
+
+.g-piece-w {
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #d8d8d8 80%);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15), inset 0 0 0 0.5px rgba(0,0,0,0.08);
+}
+
+.g-win-line {
+  position: absolute;
+  top: 38%;
+  left: 38%;
+  width: 30%;
+  height: 0;
+  border-top: 2px solid rgba(255, 59, 48, 0.85);
+  transform: rotate(35deg);
+  transform-origin: left center;
+  filter: drop-shadow(0 0 4px rgba(255, 59, 48, 0.7));
+  animation: gomokuWin 2s ease-in-out infinite;
+}
+
+@keyframes gomokuWin {
+  0%, 100% { opacity: 0.8; }
+  50%      { opacity: 1; }
+}
+
+#gomoku-card .product-mockup {
+  max-width: 200px;
+  height: 140px;
+}
+
+#gomoku-card .gomoku-window {
+  width: 200px;
+  height: 140px;
+  max-width: 100%;
+}
+
+#gomoku-card .window-title {
+  font-size: 8px;
+}
+
 /* === Music Icon Frame === */
 .music-icon-frame {
   width: 140px;

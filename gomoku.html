@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>五子棋 · dejavu team</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚫</text></svg>">
+<link rel="stylesheet" href="gomoku.css">
+</head>
+<body>
+
+<!-- 顶栏 -->
+<header class="g-nav">
+  <div class="g-nav-inner">
+    <a class="g-nav-logo" href="index.html" aria-label="返回首页">
+      <span>dejavu<span class="g-nav-fade"> team</span></span>
+    </a>
+    <div class="g-nav-title">五子棋 · Gomoku</div>
+    <a class="g-nav-back" href="index.html">← 返回</a>
+  </div>
+</header>
+
+<!-- 主区 -->
+<main class="g-main">
+
+  <!-- 左：棋盘 -->
+  <section class="g-board-wrap">
+    <div class="g-board-frame">
+      <canvas id="board" width="660" height="660"></canvas>
+      <div class="g-board-overlay" id="overlay"></div>
+    </div>
+  </section>
+
+  <!-- 右：侧栏 -->
+  <aside class="g-side">
+
+    <!-- 模式 -->
+    <div class="g-card">
+      <h3 class="g-card-title">模式</h3>
+      <div class="g-seg" id="seg-mode" role="tablist">
+        <button class="g-seg-btn active" data-mode="pvp" role="tab">双人对战</button>
+        <button class="g-seg-btn" data-mode="pve" role="tab">人机对战</button>
+      </div>
+    </div>
+
+    <!-- 难度 / 先手 (动态) -->
+    <div class="g-card" id="card-ai" hidden>
+      <h3 class="g-card-title">AI 难度</h3>
+      <div class="g-seg" id="seg-diff">
+        <button class="g-seg-btn" data-diff="easy">简单</button>
+        <button class="g-seg-btn active" data-diff="mid">中等</button>
+        <button class="g-seg-btn" data-diff="hard">困难</button>
+      </div>
+      <h3 class="g-card-title" style="margin-top:18px">先手</h3>
+      <div class="g-seg" id="seg-side">
+        <button class="g-seg-btn active" data-side="black">玩家执黑</button>
+        <button class="g-seg-btn" data-side="white">玩家执白</button>
+      </div>
+    </div>
+
+    <!-- 信息 -->
+    <div class="g-card g-card-info">
+      <div class="g-turn">
+        <span class="g-turn-label">当前轮</span>
+        <span class="g-stone g-stone-black" id="turn-stone"></span>
+        <span class="g-turn-name" id="turn-name">黑方</span>
+      </div>
+      <div class="g-meta">
+        <div class="g-meta-item">
+          <span class="g-meta-label">步数</span>
+          <span class="g-meta-val" id="moves">0</span>
+        </div>
+        <div class="g-meta-item">
+          <span class="g-meta-label">计时</span>
+          <span class="g-meta-val" id="timer">00:00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作 -->
+    <div class="g-card">
+      <h3 class="g-card-title">操作</h3>
+      <div class="g-actions">
+        <button class="g-btn g-btn-primary" id="btn-new">新对局</button>
+        <button class="g-btn" id="btn-undo">悔棋</button>
+        <button class="g-btn" id="btn-hint">提示</button>
+      </div>
+    </div>
+
+    <!-- 主题 -->
+    <div class="g-card">
+      <h3 class="g-card-title">主题</h3>
+      <div class="g-themes">
+        <button class="g-theme active" data-theme="wood" title="木纹"></button>
+        <button class="g-theme g-theme-jade" data-theme="jade" title="玉石"></button>
+        <button class="g-theme g-theme-minimal" data-theme="minimal" title="极简"></button>
+      </div>
+    </div>
+
+    <!-- 记录 -->
+    <div class="g-card g-card-log">
+      <h3 class="g-card-title">落子记录</h3>
+      <div class="g-log" id="log">
+        <div class="g-log-empty">暂无落子</div>
+      </div>
+    </div>
+
+  </aside>
+</main>
+
+<!-- 胜利横幅 -->
+<div class="g-banner" id="banner" hidden>
+  <div class="g-banner-inner">
+    <div class="g-banner-title" id="banner-title">黑方胜！</div>
+    <div class="g-banner-sub" id="banner-sub">连成五子</div>
+    <button class="g-btn g-btn-primary" id="banner-again">再来一局</button>
+  </div>
+</div>
+
+<!-- 规则说明 -->
+<details class="g-rules">
+  <summary>规则说明</summary>
+  <div class="g-rules-inner">
+    <p>黑白双方交替落子，黑先。在横、竖、斜任意方向上先连成 5 子（或更多）的一方获胜。</p>
+    <p><strong>悔棋：</strong>点击「悔棋」按钮可撤销最近一步（人机对战会同时撤销 AI 一步）。</p>
+    <p><strong>提示：</strong>高亮 AI 推荐的最佳落点。</p>
+    <p><strong>计时：</strong>从首子落盘开始计时。</p>
+  </div>
+</details>
+
+<script src="js/board.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/ui.js"></script>
+<script src="gomoku.js"></script>
+</body>
+</html>
