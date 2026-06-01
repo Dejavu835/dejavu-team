@@ -363,16 +363,18 @@ body {
   position: fixed;
   inset: 0;
   z-index: 200;
-  display: flex;
+  display: none;  /* 默认隐藏 */
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  animation: fadeIn 0.3s ease;
 }
 
-.g-banner[hidden] { display: none !important; }
+.g-banner.show {
+  display: flex;  /* 显示时通过 class 切换 */
+  animation: fadeIn 0.3s ease;
+}
 
 @keyframes fadeIn {
   from { opacity: 0; }

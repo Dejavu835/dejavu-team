@@ -133,9 +133,9 @@ const UI = (() => {
   function showBanner(title, sub) {
     refs.bannerTitle.textContent = title;
     refs.bannerSub.textContent = sub;
-    refs.banner.hidden = false;
+    refs.banner.classList.add('show');
   }
-  function hideBanner() { refs.banner.hidden = true; }
+  function hideBanner() { refs.banner.classList.remove('show'); }
 
   function setBoardTheme(theme) {
     refs.board.setAttribute('data-theme', theme);

@@ -31,8 +31,8 @@ const Board = (() => {
     theme = opts.theme || 'wood';
 
     dpr = window.devicePixelRatio || 1;
-    resize();
     reset();
+    resize();
     window.addEventListener('resize', resize);
 
     canvas.addEventListener('mousemove', onMouseMove);
