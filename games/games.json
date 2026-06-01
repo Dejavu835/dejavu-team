@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "games": [
+    {
+      "id": "tank",
+      "name": "坦克大战",
+      "icon": "🎯",
+      "url": "games/tank/index.html",
+      "tag": "射击",
+      "status": "ready",
+      "addedAt": "2026-06-02",
+      "description": "经典 FC 风格坦克大战，含 4 难度 + Boss"
+    },
+    {
+      "id": "wuziqi",
+      "name": "五子棋",
+      "icon": "⚫",
+      "url": "games/wuziqi/index.html",
+      "tag": "策略",
+      "status": "ready",
+      "addedAt": "2026-06-02",
+      "description": "AI 五子棋，含 VCF 必杀搜索"
+    },
+    {
+      "id": "wuziqi-skill",
+      "name": "技能五子棋",
+      "icon": "✨",
+      "url": "games/wuziqi-skill/index.html",
+      "tag": "策略",
+      "status": "coming",
+      "addedAt": "2026-06-02",
+      "description": "带技能系统的五子棋"
+    }
+  ]
+}
