@@ -84,8 +84,8 @@ const MAPS=[
 const DIFF={
   easy:{   label:'简单', hp:0.7, spd:0.8, fr:1.5, bHp:2, bossMult:1, scoreMult:0.8 },
   normal: {label:'普通', hp:1.0, spd:1.0, fr:1.0, bHp:3, bossMult:1, scoreMult:1.0 },
-  hard:   {label:'困难', hp:1.5, spd:1.3, fr:0.7, bHp:4, bossMult:1.5, scoreMult:1.5 },
-  nightmare:{label:'噩梦',hp:2.0, spd:1.6, fr:0.5, bHp:5, bossMult:2, scoreMult:2.0 },
+  hard:   {label:'困难', hp:2.5, spd:1.6, fr:0.45, bHp:5, bossMult:1.8, scoreMult:1.8 },
+  nightmare:{label:'噩梦',hp:4.0, spd:2.2, fr:0.28, bHp:7, bossMult:3, scoreMult:2.5 },
 };
 const DIFF_KEYS=['easy','normal','hard','nightmare'];
 const WAVES_PER_STAGE=[2,2,2,2,3];
@@ -180,22 +180,14 @@ class Tank{
     const px=player.x+player.w/2,py=player.y+player.h/2;
     const ex=this.x+this.w/2,ey=this.y+this.h/2;
     const dx=px-ex,dy=py-ey;
-    const dirs=[];
-    if(dx>10)dirs.push(1);
-    if(dx<-10)dirs.push(3);
-    if(dy>10)dirs.push(2);
-    if(dy<-10)dirs.push(0);
-    // 打乱，加随机性
-    for(let i=dirs.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
-      [dirs[i],dirs[j]]=[dirs[j],dirs[i]];
-    }
-    // 尝试每个方向，能走就用
+    const adx=Math.abs(dx),ady=Math.abs(dy);
+    let dirs=[];
+    if(ady>adx){if(dy>12)dirs.push(2);if(dy<-12)dirs.push(0);if(dx>12)dirs.push(1);if(dx<-12)dirs.push(3);}
+    else{if(dx>12)dirs.push(1);if(dx<-12)dirs.push(3);if(dy>12)dirs.push(2);if(dy<-12)dirs.push(0);}
+    // 越高级的敌人，朝准度越高
+    if(this.type>=2&&Math.random()<0.25){dirs.reverse();}
     const orig=this.dir;
-    for(const d of dirs){
-      this.dir=d;
-      if(!this.collides(this.x,this.y))return;
-    }
+    for(const d of dirs){this.dir=d;if(!this.collides(this.x,this.y))return;}
     this.dir=orig;
     this.randomDir();
   }
@@ -372,10 +364,11 @@ function initStage(s){
   const w1=[0,1,1,1,1,1,1,1,2,1,2,2,2,3,3];
   const w2=[1,1,1,1,1,1,2,2,2,2,2,2,2,3,3];
   const w0c=w0[s]||1,w1c=w1[s]||0,w2c=w2[s]||0;
+  const diffDelay=diffKey==='nightmare'?250:diffKey==='hard'?320:400;
   let delay=200;
-  for(let i=0;i<w0c;i++){setTimeout(()=>spawnEnemy(1),delay);delay+=400;}
-  for(let i=0;i<w1c;i++){setTimeout(()=>spawnEnemy(2),delay);delay+=400;}
-  for(let i=0;i<w2c;i++){setTimeout(()=>spawnEnemy(3),delay);delay+=400;}
+  for(let i=0;i<w0c;i++){setTimeout(()=>spawnEnemy(1),delay);delay+=diffDelay;}
+  for(let i=0;i<w1c;i++){setTimeout(()=>spawnEnemy(2),delay);delay+=diffDelay;}
+  for(let i=0;i<w2c;i++){setTimeout(()=>spawnEnemy(3),delay);delay+=diffDelay;}
   const cEnh=s>0&&wps>1?Math.min(s,2):0;
   for(let i=0;i<cEnh;i++){setTimeout(()=>spawnEnemy([1,2,3][i%3],true),delay+500+i*500);}
   const cBoss=s>=2&&wps>1?1:0;
@@ -383,16 +376,18 @@ function initStage(s){
   pendingSpawns=w0c+w1c+w2c+cEnh+cBoss;
   // Wave 2
   if(wps>=2){
-    const wave2Delay=delay+2500;
-    setTimeout(()=>{if(state!=='playing')return;wave=2;const w20=[1,1,2,2,2,2,2,2,3,3,3,3,3,3,4];const w21=[0,1,1,1,1,1,1,2,2,2,2,2,3,3,3];const w22=[1,1,1,1,1,1,2,2,2,2,2,2,2,3,3];let wd=0;for(let i=0;i<w20[s];i++){setTimeout(()=>spawnEnemy(1),wd);wd+=400;}for(let i=0;i<w21[s];i++){setTimeout(()=>spawnEnemy(2),wd);wd+=400;}for(let i=0;i<w22[s];i++){setTimeout(()=>spawnEnemy(3),wd);wd+=400;}if(s>0){setTimeout(()=>spawnEnemy([1,2,3][Math.floor(Math.random()*3)],true),wd+300);}if(s>=3){setTimeout(()=>spawnBoss(),wd+500);}},wave2Delay);
+    const wave2Delay=delay+(diffKey==='nightmare'?1500:diffKey==='hard'?2000:2500);
+    setTimeout(()=>{if(state!=='playing')return;wave=2;const w20=[1,1,2,2,2,2,2,2,3,3,3,3,3,3,4];const w21=[0,1,1,1,1,1,1,2,2,2,2,2,3,3,3];const w22=[1,1,1,1,1,1,2,2,2,2,2,2,2,3,3];let wd=0;for(let i=0;i<w20[s];i++){setTimeout(()=>spawnEnemy(1),wd);wd+=diffDelay;}for(let i=0;i<w21[s];i++){setTimeout(()=>spawnEnemy(2),wd);wd+=diffDelay;}for(let i=0;i<w22[s];i++){setTimeout(()=>spawnEnemy(3),wd);wd+=diffDelay;}if(s>0){setTimeout(()=>spawnEnemy([1,2,3][Math.floor(Math.random()*3)],true),wd+300);}if(s>=3){setTimeout(()=>spawnBoss(),wd+500);}},wave2Delay);
   }
   // Wave 3
   if(wps>=3){
-    setTimeout(()=>{if(state!=='playing')return;wave=3;for(let i=0;i<w2c;i++){setTimeout(()=>spawnEnemy(3),i*400);}if(s>=3){setTimeout(()=>spawnBoss(),500);}},delay+5500);
+    const w3Delay=delay+(diffKey==='nightmare'?3500:diffKey==='hard'?4500:5500);
+    setTimeout(()=>{if(state!=='playing')return;wave=3;for(let i=0;i<w2c;i++){setTimeout(()=>spawnEnemy(3),i*diffDelay);}if(s>=3){setTimeout(()=>spawnBoss(),500);}},w3Delay);
   }
   // Wave 4
   if(wps>=4){
-    setTimeout(()=>{if(state!=='playing')return;wave=4;for(let i=0;i<w0c;i++){setTimeout(()=>spawnEnemy(1),i*300);}if(s>=4){setTimeout(()=>spawnBoss(),800);}},delay+9000);
+    const w4Delay=delay+(diffKey==='nightmare'?6000:diffKey==='hard'?7500:9000);
+    setTimeout(()=>{if(state!=='playing')return;wave=4;for(let i=0;i<w0c;i++){setTimeout(()=>spawnEnemy(1),i*(diffDelay-50));}if(s>=4){setTimeout(()=>spawnBoss(),800);}},w4Delay);
   }
 }
 

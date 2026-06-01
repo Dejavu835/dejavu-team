@@ -296,18 +296,18 @@ const AI = (()=>{
     let cur=mx?my:(my===B?W:B)
     cs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,cur))
     cs.sort((a,b)=>b.h-a.h)
-    let lm=Math.min(cs.length,dp>=3?12:18)
+    let lm=Math.min(cs.length,dp>=5?8:dp>=3?12:18)
     if(mx){let b=-Infinity;for(let i=0;i<lm;i++){let c=cs[i];brd[c.r][c.c]=cur;let v=search(brd,sz,dp-1,al,bt,false,my);brd[c.r][c.c]=E;b=Math.max(b,v);al=Math.max(al,v);if(bt<=al)break}return b}
     else{let b=Infinity;for(let i=0;i<lm;i++){let c=cs[i];brd[c.r][c.c]=cur;let v=search(brd,sz,dp-1,al,bt,true,my);brd[c.r][c.c]=E;b=Math.min(b,v);bt=Math.min(bt,v);if(bt<=al)break}return b}
   }
   function bestMove(brd,sz,my,diff='mid'){
-    let dp=diff==='easy'?1:diff==='mid'?2:4,cs=cands(brd,sz,1)
+    let dp=diff==='easy'?2:diff==='mid'?3:5,cs=cands(brd,sz,1)
     if(!cs.length)return{r:Math.floor(sz/2),c:Math.floor(sz/2)}
     cs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,my));cs.sort((a,b)=>b.h-a.h)
     let opp=my===B?W:B
     for(let c of cs){brd[c.r][c.c]=my;let l=Game.checkWin(brd,c.r,c.c,my);brd[c.r][c.c]=E;if(l)return c}
     for(let c of cs){brd[c.r][c.c]=opp;let l=Game.checkWin(brd,c.r,c.c,opp);brd[c.r][c.c]=E;if(l)return c}
-    let sb=cloneB(brd,sz),best=cs[0],bestVal=-Infinity,lm=Math.min(cs.length,dp>=3?10:14)
+    let sb=cloneB(brd,sz),best=cs[0],bestVal=-Infinity,lm=Math.min(cs.length,dp>=5?8:dp>=3?10:14)
     for(let i=0;i<lm;i++){let c=cs[i];sb[c.r][c.c]=my;let v=search(sb,sz,dp-1,-Infinity,Infinity,false,my);sb[c.r][c.c]=E;if(v>bestVal){bestVal=v;best=c}}
     return best
   }
