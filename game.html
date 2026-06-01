@@ -111,6 +111,7 @@ function soundWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,'sin
 // ─── State ────────────────────────────────────────────────
 let state='start',stage=0,score=0,lives=3;
 let map=[],bullets=[],enemies=[],explosions=[],powerups=[];
+let playerLastX=0,playerLastY=0,playerVx=0,playerVy=0;
 let player=null,shieldTimer=0,freezeTimer=0,starTimer=0,starActive=false;
 let spreadTimer=0,pierceTimer=0,spreadActive=false,pierceActive=false;
 let shovelTimer=0,frameCount=0,keys={},shootCooldown=0;
@@ -160,12 +161,23 @@ class Tank{
     this.fireCooldown-=16.67;
     if(this.fireCooldown<=0&&this.type>0){
       this.fireCooldown=this.fireRate+Math.random()*500;
-      // Aim at player before shooting
+      // Aim at player before shooting (predictive lead for higher types)
       if(player){
         const px=player.x+player.w/2,py=player.y+player.h/2;
         const ex=this.x+this.w/2,ey=this.y+this.h/2;
-        if(Math.abs(px-ex)>Math.abs(py-ey))this.dir=(px>ex)?1:3;
-        else this.dir=(py>ey)?2:0;
+        // 预测提前量：高级敌人能预判玩家走位
+        let lead=0;
+        if(this.type>=2)lead=0.3;else if(this.type>=1)lead=0.15;
+        const tx=px+playerVx*lead*30;
+        const ty=py+playerVy*lead*30;
+        if(Math.abs(tx-ex)>Math.abs(ty-ey))this.dir=(tx>ex)?1:3;
+        else this.dir=(ty>ey)?2:0;
+        // 准度退化：中等/困难敌人有3-8%几率偏离
+        if(diffKey==='hard'&&Math.random()<0.05||diffKey==='nightmare'&&Math.random()<0.02){}
+        else if((diffKey==='hard'||diffKey==='nightmare')&&this.type<2&&Math.random()<0.18){
+          // 低级敌人在高难度下偶尔脱靶
+          this.dir=(this.dir+1+Math.floor(Math.random()*2))%4;
+        }
       }
       this.shoot();
     }
@@ -184,10 +196,14 @@ class Tank{
     let dirs=[];
     if(ady>adx){if(dy>12)dirs.push(2);if(dy<-12)dirs.push(0);if(dx>12)dirs.push(1);if(dx<-12)dirs.push(3);}
     else{if(dx>12)dirs.push(1);if(dx<-12)dirs.push(3);if(dy>12)dirs.push(2);if(dy<-12)dirs.push(0);}
-    // 越高级的敌人，朝准度越高
     if(this.type>=2&&Math.random()<0.25){dirs.reverse();}
     const orig=this.dir;
     for(const d of dirs){this.dir=d;if(!this.collides(this.x,this.y))return;}
+    // 主方向都堵死，尝试侧向（绕障碍）
+    if(this.type>=2){
+      const perp=[(orig+1)%4,(orig+3)%4];
+      for(const d of perp){this.dir=d;if(!this.collides(this.x,this.y))return;}
+    }
     this.dir=orig;
     this.randomDir();
   }
@@ -353,10 +369,10 @@ function initStage(s){
   spreadTimer=0;pierceTimer=0;spreadActive=false;pierceActive=false;
   shovelTimer=0;killCount=0;wave=1;hasBoss=false;hasEnhanced=false;enemiesSpawned=false;pendingSpawns=0;
   if(!player){player=new Tank(W/2-18,H-T*2+4,0,0);}
-  else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
+  else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
   diff=DIFF[diffKey];
   if(!player){player=new Tank(W/2-18,H-T*2+4,0,0);}
-  else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
+  else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
   diff=DIFF[diffKey];
   const wps=WAVES_PER_STAGE[Math.min(s,4)]||2;
   wave=1;enemiesSpawned=false;pendingSpawns=0;
@@ -438,6 +454,11 @@ function handleInput(){
     else if(canPass(player.x,player.y+dy,player.w,player.h)){player.y+=dy;}
   }
   player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));
+  // 跟踪玩家走位，预测 AI 预判
+  playerVx=player.x-playerLastX;playerVy=player.y-playerLastY;
+  // 指数平滑，避免加锁震荡
+  playerVx*=0.6;playerVy*=0.6;
+  playerLastX=player.x;playerLastY=player.y;
   shootCooldown--;
   if((keys['Space']||keys['Enter']||mk.fire)&&shootCooldown<=0){
     shootCooldown=24;
@@ -536,7 +557,7 @@ function update(){
       if(!b.isEnemy)return true;
       if(rectOverlap(b.x,b.y,b.w,b.h,player.x,player.y,player.w,player.h)){
         soundDie();lives--;explosions.push(new Explosion(player.x+player.w/2,player.y+player.h/2));
-        if(lives<=0){state='gameover';}else{shieldTimer=120;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;}
+        if(lives<=0){state='gameover';}else{shieldTimer=120;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
         return false;
       }
       const[er,ec]=getEagleTile(),ex=ec*T,ey=er*T;
@@ -552,7 +573,7 @@ function update(){
       if(!e.isBoss&&rectOverlap(e.x,e.y,e.w,e.h,player.x,player.y,player.w,player.h)){
         soundDie();lives--;explosions.push(new Explosion(player.x+player.w/2,player.y+player.h/2));
         if(lives<=0)state='gameover';
-        else{shieldTimer=120;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;}
+        else{shieldTimer=120;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
       }
     });
   }

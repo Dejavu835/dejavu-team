@@ -248,11 +248,13 @@ const AI = (()=>{
   const{E,B,W}=Game.constants
   const SC={FIVE:1e7,OPEN_FOUR:1e6,FOUR:1e5,OPEN_THREE:1e4,THREE:1e3,OPEN_TWO:100,TWO:10,ONE:1},DIRS=[[0,1],[1,0],[1,1],[1,-1]]
   function cands(brd,sz,r2=1){
-    let cs=[],st=new Set
+    let cs=[],st=new Set,count=0
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){if(brd[r][c]!==E)count++}
+    let rad=count>40?r2:2
     for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
       if(brd[r][c]!==E)continue
       let near=false
-      for(let dr=-r2;dr<=r2&&!near;dr++)for(let dc=-r2;dc<=r2&&!near;dc++){if(!dr&&!dc)continue;let nr=r+dr,nc=c+dc;if(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]!==E)near=true}
+      for(let dr=-rad;dr<=rad&&!near;dr++)for(let dc=-rad;dc<=rad&&!near;dc++){if(!dr&&!dc)continue;let nr=r+dr,nc=c+dc;if(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]!==E)near=true}
       if(near){let k=r*sz+c;if(!st.has(k)){st.add(k);cs.push({r,c})}}
     }
     return cs
@@ -282,12 +284,18 @@ const AI = (()=>{
     return mx-en
   }
   function hMove(brd,sz,r,c,col){
-    let opp=col===B?W:B,sc=0
+    let opp=col===B?W:B,my=0,en=0
     for(let[dR,dC]of DIRS){
       let w=[];for(let i=-4;i<=4;i++){let nr=r+dR*i,nc=c+dC*i;if(nr<0||nr>=sz||nc<0||nc>=sz)w.push(-1);else w.push(brd[nr][nc])}
-      w[4]=col;sc+=sw(w,col,opp)
+      let wo=w.slice();wo[4]=col;my+=sw(wo,col,opp)
+      let wt=w.slice();wt[4]=opp;en+=sw(wt,opp,col)
     }
-    return sc
+    let myAtk=Math.max(my,0),enDef=Math.max(en,0)
+    return myAtk+enDef*1.15
+  }
+  function centerBias(sz,r,c){
+    let m=Math.floor(sz/2),d=Math.abs(r-m)+Math.abs(c-m)
+    return Math.max(0,15-d*0.6)
   }
   function cloneB(brd,sz){let nb=new Array(sz);for(let r=0;r<sz;r++)nb[r]=brd[r].slice();return nb}
   function search(brd,sz,dp,al,bt,mx,my){
@@ -303,12 +311,14 @@ const AI = (()=>{
   function bestMove(brd,sz,my,diff='mid'){
     let dp=diff==='easy'?2:diff==='mid'?3:5,cs=cands(brd,sz,1)
     if(!cs.length)return{r:Math.floor(sz/2),c:Math.floor(sz/2)}
-    cs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,my));cs.sort((a,b)=>b.h-a.h)
+    cs.forEach(c=>{c.h=hMove(brd,sz,c.r,c.c,my)+centerBias(sz,c.r,c.c)*0.5})
+    cs.sort((a,b)=>b.h-a.h)
     let opp=my===B?W:B
     for(let c of cs){brd[c.r][c.c]=my;let l=Game.checkWin(brd,c.r,c.c,my);brd[c.r][c.c]=E;if(l)return c}
     for(let c of cs){brd[c.r][c.c]=opp;let l=Game.checkWin(brd,c.r,c.c,opp);brd[c.r][c.c]=E;if(l)return c}
     let sb=cloneB(brd,sz),best=cs[0],bestVal=-Infinity,lm=Math.min(cs.length,dp>=5?8:dp>=3?10:14)
     for(let i=0;i<lm;i++){let c=cs[i];sb[c.r][c.c]=my;let v=search(sb,sz,dp-1,-Infinity,Infinity,false,my);sb[c.r][c.c]=E;if(v>bestVal){bestVal=v;best=c}}
+    if(!best||best.h===undefined)best=cs[0]
     return best
   }
   return{getBestMove:bestMove}
