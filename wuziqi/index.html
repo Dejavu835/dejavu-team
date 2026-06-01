@@ -301,7 +301,7 @@ const AI = (()=>{
         for(let k=0;k<5;k++){
           const nr=r+dR*k,nc=c+dC*k
           if(nr<0||nr>=sz||nc<0||nc>=sz)break
-          const line=[],ok=true
+          const line=[];let ok=true
           for(let i=0;i<5;i++){
             const wr=nr+dR*i,wc=nc+dC*i
             if(wr<0||wr>=sz||wc<0||wc>=sz){ok=false;break}
