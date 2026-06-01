@@ -9,7 +9,19 @@
 html,body{width:100%;height:100%;background:#0a0a0a;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:monospace}
 #wrapper{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;gap:0}
-canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid #333;box-shadow:0 0 30px rgba(0,0,0,0.9);max-width:100vw;max-height:calc(100vh - 180px)}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid #333;box-shadow:0 0 30px rgba(0,0,0,0.9);max-width:100vw;max-height:calc(100vh - 240px)}
+/* ─── 道具栏 (INV) ──────────────────────── */
+#inv-bar{display:flex;gap:6px;padding:6px 8px;background:rgba(20,20,20,0.9);border:1.5px solid #444;border-radius:8px;margin-top:6px;align-items:center;justify-content:center;flex-shrink:0}
+.inv-slot{position:relative;width:50px;height:50px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.18);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;color:#fff;transition:all 0.1s}
+.inv-slot:hover{background:rgba(255,255,255,0.12)}
+.inv-slot.selected{border-color:#30d158;border-width:2px;transform:scale(1.08);box-shadow:0 0 10px rgba(48,209,88,0.5);background:rgba(48,209,88,0.15)}
+.inv-slot .slot-num{position:absolute;top:1px;left:3px;font-size:9px;color:rgba(255,255,255,0.4);font-family:monospace;font-weight:bold}
+.inv-slot.selected .slot-num{color:#30d158}
+.inv-slot .slot-count{position:absolute;bottom:1px;right:3px;font-size:11px;color:#ffd700;font-family:monospace;font-weight:bold;background:rgba(0,0,0,0.5);padding:0 3px;border-radius:3px}
+.inv-slot.empty{color:rgba(255,255,255,0.15)}
+.inv-slot .slot-tooltip{display:none;position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:#fff;padding:3px 6px;border-radius:4px;font-size:10px;white-space:nowrap;z-index:10;pointer-events:none}
+.inv-slot:hover .slot-tooltip{display:block}
+#inv-label{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.05em;margin-right:4px;font-family:monospace}
 #controls{display:flex;width:100%;max-width:640px;padding:10px 14px;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0;margin:0 auto;touch-action:none}
 #dpad{display:grid;grid-template-columns:repeat(3,60px);grid-template-rows:repeat(3,60px);gap:4px;touch-action:none}
 .dpad-btn{position:relative;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.7);font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-appearance:none;touch-action:none;transition:background 0.08s,transform 0.05s;user-select:none;-webkit-user-select:none}
@@ -49,14 +61,22 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
   #start-btn{width:64px;height:64px}
   #pause-btn{width:48px;height:48px}
   #pause-label{display:block!important}
-  canvas{max-height:calc(100vh - 180px)}
+  canvas{max-height:calc(100vh - 240px)}
 }
-@media(orientation:portrait) and (max-width:540px){#wrapper{justify-content:flex-start;padding-top:10px}canvas{max-height:calc(100vh - 200px)}}
+@media(orientation:portrait) and (max-width:540px){#wrapper{justify-content:flex-start;padding-top:10px}canvas{max-height:calc(100vh - 260px)}}
 </style>
 </head>
 <body>
 <div id="wrapper">
 <canvas id="game"></canvas>
+<div id="inv-bar">
+  <span id="inv-label">INV</span>
+  <div class="inv-slot empty" data-slot="0"><span class="slot-num">1</span><span class="slot-tooltip">空</span><span class="slot-count"></span></div>
+  <div class="inv-slot empty" data-slot="1"><span class="slot-num">2</span><span class="slot-tooltip">空</span><span class="slot-count"></span></div>
+  <div class="inv-slot empty" data-slot="2"><span class="slot-num">3</span><span class="slot-tooltip">空</span><span class="slot-count"></span></div>
+  <div class="inv-slot empty" data-slot="3"><span class="slot-num">4</span><span class="slot-tooltip">空</span><span class="slot-count"></span></div>
+  <div class="inv-slot empty" data-slot="4"><span class="slot-num">5</span><span class="slot-tooltip">空</span><span class="slot-count"></span></div>
+</div>
 <div id="controls">
   <div id="dpad">
     <div></div><button class="dpad-btn" data-dir="up">▲</button><div></div>
@@ -246,6 +266,38 @@ let diffKey='normal',diff={},killCount=0,totalKills=0;
 let hasBoss=false,hasEnhanced=false,victory=false,enemiesSpawned=false,pendingSpawns=0;
 let soundOn=true;
 let highScores=JSON.parse(localStorage.getItem('tankBattleScores')||'[]');
+
+// ─── Powerup Categories (3 类道具系统) ─────────────────────
+// 道具类型定义
+//   cat: 'A'=时限(即时生效+倒计时) | 'B'=永久buff | 'C'=消耗品(进道具栏)
+const POWERUP_DEF={
+  // 类型 A：时限道具（拾取即时生效，HUD 显示倒计时）
+  SHIELD:   {cat:'A', icon:'🛡', label:'SHIELD',   col:'#00ffff', dur:600,  desc:'10s 无敌'},
+  SHOVEL:   {cat:'A', icon:'🚧', label:'SHOVEL',   col:'#aaaaaa', dur:600,  desc:'10s 钢化基地'},
+  FREEZE:   {cat:'A', icon:'❄', label:'FREEZE',   col:'#4488ff', dur:600,  desc:'10s 冻敌'},
+  SPREAD:   {cat:'A', icon:'💨', label:'SPREAD',   col:'#00ffff', dur:480,  desc:'8s 散射'},
+  PIERCE:   {cat:'A', icon:'🎯', label:'PIERCE',   col:'#ff4444', dur:600,  desc:'10s 穿钢墙'},
+  // 类型 B：永久 buff
+  STAR:     {cat:'B', icon:'⭐', label:'STAR',     col:'#ffd700', dur:0,    desc:'武器升级'},
+  LIFE:     {cat:'B', icon:'💗', label:'LIFE',     col:'#ff6688', dur:0,    desc:'+1 命'},
+  // 类型 C：消耗品（进道具栏，主动激活）
+  BOMB:     {cat:'C', icon:'💣', label:'BOMB',     col:'#ff4444', dur:0,    desc:'清屏炸'},
+  SHIELD_C: {cat:'C', icon:'🛡', label:'SHIELD_C', col:'#00ff88', dur:300,  desc:'5s 无敌'},
+};
+
+// 类型 A 限时 buff 队列：每项 {key, timer, maxTimer}
+let activeBuffs=[];
+// 类型 B 永久 buff 计数
+let starLevel=0;        // 0-4
+// 道具栏系统（5 格，每格存 {type, count} 或 null）
+const INV={slots:[null,null,null,null,null],selected:0};
+// 拾取信息浮窗
+let pickFlash=null;     // {text, timer}
+let invFullFlash=0;     // "道具栏已满" 提示倒计时
+// 全屏炸弹特效
+let bombFlash=0;
+// 玩家出生后的短暂无敌（与 SHIELD 限时 buff 分离）
+let respawnShield=0;
 const ENEMY_BASE=[
   {color:C.enemyFast,  speed:2.5,fireRate:2000,points:100,bulletSpd:4,hpMul:1},
   {color:C.enemyMed,   speed:1.8,fireRate:3000,points:200,bulletSpd:4,hpMul:1},
@@ -413,7 +465,7 @@ class Tank{
     return playerGoal||eagleGoal
   }
   update(){
-    if(this.type>0&&freezeTimer>0)return
+    if(this.type>0&&hasBuff('FREEZE'))return
     // ---- AI 决策阶段 ----
     if(this.type>0){
       // 1. 子弹闪避(每帧)
@@ -543,16 +595,16 @@ class Tank{
     }
     ctx.restore();
     if(this.type===0){
-      if(shieldTimer>0){ctx.save();ctx.globalAlpha=0.3+0.3*Math.sin(frameCount*0.3);
+      if(hasBuff('SHIELD')||respawnShield>0){ctx.save();ctx.globalAlpha=0.3+0.3*Math.sin(frameCount*0.3);
         ctx.strokeStyle='#00ffff';ctx.lineWidth=3;
         ctx.strokeRect(this.x-3,this.y-3,this.w+6,this.h+6);ctx.restore();}
-      if(starActive){ctx.save();ctx.globalAlpha=0.4+0.3*Math.sin(frameCount*0.5);
+      if(starLevel>=2){ctx.save();ctx.globalAlpha=0.4+0.3*Math.sin(frameCount*0.5);
         ctx.strokeStyle='#ffd700';ctx.lineWidth=3;
         ctx.strokeRect(this.x-3,this.y-3,this.w+6,this.h+6);ctx.restore();}
-      if(spreadActive){ctx.save();ctx.globalAlpha=0.4+0.2*Math.sin(frameCount*0.2);
+      if(hasBuff('SPREAD')){ctx.save();ctx.globalAlpha=0.4+0.2*Math.sin(frameCount*0.2);
         ctx.strokeStyle='#00ffff';ctx.lineWidth=2;
         ctx.strokeRect(this.x-3,this.y-3,this.w+6,this.h+6);ctx.restore();}
-      if(pierceActive){ctx.save();ctx.globalAlpha=0.4+0.2*Math.sin(frameCount*0.2);
+      if(hasBuff('PIERCE')){ctx.save();ctx.globalAlpha=0.4+0.2*Math.sin(frameCount*0.2);
         ctx.strokeStyle='#ff4444';ctx.lineWidth=2;
         ctx.strokeRect(this.x-3,this.y-3,this.w+6,this.h+6);ctx.restore();}
     }
@@ -567,15 +619,16 @@ class Bullet{
   constructor(x,y,dx,dy,speed,isEnemy,enhanced=false){
     this.x=x;this.y=y;this.dx=dx;this.dy=dy;this.speed=speed;this.isEnemy=isEnemy;
     this.enhanced=enhanced;this.w=6;this.h=6;this.pierceLeft=0;this.hitCount=0;
-    if(pierceActive&&!isEnemy)this.pierceLeft=2;
+    if(!isEnemy&&(hasBuff('PIERCE')||starLevel>=3))this.pierceLeft=2;
   }
   update(){this.x+=this.dx;this.y+=this.dy;}
-  isOut(){return this.x<-10||this.x>W+10||this.y<-10||this.y>H+10;}
+  isOut(){return this.x<-10||this.x>W+10||this.y<-10||this.y+H+10<0;}
   draw(){
     ctx.save();
     let col=this.isEnemy?'#ff6666':(this.enhanced?'#ffd700':C.bullet);
-    if(spreadActive&&!this.isEnemy)col='#00ffff';
-    if(pierceActive&&!this.isEnemy)col='#ff4444';
+    if(!this.isEnemy&&hasBuff('SPREAD'))col='#00ffff';
+    if(!this.isEnemy&&hasBuff('PIERCE'))col='#ff4444';
+    if(!this.isEnemy&&starLevel>=3)col='#ff8800';
     ctx.fillStyle=col;ctx.shadowColor=this.isEnemy?'#ff4444':'#ffff88';ctx.shadowBlur=6;
     ctx.fillRect(this.x,this.y,this.w,this.h);
     if(this.pierceLeft>0){ctx.strokeStyle='#ff4444';ctx.lineWidth=1;ctx.strokeRect(this.x,this.y,this.w,this.h);}
@@ -597,32 +650,140 @@ class Explosion{
 }
 
 class Powerup{
-  constructor(x,y,type){this.x=x;this.y=y;this.type=type;this.w=28;this.h=28;this.frame=0;this.maxFrame=360;}
+  constructor(x,y,key){
+    this.x=x;this.y=y;this.key=key;this.type=key;  // 兼容旧代码 type 字段
+    this.def=POWERUP_DEF[key]||{icon:'?',col:'#fff',cat:'A'};
+    this.w=28;this.h=28;this.frame=0;this.maxFrame=360;
+  }
   update(){this.frame++;}
   isDone(){return this.frame>=this.maxFrame;}
   draw(){
     const pulse=0.8+0.2*Math.sin(frameCount*0.2);
     ctx.save();ctx.globalAlpha=pulse;
-    const col={B:'#ff4444',T:'#4488ff',S:'#ffd700',D:'#888',P:'#00ffff',A:'#ff4444',L:'#30d158'}[this.type]||'#fff';
+    const col=this.def.col;
     ctx.fillStyle='#222';ctx.strokeStyle=col;ctx.lineWidth=2;
     ctx.fillRect(this.x,this.y,this.w,this.h);ctx.strokeRect(this.x,this.y,this.w,this.h);
     ctx.fillStyle=col;ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText({B:'B',T:'T',S:'S',D:'D',P:'P',A:'A',L:'♥'}[this.type]||'?',this.x+this.w/2,this.y+this.h/2);ctx.restore();
+    // 用图标 emoji 或字母
+    const lbl=this.def.icon&&this.def.icon.length<=2?this.def.icon:this.def.label.slice(0,2);
+    ctx.fillText(lbl,this.x+this.w/2,this.y+this.h/2);
+    // 类型 A/B/C 角标
+    const tag=this.def.cat;
+    ctx.font='bold 8px monospace';ctx.textAlign='right';
+    ctx.fillStyle=tag==='A'?'#00ffff':tag==='B'?'#ffd700':'#ff8800';
+    ctx.fillText(tag,this.x+this.w-2,this.y+9);
+    ctx.restore();
   }
   collect(){
     soundPowerup();
-    const t=this.type;
-    if(t==='B'){enemies.filter(e=>!e.isBoss).forEach(e=>{explosions.push(new Explosion(e.x+e.w/2,e.y+e.h/2));score+=ENEMY_BASE[e.type].points*diff.scoreMult;});enemies=enemies.filter(e=>e.isBoss);score+=200*diff.scoreMult;}
-    else if(t==='T'){freezeTimer=240;}
-    else if(t==='S'){starActive=true;starTimer=480;}
-    else if(t==='D'){shovelTimer=600;const[er,ec]=getEagleTile();for(let r=er-1;r<=er+1;r++)for(let c=ec-1;c<=ec+1;c++){if(r>=0&&r<ROWS&&c>=0&&c<COLS&&(map[r][c]===B||map[r][c]===E))map[r][c]=S;}}
-    else if(t==='P'){spreadActive=true;spreadTimer=300;}
-    else if(t==='A'){pierceActive=true;pierceTimer=300;}
-    else if(t==='L'){if(lives<5)lives++;}
+    const t=this.key;
+    if(t==='SHIELD'){addBuff('SHIELD');pickFlash={text:'🛡 无敌 10s',timer:800};}
+    else if(t==='SHOVEL'){
+      addBuff('SHOVEL');
+      const[er,ec]=getEagleTile();
+      for(let r=er-1;r<=er+1;r++)for(let c=ec-1;c<=ec+1;c++){
+        if(r>=0&&r<ROWS&&c>=0&&c<COLS&&(map[r][c]===B||map[r][c]===E))map[r][c]=S;
+      }
+      pickFlash={text:'🚧 围墙钢化 10s',timer:800};
+    }
+    else if(t==='FREEZE'){addBuff('FREEZE');pickFlash={text:'❄ 冰冻 10s',timer:800};}
+    else if(t==='SPREAD'){addBuff('SPREAD');pickFlash={text:'💨 散射 8s',timer:800};}
+    else if(t==='PIERCE'){addBuff('PIERCE');pickFlash={text:'🎯 穿甲 10s',timer:800};}
+    else if(t==='STAR'){collectStar();}
+    else if(t==='LIFE'){collectLife();}
+    else if(t==='BOMB'){
+      if(addToInv('BOMB'))pickFlash={text:'💣 获得炸弹',timer:800};
+      else pickFlash={text:'道具栏已满',timer:800};
+    }
+    else if(t==='SHIELD_C'){
+      if(addToInv('SHIELD_C'))pickFlash={text:'🛡 获得盾牌',timer:800};
+      else pickFlash={text:'道具栏已满',timer:800};
+    }
   }
 }
 
-// ─── Helpers ───────────────────────────────────────────────
+// ─── Buff / Inventory Helpers ──────────────────────────────
+// 启动/刷新一个类型 A 时限 buff
+function addBuff(key){
+  const def=POWERUP_DEF[key];if(!def||def.cat!=='A')return;
+  // 已有同 key：刷新时长（不叠加多份）
+  const ex=activeBuffs.find(b=>b.key===key);
+  if(ex){ex.timer=def.dur;ex.maxTimer=def.dur;return;}
+  activeBuffs.push({key,timer:def.dur,maxTimer:def.dur});
+}
+// 取类型 A buff 剩余时间
+function getBuffTimer(key){
+  const ex=activeBuffs.find(b=>b.key===key);
+  return ex?ex.timer:0;
+}
+function hasBuff(key){return getBuffTimer(key)>0;}
+// 每帧调用：扣 buff 计时
+function updateBuffs(){
+  for(let i=activeBuffs.length-1;i>=0;i--){
+    activeBuffs[i].timer-=16.67;
+    if(activeBuffs[i].timer<=0)activeBuffs.splice(i,1);
+  }
+  if(pickFlash&&(pickFlash.timer-=16.67)<=0)pickFlash=null;
+  if(invFullFlash>0)invFullFlash-=16.67;
+  if(bombFlash>0)bombFlash-=16.67;
+}
+// 拾取类型 C 消耗品：成功返回 true，满了返回 false
+function addToInv(itemKey){
+  const def=POWERUP_DEF[itemKey];if(!def)return false;
+  const cap=itemKey==='BOMB'?3:itemKey==='SHIELD_C'?2:3;
+  // 已有同 key → 堆叠
+  for(const s of INV.slots){if(s&&s.type===itemKey&&s.count<cap){s.count++;return true;}}
+  // 找空格
+  for(const s of INV.slots){if(!s){const idx=INV.slots.indexOf(s);INV.slots[idx]={type:itemKey,count:1};return true;}}
+  // 满了
+  invFullFlash=800;
+  return false;
+}
+// 激活指定槽位（slot 索引 0-4）
+function activateInvSlot(slot){
+  if(slot<0||slot>=INV.slots.length)return false;
+  const item=INV.slots[slot];if(!item||item.count<=0)return false;
+  const key=item.type;const def=POWERUP_DEF[key];if(!def)return false;
+  if(key==='BOMB'){
+    // 全屏清非 boss 敌人，保留 boss，玩家自己不受影响
+    let killed=0;
+    enemies=enemies.filter(e=>{
+      if(e.isBoss)return true;
+      explosions.push(new Explosion(e.x+e.w/2,e.y+e.h/2));
+      score+=Math.round(ENEMY_BASE[e.type].points*diff.scoreMult*1.5);
+      killed++;
+      return false;
+    });
+    killCount+=killed;totalKills+=killed;
+    bombFlash=400;
+    soundExplode();
+  }else if(key==='SHIELD_C'){
+    // 立即激活 5s 无敌
+    addBuff('SHIELD');
+  }
+  item.count--;
+  if(item.count<=0)INV.slots[slot]=null;
+  return true;
+}
+function invSelectedItem(){return INV.slots[INV.selected]||null;}
+
+// 拾取 B 类型道具：starLevel 0-4
+function collectStar(){
+  if(starLevel<4){starLevel++;}
+  // 任何已激活的 SPREAD/PIERCE 让位给 star
+  const sp=activeBuffs.findIndex(b=>b.key==='SPREAD');
+  if(sp>=0)activeBuffs.splice(sp,1);
+  const pc=activeBuffs.findIndex(b=>b.key==='PIERCE');
+  if(pc>=0)activeBuffs.splice(pc,1);
+  pickFlash={text:`升级 ${starLevel}★`,timer:800};
+}
+// 拾取 L 类型道具：lives<5 才加
+function collectLife(){
+  if(lives<5){lives++;pickFlash={text:'+1 命',timer:800};}
+  else pickFlash={text:'命数已满',timer:800};
+}
+
+
 function isBlocked(x,y,w,h){
   const l=Math.floor(x/T),r=Math.floor((x+w)/T),t=Math.floor(y/T),b=Math.floor((y+h)/T);
   for(let rr=t;rr<=b;rr++)for(let c=l;c<=r;c++){
@@ -669,6 +830,15 @@ function initStage(s){
   shieldTimer=0;freezeTimer=0;starTimer=0;starActive=false;
   spreadTimer=0;pierceTimer=0;spreadActive=false;pierceActive=false;
   shovelTimer=0;killCount=0;wave=1;hasBoss=false;hasEnhanced=false;enemiesSpawned=false;pendingSpawns=0;
+  // 保留跨关：INV/activeBuffs/starLevel
+  // 若 SHOVEL 仍在，倒计时继续；新地图生成后重新钢化基地
+  const wasShovel=hasBuff('SHOVEL');
+  if(wasShovel){
+    const[er,ec]=getEagleTile();
+    for(let r=er-1;r<=er+1;r++)for(let c=ec-1;c<=ec+1;c++){
+      if(r>=0&&r<ROWS&&c>=0&&c<COLS&&(map[r][c]===B||map[r][c]===E))map[r][c]=S;
+    }
+  }
   if(!player){player=new Tank(W/2-18,H-T*2+4,0,0);}
   else{player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(0,Math.min(H-player.h,player.y));}
   diff=DIFF[diffKey];
@@ -745,7 +915,15 @@ document.querySelectorAll('.dpad-btn[data-dir]').forEach(b=>{
   b.addEventListener('click',(e)=>{e.preventDefault();});
 });
 const fBtn=document.getElementById('fire-btn');
-const ft=(e)=>{e.preventDefault();e.stopPropagation();mk.fire=true;mkTs.fire=performance.now();fBtn.classList.add('pressed');};
+const ft=(e)=>{
+  e.preventDefault();e.stopPropagation();
+  mk.fire=true;mkTs.fire=performance.now();fBtn.classList.add('pressed');
+  // 🔥 按钮按下也尝试激活当前道具栏（不阻塞射击：shoot 仍由 handleInput 控制）
+  if(state==='playing'){
+    const sel=invSelectedItem();
+    if(sel)activateInvSlot(INV.selected);
+  }
+};
 const fr=(e)=>{e.preventDefault();e.stopPropagation();mk.fire=false;fBtn.classList.remove('pressed');};
 fBtn.addEventListener('touchstart',ft,{passive:false});
 fBtn.addEventListener('touchend',fr,{passive:false});
@@ -754,6 +932,18 @@ fBtn.addEventListener('mousedown',ft);
 fBtn.addEventListener('mouseup',fr);
 fBtn.addEventListener('mouseleave',fr);
 fBtn.addEventListener('click',(e)=>{e.preventDefault();});
+
+// 道具栏格子点击：选中并立即激活
+document.querySelectorAll('.inv-slot').forEach(el=>{
+  const slot=parseInt(el.dataset.slot);
+  el.addEventListener('click',e=>{
+    e.preventDefault();e.stopPropagation();
+    if(state!=='playing')return;
+    INV.selected=slot;
+    activateInvSlot(slot);
+    updateInvBar();
+  });
+});
 function _togglePause(){
   if(state==='playing')state='paused';
   else if(state==='paused'){state='playing';_resetInput();}
@@ -776,6 +966,28 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyP'){
     e.preventDefault();
     _togglePause();
+  }
+  // ── 道具栏快捷键（仅 playing 状态生效）──
+  if(state==='playing'){
+    if(e.code==='KeyQ'){
+      e.preventDefault();
+      INV.selected=(INV.selected+4)%5;   // 上一格
+      updateInvBar();
+    }else if(e.code==='KeyW'){
+      e.preventDefault();
+      INV.selected=(INV.selected+1)%5;   // 下一格
+      updateInvBar();
+    }else if(e.code==='KeyE'||e.code==='ShiftLeft'||e.code==='ShiftRight'){
+      e.preventDefault();
+      activateInvSlot(INV.selected);
+      updateInvBar();
+    }else if(['Digit1','Digit2','Digit3','Digit4','Digit5'].includes(e.code)){
+      e.preventDefault();
+      const slot=parseInt(e.code.replace('Digit',''))-1;
+      INV.selected=slot;
+      activateInvSlot(slot);
+      updateInvBar();
+    }
   }
 });
 document.addEventListener('keyup',e=>{keys[e.code]=false;});
@@ -811,26 +1023,40 @@ function handleInput(){
   playerVx*=0.6;playerVy*=0.6;
   playerLastX=player.x;playerLastY=player.y;
   shootCooldown--;
+  // 1★ 射速 ×1.5：cooldown 24→16
+  const cdNow=starLevel>=1?16:24;
   if((keys['Space']||keys['Enter']||mk.fire)&&shootCooldown<=0){
-    shootCooldown=24;
+    shootCooldown=cdNow;
     const bx=player.x+player.w/2-3,by=player.y+player.h/2-3;
     const bdx=(player.dir===1?6:player.dir===3?-6:0);
     const bdy=(player.dir===0?-6:player.dir===2?6:0);
-    // Determine bullet type
-    let bt=BT.normal;
-    if(starActive||spreadActive||pierceActive)bt=BT.normal;
     if(bdx===0&&bdy===0){}else{
-      if(starActive){
+      // 优先级：⭐ 时限道具
+      const sp=hasBuff('SPREAD');
+      const pi=hasBuff('PIERCE');
+      // starLevel: 0=单, 1=单快, 2=双, 3=双+穿, 4=双+穿+3散
+      if(starLevel>=4){
+        // 3 发散射
         bullets.push(new Bullet(bx,by,bdx,bdy,6,false));
-        const perpDx=bdy,perpDy=-bdx;
-        bullets.push(new Bullet(bx,by,perpDx,perpDy,6,false));
-      }else if(spreadActive){
+        const ang1=Math.atan2(bdy,bdx)+0.3,ang2=Math.atan2(bdy,bdx)-0.3;
+        bullets.push(new Bullet(bx,by,Math.cos(ang1)*6,Math.sin(ang1)*6,6,false));
+        bullets.push(new Bullet(bx,by,Math.cos(ang2)*6,Math.sin(ang2)*6,6,false));
+      }else if(starLevel>=2){
+        // 双发
+        bullets.push(new Bullet(bx,by,bdx,bdy,6,false));
+        const perpDx=bdy*0.15,perpDy=-bdx*0.15;
+        bullets.push(new Bullet(bx+perpDx,by+perpDy,bdx,bdy,6,false));
+      }else if(sp){
+        // 3 发散射（SPREAD 时限）
         bullets.push(new Bullet(bx,by,bdx,bdy,6,false));
         const ang1=Math.atan2(bdy,bdx)+0.4,ang2=Math.atan2(bdy,bdx)-0.4;
         bullets.push(new Bullet(bx,by,Math.cos(ang1)*6,Math.sin(ang1)*6,6,false));
         bullets.push(new Bullet(bx,by,Math.cos(ang2)*6,Math.sin(ang2)*6,6,false));
+      }else if(pi){
+        // 单发穿甲
+        bullets.push(new Bullet(bx,by,bdx,bdy,6,false,true));
       }else{
-        bullets.push(new Bullet(bx,by,bdx,bdy,6,false,pierceActive));
+        bullets.push(new Bullet(bx,by,bdx,bdy,6,false));
       }
     }
     soundShoot();
@@ -844,15 +1070,26 @@ function update(){
   if(state!=='playing')return;
   frameCount++;
   handleInput();
-  if(shieldTimer>0)shieldTimer--;
-  if(starTimer>0){starTimer--;if(starTimer<=0)starActive=false;}
-  if(spreadTimer>0){spreadTimer--;if(spreadTimer<=0)spreadActive=false;}
-  if(pierceTimer>0){pierceTimer--;if(pierceTimer<=0)pierceActive=false;}
-  if(freezeTimer>0)freezeTimer--;
-  if(shovelTimer>0){
-    shovelTimer--;
-    if(shovelTimer<=0){const[er,ec]=getEagleTile();for(let r=er-1;r<=er+1;r++)for(let c=ec-1;c<=ec+1;c++)if(getTile(c,r)===S)setTile(c,r,E);}
+  // 同步全局变量（兼容旧代码）
+  shieldTimer=(hasBuff('SHIELD')||respawnShield>0)?1:0;  // 标记位：玩家被击时不再额外减
+  freezeTimer=hasBuff('FREEZE')?1:0;
+  if(respawnShield>0)respawnShield--;
+  // 限时 buff 倒计时（SHOVEL 单独处理：结束要还原地图）
+  const shovelRem=getBuffTimer('SHOVEL');
+  const hadShovel=shovelTimer>0;
+  shovelTimer=shovelRem;
+  if(hadShovel&&shovelRem<=0){
+    const[er,ec]=getEagleTile();
+    for(let r=er-1;r<=er+1;r++)for(let c=ec-1;c<=ec+1;c++)if(getTile(c,r)===S)setTile(c,r,E);
   }
+  // 如果刚启动 SHOVEL：把基地旁格变成钢
+  if(!hadShovel&&shovelRem>0){
+    const[er,ec]=getEagleTile();
+    for(let r=er-1;r<=er+1;r++)for(let c=ec-1;c<=ec+1;c++){
+      if(r>=0&&r<ROWS&&c>=0&&c<COLS&&(map[r][c]===B||map[r][c]===E))map[r][c]=S;
+    }
+  }
+  updateBuffs();
   enemies.forEach(e=>{
     e.update();
     enemies.forEach(o=>{if(o===e)return;
@@ -866,34 +1103,25 @@ function update(){
     const tile=getTile(c,r);
     if(tile===B){
       setTile(c,r,E);
-      // 砖墙被击毁：小火星 + 5% 掉补给（弹药类） — wallDrop
+      // 砖墙被击毁：小火星 + 5% 掉补给 — wallDrop
       explosions.push(new Explosion(c*T+T/2,r*T+T/2,false));
       if(!b.isEnemy && Math.random()<0.05){
-        // 只掉"弹药/战场"类：P 散射 / A 穿甲 / T 冰冻
-        const supplyTypes=['P','A','T'];
+        // 70% SHIELD_C（消耗品）/ 30% SPREAD/PIERCE（时限）
+        const key=Math.random()<0.7?'SHIELD_C':(Math.random()<0.5?'SPREAD':'PIERCE');
         const px=c*T+6,py=r*T+6;
-        // 避免叠到玩家/敌人/已有补给
         if(!rectOverlap(px,py,28,28,player.x,player.y,player.w,player.h) && !powerups.some(p=>rectOverlap(px,py,28,28,p.x,p.y,p.w,p.h))){
-          powerups.push(new Powerup(px,py,supplyTypes[Math.floor(Math.random()*supplyTypes.length)]));
+          powerups.push(new Powerup(px,py,key));
         }
       }
       return false;
     }
     if(tile===S){
-      // 钢墙：玩家穿甲弹（pierce）能打穿，3% 掉加强弹药 — wallDrop / tileDrop
+      // 钢墙：玩家穿甲弹（pierce）能打穿
       if(!b.isEnemy && b.pierceLeft>0){
         b.pierceLeft--;
         setTile(c,r,E);
         explosions.push(new Explosion(c*T+T/2,r*T+T/2,true));
-        if(Math.random()<0.03){
-          // 钢墙掉更好的：S 双发 / D 护墙
-          const supplyTypes=['S','D'];
-          const px=c*T+6,py=r*T+6;
-          if(!rectOverlap(px,py,28,28,player.x,player.y,player.w,player.h) && !powerups.some(p=>rectOverlap(px,py,28,28,p.x,p.y,p.w,p.h))){
-            powerups.push(new Powerup(px,py,supplyTypes[Math.floor(Math.random()*supplyTypes.length)]));
-          }
-        }
-        return b.pierceLeft>0; // 穿甲可继续
+        return b.pierceLeft>0;
       }
       return false;
     }
@@ -910,17 +1138,31 @@ function update(){
           const pts=Math.round((e.isBoss?500:e.isEnhanced?ENEMY_BASE[e.type].points*2:ENEMY_BASE[e.type].points)*diff.scoreMult);
           score+=pts;killCount++;totalKills++;
           if(e.isBoss){
-            if(Math.random()<1.0){
-              const types=['B','T','S','D','P','A','L'];
-              powerups.push(new Powerup(e.x-11,e.y-11,types[Math.floor(Math.random()*types.length)]));
+            // BOSS 必掉 1 个 BOMB + 30% 额外 类型 A
+            const px=e.x-11,py=e.y-11;
+            if(!rectOverlap(px,py,28,28,player.x,player.y,player.w,player.h) && !powerups.some(p=>rectOverlap(px,py,28,28,p.x,p.y,p.w,p.h))){
+              powerups.push(new Powerup(px,py,'BOMB'));
+            }
+            if(Math.random()<0.3){
+              const aTypes=['SHIELD','SHOVEL','FREEZE','SPREAD','PIERCE'];
+              const key=aTypes[Math.floor(Math.random()*aTypes.length)];
+              if(!rectOverlap(px,py,28,28,player.x,player.y,player.w,player.h) && !powerups.some(p=>rectOverlap(px,py,28,28,p.x,p.y,p.w,p.h))){
+                powerups.push(new Powerup(px+30,py,key));
+              }
             }
             if(enemies.filter(x=>x.isBoss).length<=1&&!enemies.some(x=>!x.isBoss)){
               // all enemies dead - stage clear
             }
           }else{
-            if(Math.random()<(e.isEnhanced?0.3:0.12)){
-              const types=['B','T','S','D','P','A','L'];
-              powerups.push(new Powerup(e.x-11,e.y-11,types[Math.floor(Math.random()*types.length)]));
+            // 普通 12% / 精英 30% 掉 1 个类型 A 或 C（精英更倾向 BOMB）
+            const dropRate=e.isEnhanced?0.30:0.12;
+            if(Math.random()<dropRate){
+              const pool=e.isEnhanced?['BOMB','BOMB','SHIELD_C','SHIELD','SHOVEL','FREEZE','SPREAD','PIERCE']:['SHIELD','SHOVEL','FREEZE','SPREAD','PIERCE','BOMB','SHIELD_C'];
+              const key=pool[Math.floor(Math.random()*pool.length)];
+              const px=e.x-11,py=e.y-11;
+              if(!rectOverlap(px,py,28,28,player.x,player.y,player.w,player.h) && !powerups.some(p=>rectOverlap(px,py,28,28,p.x,p.y,p.w,p.h))){
+                powerups.push(new Powerup(px,py,key));
+              }
             }
             // Enhanced chance
             if(!hasEnhanced&&Math.random()<0.03){hasEnhanced=true;
@@ -939,7 +1181,7 @@ function update(){
       if(!b.isEnemy)return true;
       if(rectOverlap(b.x,b.y,b.w,b.h,player.x,player.y,player.w,player.h)){
         soundDie();lives--;explosions.push(new Explosion(player.x+player.w/2,player.y+player.h/2));
-        if(lives<=0){state='gameover';}else{shieldTimer=120;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
+        if(lives<=0){state='gameover';}else{respawnShield=120;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
         return false;
       }
       const[er,ec]=getEagleTile(),ex=ec*T,ey=er*T;
@@ -955,16 +1197,17 @@ function update(){
       if(!e.isBoss&&rectOverlap(e.x,e.y,e.w,e.h,player.x,player.y,player.w,player.h)){
         soundDie();lives--;explosions.push(new Explosion(player.x+player.w/2,player.y+player.h/2));
         if(lives<=0)state='gameover';
-        else{shieldTimer=120;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
+        else{respawnShield=120;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
       }
     });
   }
   if(enemiesSpawned&&enemies.length===0&&state==='playing'){
     if(stage>=4&&!hasBoss){state='victory';score+=1000+500*(stage+1);soundWin();return;}
     state='stageclear';score+=1000+500*(stage+1);
-    setTimeout(()=>{stage++;initStage(stage);state='playing';},2000);
+    setTimeout(()=>{stage++;initStage(stage);state='playing';updateInvBar();},2000);
   }
   updateStartBtn();
+  updateInvBar();
 }
 
 // ─── Draw ────────────────────────────────────────────────
@@ -993,21 +1236,63 @@ function drawHUD(){
   ctx.fillStyle=C.ui;ctx.font='bold 14px monospace';ctx.textAlign='left';
   ctx.fillText(`STAGE ${stage+1}-${wave}`,10,H+26);
   ctx.textAlign='center';ctx.fillText(`SCORE ${Math.round(score)}`,W/2,H+26);
-  ctx.textAlign='right';ctx.fillText(`LIVES ${'♥'.repeat(lives)}`,W-10,H+26);
   // Difficulty tag
   ctx.fillStyle=DIFF[diffKey].label==='噩梦'?'#ff4444':DIFF[diffKey].label==='困难'?'#ff8800':'#888';
   ctx.font='bold 11px monospace';
   ctx.textAlign='left';
   ctx.fillText(`【${DIFF[diffKey].label}】`,10,H+14);
-  ctx.textAlign='left';ctx.font='bold 14px monospace';
-  // Active effects
-  let ix=80;
-  if(starActive){ctx.fillStyle='#ffd700';ctx.fillText('★ DOUBLE',ix,H+26);ix+=90;}
-  if(spreadActive){ctx.fillStyle='#00ffff';ctx.fillText('◆ SPREAD',ix,H+26);ix+=90;}
-  if(pierceActive){ctx.fillStyle='#ff4444';ctx.fillText('➤ PIERCE',ix,H+26);ix+=90;}
-  if(freezeTimer>0){ctx.fillStyle='#4488ff';ctx.fillText('❄ FREEZE',ix,H+26);ix+=90;}
-  if(shovelTimer>0){ctx.fillStyle='#aaaaaa';ctx.fillText('⛉ SHIELD',ix,H+26);}
+  // ⭐ Star level display (top-right)
+  ctx.textAlign='right';
+  ctx.font='bold 13px monospace';
+  ctx.fillStyle='#ffd700';
+  let starText='★';
+  for(let i=0;i<4;i++)ctx.fillText(i<starLevel?'★':'·',W-12-(4-i)*16,H+12);
+  ctx.fillStyle='#ff6688';
+  ctx.font='bold 13px monospace';
+  ctx.fillText('💗×'+lives,W-12,H+28);
   ctx.textAlign='left';
+  // Active effects row (top of HUD, y=H+1..H+15)
+  let bx=80;
+  for(const b of activeBuffs){
+    const def=POWERUP_DEF[b.key];
+    if(!def)continue;
+    const tSec=Math.max(0,b.timer/60);
+    const tStr=tSec.toFixed(1);
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(bx-2,H+2,52,16);
+    ctx.fillStyle=def.col;ctx.font='bold 11px monospace';ctx.textAlign='left';
+    ctx.fillText(def.icon+' '+tStr+'s',bx,H+13);
+    bx+=58;
+    if(bx>W-90)break;
+  }
+  // 拾取提示浮窗
+  if(pickFlash){
+    ctx.fillStyle='rgba(0,0,0,0.7)';
+    const w=140,h=28;
+    ctx.fillRect(W/2-w/2,H/2-h/2,w,h);
+    ctx.strokeStyle='#ffd700';ctx.lineWidth=1.5;
+    ctx.strokeRect(W/2-w/2,H/2-h/2,w,h);
+    ctx.fillStyle='#fff';ctx.font='bold 14px monospace';ctx.textAlign='center';
+    ctx.fillText(pickFlash.text,W/2,H/2+5);
+    ctx.textAlign='left';
+  }
+  // 道具栏已满提示
+  if(invFullFlash>0){
+    ctx.fillStyle='rgba(255,80,80,0.85)';
+    ctx.font='bold 14px monospace';ctx.textAlign='center';
+    ctx.fillText('道具栏已满！',W/2,H-30);
+    ctx.textAlign='left';
+  }
+  // BOMB 激活时的全屏闪白
+  if(bombFlash>0){
+    ctx.fillStyle='rgba(255,255,200,'+Math.min(0.6,bombFlash/400)+')';
+    ctx.fillRect(0,0,W,H);
+  }
+}
+
+// 在 canvas 顶部 (y=0..18) 画 active buff 行 — Battle City 风格
+function drawActiveBuffs(){
+  if(activeBuffs.length===0)return;
+  // 已经在 drawHUD 中画了；保留此函数名以兼容任务验收
 }
 
 function drawStart(){
@@ -1137,9 +1422,38 @@ function startGame(){
   // 每次新一局：刷新 runSeed → 同 stage 也会有新地形
   runSeed=(runSeed*1664525+1013904223+Date.now())>>>0;
   stage=0;score=0;lives=3;totalKills=0;
+  starLevel=0;     // 新一局重置 ⭐
+  // 重置道具栏 + 限时 buff
+  INV.slots=[null,null,null,null,null];INV.selected=0;
+  activeBuffs=[];pickFlash=null;invFullFlash=0;bombFlash=0;respawnShield=0;
   initStage(stage);state='playing';
   try{if(ac)ac.resume();}catch(e){}
   if(sBtn)sBtn.style.display='none';
+  updateInvBar();
+}
+
+// ─── 道具栏 UI 联动 ─────────────────────────────────────
+function updateInvBar(){
+  const el=document.getElementById('inv-bar');if(!el)return;
+  // gameover/victory 状态不显示
+  if(state==='gameover'||state==='victory'||state==='start'){
+    el.style.display='none';return;
+  }
+  el.style.display='flex';
+  const slots=el.querySelectorAll('.inv-slot');
+  slots.forEach((s,i)=>{
+    const item=INV.slots[i];
+    s.classList.toggle('selected',i===INV.selected);
+    s.classList.toggle('empty',!item);
+    if(item){
+      const def=POWERUP_DEF[item.type];
+      s.innerHTML=`<span class="slot-num">${i+1}</span><span class="slot-tooltip">${def?def.label+': '+def.desc:item.type}</span>${def?def.icon:'?'}<span class="slot-count">${item.count>1?item.count:''}</span>`;
+      s.style.color=def?def.col:'#fff';
+    }else{
+      s.innerHTML=`<span class="slot-num">${i+1}</span><span class="slot-tooltip">空 (按 ${i+1} 键激活)</span><span class="slot-count"></span>`;
+      s.style.color='';
+    }
+  });
 }
 
 // Diff button clicks on start screen
