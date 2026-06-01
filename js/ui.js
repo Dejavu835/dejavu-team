@@ -64,6 +64,9 @@ const UI = (() => {
         onBannerAgain();
       }
     });
+
+    // 初始隐藏
+    hideBanner();
   }
 
   function bindSeg(container, attr, cb) {
