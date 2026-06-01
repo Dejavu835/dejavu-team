@@ -62,11 +62,40 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
   canvas{max-height:calc(100vh - 240px)}
 }
 @media(orientation:portrait) and (max-width:540px){#wrapper{justify-content:flex-start;padding-top:10px}canvas{max-height:calc(100vh - 260px)}}
+/* ─── Settings Modal + Gear Button ────────────────── */
+#settings-modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:100}
+#settings-modal.show{display:flex}
+.modal-card{background:#1a1a1a;border:1.5px solid #444;border-radius:10px;padding:20px 24px;min-width:280px;color:#eee;font-family:monospace;box-shadow:0 4px 20px rgba(0,0,0,0.6)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;font-size:16px;margin-bottom:14px;color:#f5c400}
+.modal-close{background:none;border:none;color:#888;font-size:22px;cursor:pointer;padding:0 6px;line-height:1}
+.modal-row{display:flex;align-items:center;justify-content:space-between;margin:10px 0;font-size:12px}
+.modal-row label{color:#aaa}
+.seg{display:flex;gap:4px}
+.seg button,.modal-row button.toggle{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.2);border-radius:5px;padding:5px 10px;color:#ccc;font-size:11px;font-family:monospace;cursor:pointer;transition:all 0.1s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-appearance:none}
+.seg button.active,.modal-row button.toggle.on{background:rgba(48,209,88,0.25);border-color:#30d158;color:#30d158}
+#settings-btn{position:absolute;top:8px;right:10px;width:36px;height:36px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.25);border-radius:50%;font-size:18px;cursor:pointer;color:#f5c400;touch-action:manipulation;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;z-index:5;-webkit-appearance:none;padding:0}
+#settings-btn:hover{background:rgba(255,255,255,0.15)}
+#settings-btn:active{transform:scale(0.92)}
+#settings-btn.hidden{display:none}
+/* ─── D-Pad Fallback (十字) ─────────────────────────── */
+#dpad-fallback{display:none;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:2px;width:130px;height:130px;flex-shrink:0;touch-action:none;user-select:none;-webkit-user-select:none}
+#dpad-fallback .dpad-btn{background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.18);border-radius:5px;color:rgba(255,255,255,0.55);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-appearance:none;font-family:monospace;padding:0;line-height:1}
+#dpad-fallback .dpad-btn:active,#dpad-fallback .dpad-btn.pressed{background:rgba(120,200,255,0.25);border-color:rgba(120,200,255,0.6);color:#78c8ff}
+#dpad-fallback .dpad-center{background:rgba(255,255,255,0.03);border:1.5px dashed rgba(255,255,255,0.15);cursor:default;font-size:9px;color:rgba(255,255,255,0.3);pointer-events:none;letter-spacing:0.08em}
+@media(min-width:541px){
+  #dpad-fallback{width:120px;height:120px;grid-template-columns:repeat(3,38px);grid-template-rows:repeat(3,38px)}
+}
+@media(max-width:540px),(max-height:600px){
+  #dpad-fallback{width:110px;height:110px;grid-template-columns:repeat(3,35px);grid-template-rows:repeat(3,35px)}
+}
 </style>
 </head>
 <body>
 <div id="wrapper">
+<div id="canvas-wrap" style="position:relative;display:flex;align-items:center;justify-content:center">
 <canvas id="game"></canvas>
+<button id="settings-btn" title="设置">⚙</button>
+</div>
 <div id="inv-bar">
   <span id="inv-label">INV</span>
   <div class="inv-slot empty" data-slot="0"><span class="slot-num">1</span><span class="slot-tooltip">空</span><span class="slot-count"></span></div>
@@ -76,9 +105,18 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
   <div class="inv-slot empty" data-slot="4"><span class="slot-num">5</span><span class="slot-tooltip">空</span><span class="slot-count"></span></div>
 </div>
 <div id="controls">
-  <div id="joystick">
-    <div class="joystick-base"></div>
-    <div class="joystick-knob"></div>
+  <div id="joystick-wrap" style="position:relative;width:130px;height:130px;flex-shrink:0">
+    <div id="joystick">
+      <div class="joystick-base"></div>
+      <div class="joystick-knob"></div>
+    </div>
+    <div id="dpad-fallback" style="position:absolute;top:0;left:0">
+      <div></div><button class="dpad-btn" data-dir="up" type="button">▲</button><div></div>
+      <button class="dpad-btn" data-dir="left" type="button">◀</button>
+      <div class="dpad-btn dpad-center"><span class="dpad-label">MOVE</span></div>
+      <button class="dpad-btn" data-dir="right" type="button">▶</button>
+      <div></div><button class="dpad-btn" data-dir="down" type="button">▼</button><div></div>
+    </div>
   </div>
   <div id="fire-zone">
     <button id="start-btn">▶ START<br>开始</button>
@@ -87,6 +125,35 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
     <span id="pause-label" style="display:none">P 暂停</span>
   </div>
 </div>
+</div>
+<!-- ─── Settings Modal (必须放在 <script> 之前) ── -->
+<div id="settings-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span>⚙ 设置</span>
+      <button class="modal-close" type="button">×</button>
+    </div>
+    <div class="modal-row">
+      <label>摇杆样式</label>
+      <div class="seg">
+        <button data-style="round" type="button">圆形</button>
+        <button data-style="cross" type="button">十字</button>
+      </div>
+    </div>
+    <div class="modal-row">
+      <label>声音</label>
+      <button class="toggle" data-key="soundOn" type="button">开</button>
+    </div>
+    <div class="modal-row">
+      <label>难度</label>
+      <div class="seg">
+        <button data-diff="easy" type="button">简单</button>
+        <button data-diff="normal" type="button">普通</button>
+        <button data-diff="hard" type="button">困难</button>
+        <button data-diff="nightmare" type="button">噩梦</button>
+      </div>
+    </div>
+  </div>
 </div>
 <script>
 const canvas=document.getElementById('game');
@@ -272,6 +339,72 @@ let diffKey='normal',diff={},killCount=0,totalKills=0;
 let hasBoss=false,hasEnhanced=false,victory=false,enemiesSpawned=false,pendingSpawns=0;
 let soundOn=true;
 let highScores=JSON.parse(localStorage.getItem('tankBattleScores')||'[]');
+
+// ─── Settings (localStorage 持久化) ──────────────────────
+// settings.joystickStyle: 'round' 圆形遥杆（默认）| 'cross' 十字 D-Pad
+// settings.soundOn: 声音开关
+// settings.diffKey: 难度 (easy/normal/hard/nightmare)
+const SETTINGS_KEY='tank_v3_settings';
+const settings={
+  joystickStyle:'round',  // 'round' | 'cross'
+  soundOn:true,
+  diffKey:'normal',
+};
+function saveSettings(){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}catch(e){}}
+function loadSettings(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SETTINGS_KEY));
+    if(s)Object.assign(settings,s);
+  }catch(e){}
+  if(!['round','cross'].includes(settings.joystickStyle))settings.joystickStyle='round';
+  if(typeof settings.soundOn!=='boolean')settings.soundOn=true;
+  if(!['easy','normal','hard','nightmare'].includes(settings.diffKey))settings.diffKey='normal';
+}
+function applySoundSetting(){soundOn=settings.soundOn;}
+function applyJoystickStyle(){
+  const joyEl=document.getElementById('joystick');
+  const dpadEl=document.getElementById('dpad-fallback');
+  if(settings.joystickStyle==='cross'){
+    if(joyEl)joyEl.style.display='none';
+    if(dpadEl)dpadEl.style.display='grid';
+    // 切换时清掉 joystick 残留状态
+    joy.active=false;joy.activeTouch=null;joy.activePointer=null;
+    joy.dx=0;joy.dy=0;joy.mag=0;
+    if(joy.knob){joy.knob.style.transform='translate(-50%,-50%)';joy.knob.classList.remove('active');}
+    mk.up=mk.down=mk.left=mk.right=false;
+  }else{
+    if(joyEl)joyEl.style.display='block';
+    if(dpadEl)dpadEl.style.display='none';
+    // 切换时清掉 dpad 残留状态
+    document.querySelectorAll('#dpad-fallback .dpad-btn').forEach(b=>b.classList.remove('pressed'));
+    mk.up=mk.down=mk.left=mk.right=false;
+  }
+}
+function updateSettingsUI(){
+  document.querySelectorAll('.seg button[data-style]').forEach(b=>{
+    b.classList.toggle('active',b.dataset.style===settings.joystickStyle);
+  });
+  document.querySelectorAll('.seg button[data-diff]').forEach(b=>{
+    b.classList.toggle('active',b.dataset.diff===settings.diffKey);
+  });
+  const sndBtn=document.querySelector('button.toggle[data-key="soundOn"]');
+  if(sndBtn){sndBtn.classList.toggle('on',settings.soundOn);sndBtn.textContent=settings.soundOn?'开':'关';}
+}
+function openSettings(){
+  const m=document.getElementById('settings-modal');if(!m)return;
+  m.classList.add('show');
+  updateSettingsUI();
+}
+function closeSettings(){
+  const m=document.getElementById('settings-modal');if(!m)return;
+  m.classList.remove('show');
+}
+function updateSettingsBtn(){
+  // 仅在 start / gameover / victory 显示齿轮按钮
+  const btn=document.getElementById('settings-btn');if(!btn)return;
+  const wantShow=(state==='start'||state==='gameover'||state==='victory');
+  btn.classList.toggle('hidden',!wantShow);
+}
 
 // ─── Powerup Categories (3 类道具系统) ─────────────────────
 // 道具类型定义
@@ -1018,6 +1151,103 @@ function initJoystick(){
   joy.el.addEventListener('pointercancel',e=>{if(e.pointerType==='touch')return;if(joy.active&&joy.activePointer===e.pointerId)onEnd(e);});
 }
 initJoystick();
+
+// ─── Settings 初始化（必须在 initJoystick 之后才能 applyJoystickStyle） ──
+loadSettings();
+applySoundSetting();
+applyJoystickStyle();
+updateSettingsBtn();
+updateSettingsUI();
+
+// ─── Settings Button + Modal 事件绑定 ────────────────────
+(function bindSettingsUI(){
+  const settingsBtn=document.getElementById('settings-btn');
+  if(settingsBtn){
+    const open=(e)=>{e.preventDefault();e.stopPropagation();openSettings();};
+    settingsBtn.addEventListener('touchstart',open,{passive:false});
+    settingsBtn.addEventListener('mousedown',open);
+    settingsBtn.addEventListener('click',(e)=>{e.preventDefault();e.stopPropagation();openSettings();});
+  }
+  const closeBtn=document.querySelector('.modal-close');
+  if(closeBtn){
+    closeBtn.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();closeSettings();},{passive:false});
+    closeBtn.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();closeSettings();});
+    closeBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeSettings();});
+  }
+  const modal=document.getElementById('settings-modal');
+  if(modal){
+    modal.addEventListener('click',e=>{if(e.target===modal)closeSettings();});
+  }
+  // 摇杆样式切换
+  document.querySelectorAll('.seg button[data-style]').forEach(btn=>{
+    const handler=(e)=>{
+      e.preventDefault();e.stopPropagation();
+      settings.joystickStyle=btn.dataset.style;
+      saveSettings();
+      applyJoystickStyle();
+      updateSettingsUI();
+    };
+    btn.addEventListener('touchstart',handler,{passive:false});
+    btn.addEventListener('mousedown',handler);
+    btn.addEventListener('click',handler);
+  });
+  // 难度切换
+  document.querySelectorAll('.seg button[data-diff]').forEach(btn=>{
+    const handler=(e)=>{
+      e.preventDefault();e.stopPropagation();
+      settings.diffKey=btn.dataset.diff;
+      diffKey=settings.diffKey;
+      diff=DIFF[diffKey];
+      saveSettings();
+      updateSettingsUI();
+    };
+    btn.addEventListener('touchstart',handler,{passive:false});
+    btn.addEventListener('mousedown',handler);
+    btn.addEventListener('click',handler);
+  });
+  // 声音开关
+  const sndBtn=document.querySelector('button.toggle[data-key="soundOn"]');
+  if(sndBtn){
+    const handler=(e)=>{
+      e.preventDefault();e.stopPropagation();
+      settings.soundOn=!settings.soundOn;
+      soundOn=settings.soundOn;
+      saveSettings();
+      updateSettingsUI();
+    };
+    sndBtn.addEventListener('touchstart',handler,{passive:false});
+    sndBtn.addEventListener('mousedown',handler);
+    sndBtn.addEventListener('click',handler);
+  }
+})();
+
+// ─── D-Pad Fallback 事件绑定（4 方向） ───────────────────
+(function bindDpad(){
+  const dirMap={up:0,right:1,down:2,left:3};
+  const keyMap={up:'up',right:'right',down:'down',left:'left'};
+  document.querySelectorAll('#dpad-fallback .dpad-btn[data-dir]').forEach(btn=>{
+    const dir=btn.dataset.dir;
+    if(!dirMap.hasOwnProperty(dir))return;
+    const mkKey=keyMap[dir];
+    const onPress=(e)=>{
+      e.preventDefault();e.stopPropagation();
+      mk[mkKey]=true;mkTs[mkKey]=performance.now();
+      btn.classList.add('pressed');
+    };
+    const onRelease=(e)=>{
+      if(e)e.preventDefault();
+      mk[mkKey]=false;
+      btn.classList.remove('pressed');
+    };
+    btn.addEventListener('touchstart',onPress,{passive:false});
+    btn.addEventListener('touchend',onRelease,{passive:false});
+    btn.addEventListener('touchcancel',onRelease,{passive:false});
+    btn.addEventListener('mousedown',onPress);
+    btn.addEventListener('mouseup',onRelease);
+    btn.addEventListener('mouseleave',onRelease);
+    btn.addEventListener('click',e=>e.preventDefault());
+  });
+})();
 const fBtn=document.getElementById('fire-btn');
 const ft=(e)=>{
   e.preventDefault();e.stopPropagation();
@@ -1361,6 +1591,7 @@ function update(){
   }
   updateStartBtn();
   updateInvBar();
+  updateSettingsBtn();
 }
 
 // ─── Draw ────────────────────────────────────────────────
