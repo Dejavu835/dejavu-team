@@ -178,190 +178,220 @@ class Tank{
       this.speed=3;this.fireRate=400;this.color=C.player;this.w=36;this.h=36;this.hp=1;
     }
     this.fireCooldown=0;this.enhanced=false;this.enhancedFlash=0;
+    this.stuckFrames=0;this.lastTried=[];this.bfsTick=0;
   }
-  // 子弹闪避：检测来袭子弹，必要时改变方向
+  // 真实子弹闪避:扫描来袭子弹,选垂直方向可走格子
   dodgeBullet(){
     if(this.type<=0||!bullets.length)return false
     const ex=this.x+this.w/2,ey=this.y+this.h/2
-    let best=Infinity,bsx=0,bsy=0
+    let danger=null,bestDist=Infinity,bsx=0,bsy=0
     for(const b of bullets){
       if(b.enemy)continue
       const bcx=b.x+b.w/2,bcy=b.y+b.h/2
-      const dist=Math.abs(bcx-ex)+Math.abs(bcy-ey)
-      if(dist>140)continue
+      const dist=Math.hypot(bcx-ex,bcy-ey)
+      if(dist>250)continue
       const dot=(ex-bcx)*b.sx+(ey-bcy)*b.sy
       if(dot<0)continue
-      if(dist<best){best=dist;bsx=b.sx;bsy=b.sy}
+      // 估计击中时间(粗略),1秒内会击中
+      if(dist<Math.abs(b.sx)+Math.abs(b.sy)&&dist<bestDist){
+        bestDist=dist;bsx=b.sx;bsy=b.sy;danger=b
+      }
     }
-    if(best===Infinity)return false
+    if(!danger)return false
+    // 按难度决定是否真躲(70-95%命中率)
+    const dodgeChance=diffKey==='easy'?0.5:diffKey==='normal'?0.7:diffKey==='hard'?0.85:0.95
+    if(Math.random()>dodgeChance)return false
+    // 选垂直方向不撞墙的格子
     const perpDirs=bsx!==0?[0,2]:[1,3]
-    let bestDir=this.dir,bestScore=Infinity
     for(const d of perpDirs){
       const tdx=d===1?this.speed:d===3?-this.speed:0
       const tdy=d===0?-this.speed:d===2?this.speed:0
       const nx=Math.max(0,Math.min(W-this.w,this.x+tdx))
       const ny=Math.max(0,Math.min(H-this.h,this.y+tdy))
       if(this.collides(nx,ny))continue
-      if(player){
-        const px=player.x+player.w/2,py=player.y+player.h/2
-        const score=Math.abs((nx+this.w/2)-px)+Math.abs((ny+this.h/2)-py)
-        if(score<bestScore){bestScore=score;bestDir=d}
-      }else{bestDir=d;break}
+      this.dir=d
+      this.stuckFrames=0
+      return true
     }
-    if(bestDir!==this.dir){this.dir=bestDir;return true}
     return false
   }
-  // 各类型特殊 AI
+  // 不同类型敌人行为区分
   doTactic(){
-    if(!this.tactic||!player)return
-    const ex=this.x+this.w/2,ey=this.y+this.h/2
-    const px=player.x+player.w/2,py=player.y+player.h/2
-    const dx=px-ex,dy=py-ey,dist=Math.hypot(dx,dy)
+    if(!player)return
     if(this.tactic==='sniper'){
-      // 狙击手：保持中距离(120-200px)，太近后退、远了靠近
-      if(dist<120)this.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?3:1):(dy>0?0:2)
-      else if(dist>200)this.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0)
+      // 狙击手:保持120-200px中距
+      const ex=this.x+this.w/2,ey=this.y+this.h/2
+      const px=player.x+player.w/2,py=player.y+player.h/2
+      const dist=Math.hypot(px-ex,py-ey)
+      if(dist<120){
+        this.dir=Math.abs(px-ex)>Math.abs(py-ey)?(px>ex?3:1):(py>ey?0:2)
+      }else if(dist>200){
+        this.dir=Math.abs(px-ex)>Math.abs(py-ey)?(px>ex?1:3):(py>ey?2:0)
+      }
     }else if(this.tactic==='charger'){
-      // 冲锋者：始终朝玩家方向，遇堵随机
-      if(Math.random()<0.1)this.randomDir()
+      // 冲锋者:10%/帧随机变向,扰乱玩家
+      {if(Math.random()<0.1)this.randomDir()}
     }else if(this.tactic==='heavy'){
-      // 重甲：直行不偏，遇堵才转
-      if(this._stuckFrames==null)this._stuckFrames=0
-      if(!this.collides(this.x,this.y))this._stuckFrames=0
-      else{this._stuckFrames++;if(this._stuckFrames>15){this._stuckFrames=0;this.randomDir()}}
+      // 重甲:堵15帧才转
+      if(this.collides(this.x,this.y)){this._stuckF=(this._stuckF||0)+1;if(this._stuckF>15){this._stuckF=0;this.randomDir()}}
+      else this._stuckF=0
     }
   }
-  update(){
-    if(this.type>0&&freezeTimer>0)return;
-    let dx=0,dy=0;
-    if(this.dir===0)dy=-this.speed;else if(this.dir===2)dy=this.speed;
-    else if(this.dir===1)dx=this.speed;else if(this.dir===3)dx=-this.speed;
-    let nx=Math.max(0,Math.min(W-this.w,this.x+dx));
-    let ny=Math.max(0,Math.min(H-this.h,this.y+dy));
-    if(!this.collides(nx,ny)){this.x=nx;this.y=ny;}
-    else if(!this.collides(nx,this.y)){this.x=nx;}
-    else if(!this.collides(this.x,ny)){this.y=ny;}
-    else{if(this.type>0)this.smartDir();this.x=nx;this.y=ny;}
-    if(this.type>=2&&Math.random()<0.35)this.dodgeBullet();
-    this.doTactic();
-    this.fireCooldown-=16.67;
-    if(this.fireCooldown<=0&&this.type>0){
-      this.fireCooldown=this.fireRate+Math.random()*500;
-      if(player){
-        const px=player.x+player.w/2,py=player.y+player.h/2;
-        const ex=this.x+this.w/2,ey=this.y+this.h/2;
-        let lead=0;
-        if(this.type>=2)lead=0.3;else if(this.type>=1)lead=0.15;
-        const tx=px+playerVx*lead*30;
-        const ty=py+playerVy*lead*30;
-        if(Math.abs(tx-ex)>Math.abs(ty-ey))this.dir=(tx>ex)?1:3;
-        else this.dir=(ty>ey)?2:0;
-        if(diffKey==='hard'&&Math.random()<0.05||diffKey==='nightmare'&&Math.random()<0.02){}
-        else if((diffKey==='hard'||diffKey==='nightmare')&&this.type<2&&Math.random()<0.18){
-          this.dir=(this.dir+1+Math.floor(Math.random()*2))%4;
-        }
-        // 中高难度：低级敌人30%几率保留子弹不浪费（追击过程中）
-        if((diffKey==='hard'||diffKey==='nightmare')&&this.type<2&&Math.random()<0.3){
-          this.fireCooldown=this.fireRate*0.3;return;
+  // 用 BFS 找下一格方向(0/1/2/3),找不到返回 null
+  bfsNextStep(goalR,goalC){
+    const sz=ROWS
+    if(goalR<0||goalR>=sz||goalC<0||goalC>=sz)return null
+    const blockedAt=function(r,c){
+      if(r<0||r>=sz||c<0||c>=sz)return true
+      const t=getTile(c,r)
+      return t===2||t===3||t===4
+    }
+    if(blockedAt(goalR,goalC))return null
+    const sr=Math.round(this.y/T),sc=Math.round(this.x/T)
+    if(sr===goalR&&sc===goalC)return null
+    const vis=Array.from({length:sz},function(){return Array(sz).fill(-1)})
+    const par=Array.from({length:sz},function(){return Array(sz).fill(-1)})
+    vis[sr][sc]=0
+    const queue=[[sr,sc]]
+    const DIRS=[[-1,0,0],[0,-1,3],[0,1,1],[1,0,2]]
+    while(queue.length){
+      const cur=queue.shift()
+      const r=cur[0],c=cur[1]
+      if(r===goalR&&c===goalC){
+        // 回溯路径到 (sr,sc) 的下一步
+        let cr=goalR,cc=goalC
+        while(true){
+          const p=par[cr][cc]
+          if(p<0)return null
+          const pr=p>>8,pc=p&0xFF
+          if(pr===sr&&pc===sc){
+            // pr,pc 是 (sr,sc);cr,cc 是它的下家
+            for(let i=0;i<4;i++){
+              if(cr===sr+DIRS[i][0]&&cc===sc+DIRS[i][1])return DIRS[i][2]
+            }
+            return null
+          }
+          cr=pr;cc=pc
         }
       }
-      this.shoot();
+      for(let i=0;i<4;i++){
+        const nr=r+DIRS[i][0],nc=c+DIRS[i][1]
+        if(nr<0||nr>=sz||nc<0||nc>=sz)continue
+        if(vis[nr][nc]!==-1)continue
+        if(blockedAt(nr,nc))continue
+        vis[nr][nc]=vis[r][c]+1
+        par[nr][nc]=(r<<8)|c
+        queue.push([nr,nc])
+      }
     }
-    if(this.enhancedFlash>0)this.enhancedFlash--;
+    return null
+  }
+  // 玩家位置(grid 坐标)
+  getPlayerGoal(){
+    if(!player)return null
+    return[Math.round(player.y/T),Math.round(player.x/T)]
+  }
+  getEagleGoal(){
+    const[r,c]=getEagleTile()
+    return[r,c]
+  }
+  // Boss 优先打基地
+  getGoal(){
+    if(!this.isBoss||!player)return this.getPlayerGoal()
+    const playerGoal=this.getPlayerGoal()
+    const eagleGoal=this.getEagleGoal()
+    if(!eagleGoal)return playerGoal
+    // BFS 距离 Eagle vs 玩家
+    const dE=this.bfsNextStep(eagleGoal[0],eagleGoal[1])
+    const dP=playerGoal?this.bfsNextStep(playerGoal[0],playerGoal[1]):null
+    if(Math.random()<0.8&&dE!==null)return eagleGoal
+    return playerGoal||eagleGoal
+  }
+  update(){
+    if(this.type>0&&freezeTimer>0)return
+    // ---- AI 决策阶段 ----
+    if(this.type>0){
+      // 1. 子弹闪避(每帧)
+      this.dodgeBullet()
+      // 2. Tactic 行为(sniper距离控制/charger随机/heavy直行)
+      this.doTactic()
+      // 3. BFS 寻路(按难度间隔)
+      const bfsInterval=diffKey==='easy'?30:diffKey==='normal'?15:diffKey==='hard'?5:3
+      this.bfsTick=(this.bfsTick+1)%bfsInterval
+      if(this.bfsTick===0){
+        const goal=this.getGoal()
+        if(goal){
+          const step=this.bfsNextStep(goal[0],goal[1])
+          if(step!==null)this.dir=step
+        }
+      }
+      // 4. 拆砖(hard+ 15%)
+      if((diffKey==='hard'||diffKey==='nightmare')&&Math.random()<0.05){
+        // 朝前方 1 格是砖 → 开火
+        const fdx=this.dir===1?T:this.dir===3?-T:0
+        const fdy=this.dir===2?T:this.dir===0?-T:0
+        const tr=Math.round((this.y+fdy)/T),tc=Math.round((this.x+fdx)/T)
+        if(tr>=0&&tr<ROWS&&tc>=0&&tc<COLS&&getTile(tc,tr)===2){
+          this.shoot()
+        }
+      }
+    }
+    // ---- 移动阶段 ----
+    let dx=0,dy=0
+    if(this.dir===0)dy=-this.speed;else if(this.dir===2)dy=this.speed
+    else if(this.dir===1)dx=this.speed;else if(this.dir===3)dx=-this.speed
+    const nx=Math.max(0,Math.min(W-this.w,this.x+dx))
+    const ny=Math.max(0,Math.min(H-this.h,this.y+dy))
+    if(!this.collides(nx,ny)){this.x=nx;this.y=ny;this.stuckFrames=0}
+    else if(!this.collides(nx,this.y)){this.x=nx;this.stuckFrames++}
+    else if(!this.collides(this.x,ny)){this.y=ny;this.stuckFrames++}
+    else{
+      this.stuckFrames++
+      if(this.type>0&&this.stuckFrames>60){
+        // 60帧卡死才 randomDir,避开 lastTried
+        const availDirs=[0,1,2,3].filter(d=>!this.lastTried.includes(d))
+        if(availDirs.length)this.dir=availDirs[Math.floor(Math.random()*availDirs.length)]
+        else{this.dir=Math.floor(Math.random()*4);this.lastTried=[]}
+        this.lastTried.push(this.dir)
+        if(this.lastTried.length>4)this.lastTried=[]
+        this.stuckFrames=0
+      }
+    }
+    // ---- 射击阶段 ----
+    this.fireCooldown-=16.67
+    if(this.fireCooldown<=0&&this.type>0){
+      this.fireCooldown=this.fireRate+Math.random()*500
+      if(player){
+        const px=player.x+player.w/2,py=player.y+player.h/2
+        const ex=this.x+this.w/2,ey=this.y+this.h/2
+        let lead=0
+        if(this.type>=2)lead=0.3
+        else if(this.type>=1)lead=0.15
+        if(this.tactic==='sniper')lead=0.4
+        if(this.tactic==='heavy')lead=0.25
+        const tx=px+playerVx*lead*30
+        const ty=py+playerVy*lead*30
+        if(Math.abs(tx-ex)>Math.abs(ty-ey))this.dir=(tx>ex)?1:3
+        else this.dir=(ty>ey)?2:0
+        // 准度退化: 高级难度低级敌人偏移
+        if((diffKey==='hard'||diffKey==='nightmare')&&this.type<2&&Math.random()<0.18){
+          this.dir=(this.dir+1+Math.floor(Math.random()*2))%4
+        }
+        // 中高难度低级敌人 30% 保留子弹
+        if((diffKey==='hard'||diffKey==='nightmare')&&this.type<2&&Math.random()<0.3){
+          this.fireCooldown=this.fireRate*0.3
+          if(this.enhancedFlash>0)this.enhancedFlash--
+          return
+        }
+      }
+      this.shoot()
+    }
+    if(this.enhancedFlash>0)this.enhancedFlash--
   }
   collides(x,y){
     const p=2;return isBlocked(x+p,y+p,this.w-p*2,this.h-p*2);
   }
   randomDir(){this.dir=Math.floor(Math.random()*4);}
-  smartDir(){
-    if(!player) return this.randomDir();
-    const px=player.x+player.w/2,py=player.y+player.h/2;
-    const ex=this.x+this.w/2,ey=this.y+this.h/2;
-    const dx=px-ex,dy=py-ey;
-    const adx=Math.abs(dx),ady=Math.abs(dy);
-    let dirs=[];
-    if(ady>adx){if(dy>12)dirs.push(2);if(dy<-12)dirs.push(0);if(dx>12)dirs.push(1);if(dx<-12)dirs.push(3);}
-    else{if(dx>12)dirs.push(1);if(dx<-12)dirs.push(3);if(dy>12)dirs.push(2);if(dy<-12)dirs.push(0);}
-    if(this.type>=2&&Math.random()<0.25){dirs.reverse();}
-    const orig=this.dir;
-    for(const d of dirs){this.dir=d;if(!this.collides(this.x,this.y))return;}
-    // 主方向都堵死，尝试侧向（绕障碍）
-    if(this.type>=2){
-      const perp=[(orig+1)%4,(orig+3)%4];
-      for(const d of perp){this.dir=d;if(!this.collides(this.x,this.y))return;}
-    }
-    this.dir=orig;
-    this.randomDir();
-  }
-  shoot(){
-    const bx=this.x+this.w/2-3,by=this.y+this.h/2-3;
-    if(this.isBoss){
-      // Boss shoots in all 4 directions
-      [[0,-1],[0,1],[-1,0],[1,0]].forEach(([bdx,bdy])=>{
-        bullets.push(new Bullet(bx,by,bdx*4,bdy*4,4,true,this.isEnhanced));
-      });
-    }else{
-      let bdx=0,bdy=0;
-      if(this.dir===0)bdy=-5;else if(this.dir===2)bdy=5;
-      else if(this.dir===1)bdx=5;else bdx=-5;
-      const bsp=this.bulletSpd||(this.type>0?4:6);
-      bullets.push(new Bullet(bx,by,bdx,bdy,bsp,this.type>0,this.isEnhanced));
-    }
-    soundShoot();
-  }
-  hit(){this.hp--;this.enhancedFlash=20;return this.hp<=0;}
-  draw(){
-    const cx=this.x+this.w/2,cy=this.y+this.h/2;
-    ctx.save();ctx.translate(cx,cy);ctx.rotate(this.dir*Math.PI/2);
-    if(this.isBoss){
-      // Boss glow
-      ctx.shadowColor=C.boss;ctx.shadowBlur=15+10*Math.sin(frameCount*0.1);
-      ctx.fillStyle=C.boss;ctx.fillRect(-16,-16,32,32);
-      ctx.shadowBlur=0;ctx.fillStyle=C.bossDark;ctx.fillRect(-10,-10,20,20);
-      ctx.fillStyle=C.boss;ctx.fillRect(-4,-24,8,12);
-    }else{
-      const col=this.enhanced?(this.enhancedFlash>0&&frameCount%4<2?'#ffffff':this.color):this.color;
-      ctx.fillStyle=col;ctx.fillRect(-14,-14,28,28);
-      ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(-16,-16,4,32);ctx.fillRect(12,-16,4,32);
-      ctx.fillStyle=this.type>0?'#aa2020':'#c8a000';
-      ctx.fillRect(-7,-7,14,14);ctx.fillStyle=col;
-      ctx.fillRect(-3,-22,6,12);
-      // 新类型特殊标记：狙击手开缺口示镜、冲锋者画箭头、重甲画粗框
-      if(this.tactic==='sniper'){
-        ctx.fillStyle='#000';ctx.fillRect(-14,-2,28,4);ctx.fillRect(-2,-14,4,28);
-      }else if(this.tactic==='charger'){
-        ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(0,-22);ctx.lineTo(-4,-12);ctx.lineTo(4,-12);ctx.fill();
-      }else if(this.tactic==='heavy'){
-        ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(-12,-12,24,24);
-      }
-    }
-    // Enhanced glow ring
-    if(this.isEnhanced&&!this.isBoss){
-      ctx.globalAlpha=0.4+0.2*Math.sin(frameCount*0.15);
-      ctx.strokeStyle='#ff8800';ctx.lineWidth=2;
-      ctx.strokeRect(-this.w/2-2,-this.h/2-2,this.w+4,this.h+4);
-    }
-    ctx.restore();
-    if(this.type===0){
-      if(shieldTimer>0){ctx.save();ctx.globalAlpha=0.3+0.3*Math.sin(frameCount*0.3);
-        ctx.strokeStyle='#00ffff';ctx.lineWidth=3;
-        ctx.strokeRect(this.x-3,this.y-3,this.w+6,this.h+6);ctx.restore();}
-      if(starActive){ctx.save();ctx.globalAlpha=0.4+0.3*Math.sin(frameCount*0.5);
-        ctx.strokeStyle='#ffd700';ctx.lineWidth=3;
-        ctx.strokeRect(this.x-3,this.y-3,this.w+6,this.h+6);ctx.restore();}
-      if(spreadActive){ctx.save();ctx.globalAlpha=0.4+0.2*Math.sin(frameCount*0.2);
-        ctx.strokeStyle='#00ffff';ctx.lineWidth=2;
-        ctx.strokeRect(this.x-3,this.y-3,this.w+6,this.h+6);ctx.restore();}
-      if(pierceActive){ctx.save();ctx.globalAlpha=0.4+0.2*Math.sin(frameCount*0.2);
-        ctx.strokeStyle='#ff4444';ctx.lineWidth=2;
-        ctx.strokeRect(this.x-3,this.y-3,this.w+6,this.h+6);ctx.restore();}
-    }
-    // Boss HP bar
-    if(this.isBoss&&this.hp<this.maxHp){
-      ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(this.x,this.y-8,this.w,4);
-      ctx.fillStyle='#9933ff';ctx.fillRect(this.x,this.y-8,this.w*(this.hp/this.maxHp),4);
-    }
-  }
 }
 
 class Bullet{
