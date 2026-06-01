@@ -12,7 +12,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid #333;box-shadow:0 0 30px rgba(0,0,0,0.9);max-width:100vw;max-height:calc(100vh - 240px)}
 /* ─── 道具栏 (INV) ──────────────────────── */
 #inv-bar{display:flex;gap:6px;padding:6px 8px;background:rgba(20,20,20,0.9);border:1.5px solid #444;border-radius:8px;margin-top:6px;align-items:center;justify-content:center;flex-shrink:0}
-.inv-slot{position:relative;width:50px;height:50px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.18);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;color:#fff;transition:all 0.1s}
+.inv-slot{position:relative;width:50px;height:50px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.18);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;color:#fff;transition:all 0.1s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 .inv-slot:hover{background:rgba(255,255,255,0.12)}
 .inv-slot.selected{border-color:#30d158;border-width:2px;transform:scale(1.08);box-shadow:0 0 10px rgba(48,209,88,0.5);background:rgba(48,209,88,0.15)}
 .inv-slot .slot-num{position:absolute;top:1px;left:3px;font-size:9px;color:rgba(255,255,255,0.4);font-family:monospace;font-weight:bold}
@@ -23,13 +23,11 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
 .inv-slot:hover .slot-tooltip{display:block}
 #inv-label{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.05em;margin-right:4px;font-family:monospace}
 #controls{display:flex;width:100%;max-width:640px;padding:10px 14px;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0;margin:0 auto;touch-action:none}
-#dpad{display:grid;grid-template-columns:repeat(3,60px);grid-template-rows:repeat(3,60px);gap:4px;touch-action:none}
-.dpad-btn{position:relative;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.7);font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-appearance:none;touch-action:none;transition:background 0.08s,transform 0.05s;user-select:none;-webkit-user-select:none}
-.dpad-btn::before{content:"";position:absolute;inset:-10px;background:transparent}
-/* 视觉缩放反馈，命中区由 ::before 扩展 */
-.dpad-btn:active,.dpad-btn.pressed{background:rgba(255,255,255,0.28);transform:scale(0.92)}
-.dpad-center{background:transparent;border:none;pointer-events:none}
-.dpad-label{font-size:9px;letter-spacing:0.05em;color:rgba(255,255,255,0.3)}
+/* 圆形遥杆 — 替换原 3x3 D-Pad */
+#joystick{position:relative;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.18);flex-shrink:0;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.joystick-base{position:absolute;inset:8px;border-radius:50%;background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.15);pointer-events:none}
+.joystick-knob{position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.4);top:50%;left:50%;transform:translate(-50%,-50%);transition:background 0.1s;pointer-events:none}
+.joystick-knob.active{background:rgba(120,200,255,0.4);border-color:rgba(120,200,255,0.7)}
 #fire-zone{display:flex;flex-direction:column;gap:10px;align-items:center}
 #fire-btn{width:72px;height:72px;border-radius:50%;background:rgba(255,80,80,0.15);border:2.5px solid rgba(255,80,80,0.4);color:rgba(255,100,100,0.9);font-size:11px;font-weight:bold;font-family:monospace;letter-spacing:0.08em;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;transition:background 0.1s,transform 0.1s}
 #fire-btn:active{background:rgba(255,80,80,0.35);transform:scale(0.93)}
@@ -42,8 +40,8 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
 #pause-btn:active{background:rgba(255,255,255,0.2)}
 /* 桌面：控件紧凑 */
 @media(min-width:541px){
-  #dpad{grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px)}
-  #dpad .dpad-btn{width:52px;height:52px;font-size:18px}
+  #joystick{width:120px;height:120px}
+  .joystick-knob{width:46px;height:46px}
   #fire-btn{width:60px;height:60px;font-size:10px}
   #start-btn{width:58px;height:58px;font-size:10px}
   #pause-btn{width:44px;height:44px;font-size:9px}
@@ -55,8 +53,8 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
 }
 /* 手机小屏 */
 @media(max-width:540px),(max-height:600px){
-  #dpad{grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px)}
-  #dpad .dpad-btn{width:56px;height:56px;font-size:20px}
+  #joystick{width:110px;height:110px}
+  .joystick-knob{width:42px;height:42px}
   #fire-btn{width:64px;height:64px}
   #start-btn{width:64px;height:64px}
   #pause-btn{width:48px;height:48px}
@@ -78,12 +76,9 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
   <div class="inv-slot empty" data-slot="4"><span class="slot-num">5</span><span class="slot-tooltip">空</span><span class="slot-count"></span></div>
 </div>
 <div id="controls">
-  <div id="dpad">
-    <div></div><button class="dpad-btn" data-dir="up">▲</button><div></div>
-    <button class="dpad-btn" data-dir="left">◀</button>
-    <div class="dpad-btn dpad-center"><span class="dpad-label">MOVE</span></div>
-    <button class="dpad-btn" data-dir="right">▶</button>
-    <div></div><button class="dpad-btn" data-dir="down">▼</button><div></div>
+  <div id="joystick">
+    <div class="joystick-base"></div>
+    <div class="joystick-knob"></div>
   </div>
   <div id="fire-zone">
     <button id="start-btn">▶ START<br>开始</button>
@@ -256,6 +251,17 @@ function soundWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,'sin
 
 // ─── State ────────────────────────────────────────────────
 let state='start',stage=0,score=0,lives=3;
+
+// ─── 坦克选择 (3 种) ───────────────────────────────────────
+const TANK_TYPES=[
+  {key:'heavy',  label:'重装', icon:'🛡️', hp:3,   spdMul:0.85, fireRateMul:1.0, heal:false, col:'#5a8eff',
+   desc:'HP×3 抗揍'},
+  {key:'speed',  label:'速攻', icon:'⚡',  hp:1.5, spdMul:1.2,  fireRateMul:1.6, heal:false, col:'#ffd700',
+   desc:'射速+60%'},
+  {key:'healer', label:'治疗', icon:'💚', hp:2,   spdMul:1.0,  fireRateMul:1.0, heal:true,  col:'#3ddc84',
+   desc:'5s 自动回血'},
+];
+let selectedTank=0;  // 0=heavy, 1=speed, 2=healer
 let runSeed=1; // 每次 startGame() 改变 → 同 stage 每次开局地形不同
 let map=[],bullets=[],enemies=[],explosions=[],powerups=[];
 let playerLastX=0,playerLastY=0,playerVx=0,playerVy=0;
@@ -332,7 +338,16 @@ class Tank{
       this.w=36;this.h=36;this.hp=Math.ceil(d.hp*(eb.hpMul||1));this.maxHp=this.hp;
       this.isEnhanced=false;
     }else{
-      this.speed=3;this.fireRate=400;this.color=C.player;this.w=36;this.h=36;this.hp=1;
+      this.speed=3;this.fireRate=400;this.color=C.player;this.w=36;this.h=36;
+      // 玩家坦克：按 TANK_TYPES 初始化 HP/速度/射速
+      const tk=TANK_TYPES[selectedTank]||TANK_TYPES[0];
+      this.tankType=tk;
+      this.maxHp=Math.ceil(tk.hp);
+      this.hp=this.maxHp;
+      this.speed=this.speed*tk.spdMul;
+      this.fireRate=Math.floor(400/tk.fireRateMul);
+      this.healTimer=0;
+      this.healInterval=300;  // 5 秒 = 300 帧 (60fps)
     }
     this.fireCooldown=0;this.enhanced=false;this.enhancedFlash=0;
     this.stuckFrames=0;this.lastTried=[];this.bfsTick=0;
@@ -612,6 +627,16 @@ class Tank{
       ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(this.x,this.y-8,this.w,4);
       ctx.fillStyle='#9933ff';ctx.fillRect(this.x,this.y-8,this.w*(this.hp/this.maxHp),4);
     }
+    // 玩家头顶血条：受伤时显示 / 治疗坦克始终显示
+    if(this.type===0 && this.maxHp && (this.hp<this.maxHp || (this.tankType&&this.tankType.heal))){
+      const ratio=this.hp/this.maxHp;
+      const barW=this.w+4, barH=4, bx=this.x-2, by=this.y-9;
+      ctx.fillStyle='rgba(0,0,0,0.65)';ctx.fillRect(bx,by,barW,barH);
+      ctx.fillStyle=ratio>0.5?'#3ddc84':ratio>0.25?'#ffcc00':'#ff4444';
+      ctx.fillRect(bx+1,by+1,(barW-2)*ratio,barH-2);
+      ctx.strokeStyle='rgba(0,0,0,0.8)';ctx.lineWidth=0.5;
+      ctx.strokeRect(bx+0.5,by+0.5,barW-1,barH-1);
+    }
   }
 }
 
@@ -732,11 +757,12 @@ function addToInv(itemKey){
   const def=POWERUP_DEF[itemKey];if(!def)return false;
   const cap=itemKey==='BOMB'?3:itemKey==='SHIELD_C'?2:3;
   // 已有同 key → 堆叠
-  for(const s of INV.slots){if(s&&s.type===itemKey&&s.count<cap){s.count++;return true;}}
+  for(const s of INV.slots){if(s&&s.type===itemKey&&s.count<cap){s.count++;updateInvBar();return true;}}
   // 找空格
-  for(const s of INV.slots){if(!s){const idx=INV.slots.indexOf(s);INV.slots[idx]={type:itemKey,count:1};return true;}}
+  for(const s of INV.slots){if(!s){const idx=INV.slots.indexOf(s);INV.slots[idx]={type:itemKey,count:1};updateInvBar();return true;}}
   // 满了
   invFullFlash=800;
+  updateInvBar();
   return false;
 }
 // 激活指定槽位（slot 索引 0-4）
@@ -763,6 +789,7 @@ function activateInvSlot(slot){
   }
   item.count--;
   if(item.count<=0)INV.slots[slot]=null;
+  updateInvBar();
   return true;
 }
 function invSelectedItem(){return INV.slots[INV.selected]||null;}
@@ -895,25 +922,96 @@ function _resetInput(){
   Object.keys(mk).forEach(k=>mk[k]=false);
   Object.keys(mkTs).forEach(k=>delete mkTs[k]);
   Object.keys(keys).forEach(k=>keys[k]=false);
-  document.querySelectorAll('.dpad-btn').forEach(b=>b.classList.remove('pressed'));
+  if(joy)joy.active=false;
   fBtn.classList.remove('pressed');
 }
-document.querySelectorAll('.dpad-btn[data-dir]').forEach(b=>{
-  const dir=b.dataset.dir;
-  const onPress=(e)=>{e.preventDefault();e.stopPropagation();_pressDir(dir);b.classList.add('pressed');};
-  const onRelease=(e)=>{e.preventDefault();e.stopPropagation();_releaseDir(dir);b.classList.remove('pressed');};
-  // 移动端：touchstart 立即响应；touchend/cancel/leave 处理抬起
-  b.addEventListener('touchstart',onPress,{passive:false});
-  b.addEventListener('touchend',onRelease,{passive:false});
-  b.addEventListener('touchcancel',onRelease,{passive:false});
-  b.addEventListener('touchmove',(e)=>{e.preventDefault();},{passive:false});
-  // 桌面：mousedown/mouseup/mouseleave
-  b.addEventListener('mousedown',onPress);
-  b.addEventListener('mouseup',onRelease);
-  b.addEventListener('mouseleave',onRelease);
-  // 防止 click 事件再触发（已用 touchstart/mousedown）
-  b.addEventListener('click',(e)=>{e.preventDefault();});
-});
+
+// ─── 圆形遥杆（替换原 3x3 D-Pad） ──────────────────────────
+const joy={el:null,knob:null,r:55,active:false,dx:0,dy:0,mag:0,activeTouch:null,activePointer:null};
+function initJoystick(){
+  joy.el=document.getElementById('joystick');
+  if(!joy.el)return;
+  joy.knob=joy.el.querySelector('.joystick-knob');
+  const onStart=(e)=>{
+    e.preventDefault();e.stopPropagation();
+    joy.active=true;
+    if(e.touches&&e.touches[0]){joy.activeTouch=e.touches[0].identifier;}
+    if(e.pointerId!==undefined){try{joy.el.setPointerCapture(e.pointerId);}catch(_){ }joy.activePointer=e.pointerId;}
+    let cx,cy;
+    if(e.touches&&e.touches[0]){cx=e.touches[0].clientX;cy=e.touches[0].clientY;}
+    else{cx=e.clientX;cy=e.clientY;}
+    updateJoy(cx,cy);
+  };
+  const onMove=(e)=>{
+    if(!joy.active)return;
+    e.preventDefault();
+    let cx,cy;
+    if(e.touches){
+      let t=null;
+      for(const tt of e.touches){if(joy.activeTouch===null||tt.identifier===joy.activeTouch){t=tt;break;}}
+      if(!t)return;
+      cx=t.clientX;cy=t.clientY;
+    }else if(e.pointerId!==undefined&&(joy.activePointer===null||e.pointerId===joy.activePointer)){
+      cx=e.clientX;cy=e.clientY;
+    }else if(joy.activePointer===null){
+      // mouse fallback
+      cx=e.clientX;cy=e.clientY;
+    }else return;
+    updateJoy(cx,cy);
+  };
+  const onEnd=(e)=>{
+    if(!joy.active)return;
+    e.preventDefault();
+    joy.active=false;
+    joy.activeTouch=null;
+    joy.activePointer=null;
+    joy.dx=0;joy.dy=0;joy.mag=0;
+    joy.knob.style.transform='translate(-50%,-50%)';
+    joy.knob.classList.remove('active');
+    // 同步清空 mk 方向键
+    mk.up=false;mk.down=false;mk.left=false;mk.right=false;
+  };
+  function updateJoy(cx,cy){
+    const rect=joy.el.getBoundingClientRect();
+    const cx0=rect.left+rect.width/2;
+    const cy0=rect.top+rect.height/2;
+    let dx=cx-cx0,dy=cy-cy0;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    const maxR=rect.width/2-25;  // knob 半径
+    if(dist>maxR){dx=dx*maxR/dist;dy=dy*maxR/dist;}
+    joy.dx=dx/maxR;joy.dy=dy/maxR;  // 归一化 -1..1
+    joy.mag=Math.min(1,dist/30);     // 死区 30px
+    joy.knob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    joy.knob.classList.add('active');
+    // 同步给 mk 方向键（兼容 handleInput 的 4 方向逻辑）
+    const dead=joy.mag<0.15;
+    mk.up=!dead&&joy.dy<-0.3;
+    mk.down=!dead&&joy.dy>0.3;
+    mk.left=!dead&&joy.dx<-0.3;
+    mk.right=!dead&&joy.dx>0.3;
+    if(dead){mk.up=mk.down=mk.left=mk.right=false;}
+    // 更新时间戳
+    if(mk.up)mkTs.up=performance.now();
+    if(mk.down)mkTs.down=performance.now();
+    if(mk.left)mkTs.left=performance.now();
+    if(mk.right)mkTs.right=performance.now();
+  }
+  // 触屏
+  joy.el.addEventListener('touchstart',onStart,{passive:false});
+  joy.el.addEventListener('touchmove',onMove,{passive:false});
+  joy.el.addEventListener('touchend',onEnd,{passive:false});
+  joy.el.addEventListener('touchcancel',onEnd,{passive:false});
+  // 鼠标 / 指针（桌面）
+  joy.el.addEventListener('mousedown',onStart);
+  window.addEventListener('mousemove',e=>{if(joy.active&&joy.activePointer===null)onMove(e);});
+  window.addEventListener('mouseup',e=>{if(joy.active&&joy.activePointer===null)onEnd(e);});
+  // Pointer events（更好支持触屏 + 鼠标统一）
+  joy.el.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;onStart(e);});
+  joy.el.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;if(joy.active&&joy.activePointer===e.pointerId)onMove(e);});
+  joy.el.addEventListener('pointerup',e=>{if(e.pointerType==='touch')return;if(joy.active&&joy.activePointer===e.pointerId)onEnd(e);});
+  joy.el.addEventListener('pointercancel',e=>{if(e.pointerType==='touch')return;if(joy.active&&joy.activePointer===e.pointerId)onEnd(e);});
+}
+initJoystick();
 const fBtn=document.getElementById('fire-btn');
 const ft=(e)=>{
   e.preventDefault();e.stopPropagation();
@@ -921,7 +1019,7 @@ const ft=(e)=>{
   // 🔥 按钮按下也尝试激活当前道具栏（不阻塞射击：shoot 仍由 handleInput 控制）
   if(state==='playing'){
     const sel=invSelectedItem();
-    if(sel)activateInvSlot(INV.selected);
+    if(sel){activateInvSlot(INV.selected);updateInvBar();}
   }
 };
 const fr=(e)=>{e.preventDefault();e.stopPropagation();mk.fire=false;fBtn.classList.remove('pressed');};
@@ -933,16 +1031,21 @@ fBtn.addEventListener('mouseup',fr);
 fBtn.addEventListener('mouseleave',fr);
 fBtn.addEventListener('click',(e)=>{e.preventDefault();});
 
-// 道具栏格子点击：选中并立即激活
-document.querySelectorAll('.inv-slot').forEach(el=>{
-  const slot=parseInt(el.dataset.slot);
-  el.addEventListener('click',e=>{
+// 道具栏格子点击：touchstart + mousedown 双绑（修移动端 300ms 延迟 + 防止 fire 穿透）
+function bindSlot(i,el){
+  const handler=(e)=>{
     e.preventDefault();e.stopPropagation();
     if(state!=='playing')return;
-    INV.selected=slot;
-    activateInvSlot(slot);
+    INV.selected=i;
+    activateInvSlot(i);
     updateInvBar();
-  });
+  };
+  el.addEventListener('touchstart',handler,{passive:false});
+  el.addEventListener('mousedown',handler);
+}
+document.querySelectorAll('.inv-slot').forEach(el=>{
+  const slot=parseInt(el.dataset.slot);
+  bindSlot(slot,el);
 });
 function _togglePause(){
   if(state==='playing')state='paused';
@@ -962,6 +1065,14 @@ sBtn.addEventListener('click',(e)=>{e.preventDefault();e.stopPropagation();start
 document.addEventListener('keydown',e=>{
   keys[e.code]=true;
   keysLastTs=performance.now();
+  // 选车界面快捷键
+  if(state==='start'){
+    if(e.code==='Digit1'||e.code==='Numpad1'){e.preventDefault();selectedTank=0;}
+    else if(e.code==='Digit2'||e.code==='Numpad2'){e.preventDefault();selectedTank=1;}
+    else if(e.code==='Digit3'||e.code==='Numpad3'){e.preventDefault();selectedTank=2;}
+    else if(e.code==='ArrowLeft'||e.code==='KeyA'){e.preventDefault();selectedTank=(selectedTank+2)%3;}
+    else if(e.code==='ArrowRight'||e.code==='KeyD'){e.preventDefault();selectedTank=(selectedTank+1)%3;}
+  }
   if((e.code==='Space'||e.code==='Enter')&&(state==='start'||state==='gameover')){e.preventDefault();startGame();}
   if(e.code==='KeyP'){
     e.preventDefault();
@@ -996,19 +1107,31 @@ document.addEventListener('keyup',e=>{keys[e.code]=false;});
 function handleInput(){
   if(!player)return;
   let dx=0,dy=0;
-  // 找最新按下的方向键（mk 与键盘混合时间戳），解决"上+右同时按"卡死
-  const candidates=[
-    {cond:keys['ArrowUp']||keys['KeyW']||mk.up,  dir:0, ts:keys['ArrowUp']||keys['KeyW']?keysLastTs:(mkTs.up||0)},
-    {cond:keys['ArrowRight']||keys['KeyD']||mk.right,dir:1,ts:keys['ArrowRight']||keys['KeyD']?keysLastTs:(mkTs.right||0)},
-    {cond:keys['ArrowDown']||keys['KeyS']||mk.down, dir:2, ts:keys['ArrowDown']||keys['KeyS']?keysLastTs:(mkTs.down||0)},
-    {cond:keys['ArrowLeft']||keys['KeyA']||mk.left, dir:3, ts:keys['ArrowLeft']||keys['KeyA']?keysLastTs:(mkTs.left||0)},
-  ].filter(c=>c.cond).sort((a,b)=>b.ts-a.ts);
-  if(candidates.length){
-    const c=candidates[0];
-    if(c.dir===0){dy=-PLAYER_SPD;player.dir=0;}
-    else if(c.dir===1){dx=PLAYER_SPD;player.dir=1;}
-    else if(c.dir===2){dy=PLAYER_SPD;player.dir=2;}
-    else if(c.dir===3){dx=-PLAYER_SPD;player.dir=3;}
+  // 优先：遥杆（支持 8 方向，速度跟距离成正比）
+  if(joy && joy.active && joy.mag>0.15){
+    const spd=PLAYER_SPD*(0.5+joy.mag*0.5);  // 推得越远越快
+    dx=joy.dx*spd;dy=joy.dy*spd;
+    // 玩家朝向取最大分量
+    if(Math.abs(joy.dx)>Math.abs(joy.dy)){
+      player.dir=joy.dx>0?1:3;
+    }else{
+      player.dir=joy.dy>0?2:0;
+    }
+  }else{
+    // 找最新按下的方向键（mk 与键盘混合时间戳），解决"上+右同时按"卡死
+    const candidates=[
+      {cond:keys['ArrowUp']||keys['KeyW']||mk.up,  dir:0, ts:keys['ArrowUp']||keys['KeyW']?keysLastTs:(mkTs.up||0)},
+      {cond:keys['ArrowRight']||keys['KeyD']||mk.right,dir:1,ts:keys['ArrowRight']||keys['KeyD']?keysLastTs:(mkTs.right||0)},
+      {cond:keys['ArrowDown']||keys['KeyS']||mk.down, dir:2, ts:keys['ArrowDown']||keys['KeyS']?keysLastTs:(mkTs.down||0)},
+      {cond:keys['ArrowLeft']||keys['KeyA']||mk.left, dir:3, ts:keys['ArrowLeft']||keys['KeyA']?keysLastTs:(mkTs.left||0)},
+    ].filter(c=>c.cond).sort((a,b)=>b.ts-a.ts);
+    if(candidates.length){
+      const c=candidates[0];
+      if(c.dir===0){dy=-PLAYER_SPD;player.dir=0;}
+      else if(c.dir===1){dx=PLAYER_SPD;player.dir=1;}
+      else if(c.dir===2){dy=PLAYER_SPD;player.dir=2;}
+      else if(c.dir===3){dx=-PLAYER_SPD;player.dir=3;}
+    }
   }
   // 移动：先尝试斜对角，撞墙则退化为单轴
   if(dx!==0||dy!==0){
@@ -1180,8 +1303,17 @@ function update(){
     bullets=bullets.filter(b=>{
       if(!b.isEnemy)return true;
       if(rectOverlap(b.x,b.y,b.w,b.h,player.x,player.y,player.w,player.h)){
-        soundDie();lives--;explosions.push(new Explosion(player.x+player.w/2,player.y+player.h/2));
-        if(lives<=0){state='gameover';}else{respawnShield=120;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
+        player.hp--;
+        explosions.push(new Explosion(player.x+player.w/2,player.y+player.h/2,false));
+        if(player.hp<=0){
+          soundDie();lives--;
+          if(lives<=0){state='gameover';}
+          else{respawnShield=120;player.hp=player.maxHp;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
+        }else{
+          respawnShield=30;  // 0.5s 短无敌
+          // 闪红
+          player.enhancedFlash=10;
+        }
         return false;
       }
       const[er,ec]=getEagleTile(),ex=ec*T,ey=er*T;
@@ -1189,15 +1321,30 @@ function update(){
       return true;
     });
   }
+  // 治疗坦克：自动回血
+  if(player && player.tankType && player.tankType.heal && player.hp<player.maxHp && state==='playing'){
+    player.healTimer++;
+    if(player.healTimer>=player.healInterval){
+      player.healTimer=0;
+      player.hp=Math.min(player.maxHp,player.hp+1);
+      pickFlash={text:'💚 +1 HP',timer:600};
+    }
+  }
   powerups.forEach(p=>p.update());
   powerups=powerups.filter(p=>{if(p.isDone())return false;if(rectOverlap(p.x,p.y,p.w,p.h,player.x,player.y,player.w,player.h)){p.collect();return false;}return true;});
   explosions.forEach(e=>e.update());explosions=explosions.filter(e=>!e.isDone());
   if(shieldTimer<=0){
     enemies.forEach(e=>{
       if(!e.isBoss&&rectOverlap(e.x,e.y,e.w,e.h,player.x,player.y,player.w,player.h)){
-        soundDie();lives--;explosions.push(new Explosion(player.x+player.w/2,player.y+player.h/2));
-        if(lives<=0)state='gameover';
-        else{respawnShield=120;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
+        player.hp--;
+        explosions.push(new Explosion(player.x+player.w/2,player.y+player.h/2,false));
+        if(player.hp<=0){
+          soundDie();lives--;
+          if(lives<=0)state='gameover';
+          else{respawnShield=120;player.hp=player.maxHp;player.x=W/2-18;player.y=H-T*2+4;player.dir=0;playerLastX=player.x;playerLastY=player.y;playerVx=0;playerVy=0;}
+        }else{
+          respawnShield=30;player.enhancedFlash=10;
+        }
       }
     });
   }
@@ -1232,6 +1379,7 @@ function drawMap(){
 }
 
 function drawHUD(){
+  drawActiveBuffs(ctx);
   ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,H,W,40);
   ctx.fillStyle=C.ui;ctx.font='bold 14px monospace';ctx.textAlign='left';
   ctx.fillText(`STAGE ${stage+1}-${wave}`,10,H+26);
@@ -1289,45 +1437,95 @@ function drawHUD(){
   }
 }
 
-// 在 canvas 顶部 (y=0..18) 画 active buff 行 — Battle City 风格
-function drawActiveBuffs(){
-  if(activeBuffs.length===0)return;
-  // 已经在 drawHUD 中画了；保留此函数名以兼容任务验收
+// 在 canvas 顶部 (y=0..22) 画 active buff 行 — Battle City 风格
+function drawActiveBuffs(ctx){
+  if(!activeBuffs||activeBuffs.length===0)return;
+  const startX=4,startY=4,slotW=58,slotH=18;
+  activeBuffs.forEach((b,i)=>{
+    const def=POWERUP_DEF[b.key];if(!def)return;
+    const bx=startX+i*slotW,by=startY;
+    // 背景
+    ctx.fillStyle='rgba(0,0,0,0.55)';
+    ctx.fillRect(bx,by,slotW-4,slotH);
+    // 边框（按颜色）
+    ctx.strokeStyle=def.col;ctx.lineWidth=1;
+    ctx.strokeRect(bx+0.5,by+0.5,slotW-5,slotH-1);
+    // 图标
+    ctx.fillStyle=def.col;ctx.font='bold 11px monospace';ctx.textAlign='left';
+    ctx.fillText(def.icon,bx+3,by+13);
+    // 倒计时（颜色按剩余时间渐变）
+    const tSec=Math.max(0,b.timer/60);
+    const tInt=Math.ceil(tSec);
+    const colT=tSec>5?'#3ddc84':tSec>2?'#ffd700':'#ff4444';
+    ctx.fillStyle=colT;ctx.font='bold 10px monospace';
+    ctx.fillText(tInt+'s',bx+20,by+13);
+  });
 }
 
 function drawStart(){
   ctx.fillStyle='rgba(0,0,0,0.88)';ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#f5c400';ctx.font='bold 40px monospace';ctx.textAlign='center';
-  ctx.fillText('TANK BATTLE',W/2,H/2-90);
-  ctx.fillStyle='#888';ctx.font='14px monospace';
-  ctx.fillStyle='#555';ctx.font='12px monospace';
-  ctx.fillText('方向键移动 | 空格射击 | P暂停',W/2,H/2-25);
-  updateStartBtn();
-  // Difficulty selector
-  ctx.fillStyle='#aaa';ctx.font='bold 13px monospace';
-  ctx.fillText('选择难度',W/2,H/2+10);
-  const btnW=72,btnH=32,btnGap=8;
+  ctx.fillStyle='#f5c400';ctx.font='bold 36px monospace';ctx.textAlign='center';
+  ctx.fillText('TANK BATTLE',W/2,50);
+  ctx.fillStyle='#888';ctx.font='12px monospace';
+  ctx.fillText('方向键移动 | 空格射击 | P暂停',W/2,75);
+  // ─── 选车界面 ─────────────────────────────────────
+  ctx.fillStyle='#aaa';ctx.font='bold 14px monospace';
+  ctx.fillText('选择你的坦克',W/2,108);
+  const cardW=140,cardH=92,cardGap=12;
+  const totalCardsW=cardW*3+cardGap*2;
+  const cardStartX=W/2-totalCardsW/2;
+  const cardY=120;
+  TANK_TYPES.forEach((tk,i)=>{
+    const cx=cardStartX+i*(cardW+cardGap);
+    const sel=(selectedTank===i);
+    ctx.save();
+    if(sel){ctx.translate(cx+cardW/2,cardY+cardH/2);ctx.scale(1.05,1.05);ctx.translate(-(cx+cardW/2),-(cardY+cardH/2));}
+    // 卡背景
+    ctx.fillStyle=sel?'rgba(48,209,88,0.18)':'rgba(255,255,255,0.05)';
+    ctx.strokeStyle=sel?'#30d158':tk.col;
+    ctx.lineWidth=sel?2.5:1.5;
+    ctx.beginPath();ctx.roundRect(cx,cardY,cardW,cardH,8);ctx.fill();ctx.stroke();
+    // 数字键
+    ctx.fillStyle=sel?'#30d158':'#666';
+    ctx.font='bold 11px monospace';ctx.textAlign='left';
+    ctx.fillText('['+(i+1)+']',cx+6,cardY+14);
+    // 坦克类型
+    ctx.fillStyle=tk.col;ctx.font='bold 18px monospace';ctx.textAlign='center';
+    ctx.fillText(tk.icon+' '+tk.label,cx+cardW/2,cardY+38);
+    // 描述
+    ctx.fillStyle='#bbb';ctx.font='11px monospace';
+    ctx.fillText(tk.desc,cx+cardW/2,cardY+56);
+    // 属性行
+    ctx.fillStyle='#888';ctx.font='10px monospace';
+    ctx.fillText('HP×'+tk.hp+'  速×'+tk.spdMul.toFixed(2),cx+cardW/2,cardY+72);
+    ctx.fillText('射速×'+tk.fireRateMul.toFixed(1)+(tk.heal?'  自愈':''),cx+cardW/2,cardY+85);
+    ctx.restore();
+  });
+  // ─── 难度选择 ─────────────────────────────────────
+  ctx.fillStyle='#aaa';ctx.font='bold 13px monospace';ctx.textAlign='center';
+  ctx.fillText('选择难度',W/2,240);
+  const btnW=64,btnH=28,btnGap=6;
   const totalW=btnW*4+btnGap*3;
   const startX=W/2-totalW/2;
   DIFF_KEYS.forEach((k,i)=>{
     const x=startX+i*(btnW+btnGap);
-    const y=H/2+25;
+    const y=250;
     const sel=diffKey===k;
     ctx.fillStyle=sel?'rgba(48,209,88,0.3)':'rgba(255,255,255,0.06)';
     ctx.strokeStyle=sel?'#30d158':'rgba(255,255,255,0.2)';
     ctx.lineWidth=sel?2:1;
     ctx.beginPath();ctx.roundRect(x,y,btnW,btnH,6);ctx.fill();ctx.stroke();
-    ctx.fillStyle=sel?'#30d158':'#888';ctx.font='bold 12px monospace';
-    ctx.fillText(DIFF[k].label,x+btnW/2,y+20);
+    ctx.fillStyle=sel?'#30d158':'#888';ctx.font='bold 11px monospace';
+    ctx.fillText(DIFF[k].label,x+btnW/2,y+18);
   });
   ctx.fillStyle='#555';ctx.font='11px monospace';
-  ctx.fillText('按 空格键 开始',W/2,H/2+75);
+  ctx.fillText('1/2/3 选车 · ← → 切车 · 空格 开始',W/2,300);
   // Sound toggle button
-  const sbw=60,sbh=28,sbx=W/2-sbw/2,sby=H/2+100;
+  const sbw=60,sbh=26,sbx=W/2-sbw/2,sby=315;
   ctx.fillStyle=soundOn?'rgba(48,209,88,0.2)':'rgba(255,255,255,0.06)';
   ctx.strokeStyle=soundOn?'#30d158':'rgba(255,255,255,0.2)';ctx.lineWidth=1.5;
   ctx.beginPath();ctx.roundRect(sbx,sby,sbw,sbh,6);ctx.fill();ctx.stroke();
-  ctx.fillStyle=soundOn?'#30d158':'#555';ctx.font='bold 12px monospace';
+  ctx.fillStyle=soundOn?'#30d158':'#555';ctx.font='bold 11px monospace';
   ctx.fillText(soundOn?'🔊 开':'🔇 关',W/2,sby+sbh/2+4);ctx.textAlign='left';
 }
 
@@ -1464,13 +1662,23 @@ canvas.addEventListener('click',e=>{
   const my=(e.clientY-rect.top)*scaleY;
 
   if(state==='start'){
-    // Sound toggle: sbw=60,sbh=28,sbx=W/2-sbw/2,sby=H/2+100
-    const sbw=60,sbh=28,sbx=W/2-sbw/2,sby=H/2+100;
+    // 选车卡片 (cardW=140,cardH=92,cardGap=12, cardY=120)
+    const cardW=140,cardH=92,cardGap=12;
+    const totalCardsW=cardW*3+cardGap*2;
+    const cardStartX=W/2-totalCardsW/2;
+    const cardY=120;
+    TANK_TYPES.forEach((tk,i)=>{
+      const cx=cardStartX+i*(cardW+cardGap);
+      if(mx>=cx&&mx<=cx+cardW&&my>=cardY&&my<=cardY+cardH){selectedTank=i;}
+    });
+    // Sound toggle
+    const sbw=60,sbh=26,sbx=W/2-sbw/2,sby=315;
     if(mx>=sbx&&mx<=sbx+sbw&&my>=sby&&my<=sby+sbh){soundOn=!soundOn;return;}
-    const btnW=72,btnH=32,btnGap=8;
+    // 难度按钮 (btnW=64,btnH=28,btnGap=6, y=250)
+    const btnW=64,btnH=28,btnGap=6;
     const totalW=btnW*4+btnGap*3;
     const startX=W/2-totalW/2;
-    const y=H/2+25;
+    const y=250;
     DIFF_KEYS.forEach((k,i)=>{
       const x=startX+i*(btnW+btnGap);
       if(mx>=x&&mx<=x+btnW&&my>=y&&my<=y+btnH){diffKey=k;}
