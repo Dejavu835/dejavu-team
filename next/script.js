@@ -74,58 +74,31 @@
       targetX = nx; targetY = ny;
       active = true;
       if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
-      // Eye tracking: offset = (nx-0.5, ny-0.5) * MAX_EYE_OFFSET
-      eyeDx = (nx - 0.5) * 2;
-      eyeDy = (ny - 0.5) * 2;
-      scheduleEyeUpdate();
+      // Move the screen glow to follow the mouse (CSS var)
+      if (glowEl) {
+        glowEl.style.setProperty('--mx', (nx * 100).toFixed(2) + '%');
+        glowEl.style.setProperty('--my', (ny * 100).toFixed(2) + '%');
+      }
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
     const onLeave = () => {
       active = false;
       if (statusEl && statusEl.textContent !== 'online') statusEl.textContent = 'online';
-      eyeDx = 0; eyeDy = 0;
-      scheduleEyeUpdate();
+      if (glowEl) {
+        glowEl.style.setProperty('--mx', '50%');
+        glowEl.style.setProperty('--my', '50%');
+      }
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
 
     const statusEl = $('#hvStatus');
-    const eyeL = $('#hvEyeL');
-    const eyeR = $('#hvEyeR');
-    const MAX_EYE_OFFSET = 8;   // px (subtle)
-    const MAX_EYE_OFFSET_Y = 5;
-    let eyeDx = 0, eyeDy = 0;
-    let eyeRaf = null;
-    let curEyeX = 0, curEyeY = 0;
-
-    // rAF lerp so eyes move smoothly with mouse (and return to center on leave)
-    const updateEyes = () => {
-      eyeRaf = null;
-      curEyeX += (eyeDx - curEyeX) * 0.22;
-      curEyeY += (eyeDy - curEyeY) * 0.22;
-      const offX = curEyeX * MAX_EYE_OFFSET;
-      const offY = curEyeY * MAX_EYE_OFFSET_Y;
-      // Skip transform update during blink (blink class overrides)
-      if (document.body.classList.contains('hv-blinking')) {
-        if (Math.abs(eyeDx - curEyeX) > 0.001 || Math.abs(eyeDy - curEyeY) > 0.001) {
-          eyeRaf = requestAnimationFrame(updateEyes);
-        }
-        return;
-      }
-      if (eyeL) eyeL.style.transform = `translate(calc(-50% + ${offX.toFixed(2)}px), calc(-50% + ${offY.toFixed(2)}px))`;
-      if (eyeR) eyeR.style.transform = `translate(calc(-50% + ${offX.toFixed(2)}px), calc(-50% + ${offY.toFixed(2)}px))`;
-      if (Math.abs(eyeDx - curEyeX) > 0.001 || Math.abs(eyeDy - curEyeY) > 0.001) {
-        eyeRaf = requestAnimationFrame(updateEyes);
-      }
-    };
-    const scheduleEyeUpdate = () => {
-      if (eyeRaf === null) eyeRaf = requestAnimationFrame(updateEyes);
-    };
+    const glowEl  = $('#hvGlow');
 
     // Blink: schedule random blinks every 3.5–6.5s
     const blink = () => {
       if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
         document.body.classList.add('hv-blinking');
-        setTimeout(() => document.body.classList.remove('hv-blinking'), 130);
+        setTimeout(() => document.body.classList.remove('hv-blinking'), 200);
       }
       setTimeout(blink, 3500 + Math.random() * 3000);
     };

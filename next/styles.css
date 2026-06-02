@@ -414,8 +414,8 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 .hv-figure {
   position: relative;
-  width: clamp(320px, 38vw, 480px);
-  aspect-ratio: 7 / 8;
+  width: clamp(280px, 32vw, 420px);
+  aspect-ratio: 3 / 5;
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow:
@@ -430,53 +430,75 @@ h1, h2, h3, h4, p { margin: 0; }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center center;
+  object-position: center 30%;
   display: block;
   user-select: none;
   -webkit-user-drag: none;
 }
 
-/* Hero monitor screen — the dark CRT area inside the bezel.
-   .hv-screen is the visible CRT area; .hv-eye are the 2 animated eye dots. */
-.hv-screen {
+/* Hero monitor screen — light/glow effects that respond to mouse.
+   The CRT screen area in the image is roughly:
+   top: 18%, left: 17%, width: 66%, height: 27% */
+.hv-glow {
   position: absolute;
-  top: 26.3%;
-  left: 20.8%;
-  width: 49.8%;
-  height: 21.5%;
-  overflow: hidden;
-  border-radius: 6px;
+  top: 18%;
+  left: 17%;
+  width: 66%;
+  height: 27%;
+  border-radius: 8px;
   pointer-events: none;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(180, 230, 255, 0.15) 22%,
+    transparent 50%);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease), background 0.3s var(--ease);
+  mix-blend-mode: screen;
+  filter: blur(2px);
 }
-.hv-eye {
-  position: absolute;
-  top: 50%;
-  width: 18%;
-  height: 60%;
-  background: radial-gradient(ellipse at 50% 50%,
-    #ffffff 0%,
-    #f0f4f7 35%,
-    #d4dde2 70%,
-    #a8b3ba 100%);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  will-change: transform;
-  box-shadow:
-    0 0 6px rgba(255, 255, 255, 0.35),
-    inset 0 1px 2px rgba(255, 255, 255, 0.6);
-  transform-origin: center;
-}
-.hv-eye-l { left: 30%; }
-.hv-eye-r { left: 70%; }
+.hv-figure:hover .hv-glow { opacity: 1; }
 
-/* Blink animation: occasional vertical squish, triggered by JS class toggle */
-.hv-blinking .hv-eye {
-  animation: hv-blink-once 130ms ease-out;
+/* Horizontal scanline overlay — subtle CRT feel */
+.hv-scanline {
+  position: absolute;
+  top: 18%;
+  left: 17%;
+  width: 66%;
+  height: 27%;
+  border-radius: 8px;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.10) 0px,
+    rgba(0, 0, 0, 0.10) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.35;
+  mix-blend-mode: multiply;
 }
-@keyframes hv-blink-once {
-  0%   { transform: scaleY(1); }
-  50%  { transform: scaleY(0.06); }
-  100% { transform: scaleY(1); }
+
+/* Blink: brief screen dim + horizontal sweep line */
+.hv-blinking .hv-scanline {
+  animation: hv-blink 180ms ease-out;
+}
+@keyframes hv-blink {
+  0%   { opacity: 0.35; }
+  30%  { opacity: 0.95; }
+  60%  { opacity: 0.95; }
+  100% { opacity: 0.35; }
+}
+.hv-blinking .hv-glow {
+  animation: hv-blink-glow 180ms ease-out;
+}
+@keyframes hv-blink-glow {
+  0%   { opacity: 0; }
+  30%  { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv-blinking .hv-scanline,
+  .hv-blinking .hv-glow { animation: none; }
 }
 
 /* Hero status chip — small, monospace, live dot. */
