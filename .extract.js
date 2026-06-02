@@ -1,0 +1,1 @@
+var fs=require('fs');var html=fs.readFileSync('game.html','utf8');var m=html.match(/<script>([\s\S]*?)<\/script>/);if(m){fs.writeFileSync('validate.js',m[1]);console.log('extracted',m[1].length,'chars');}else{console.log('no script tag found');}
