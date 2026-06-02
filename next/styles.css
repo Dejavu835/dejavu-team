@@ -456,6 +456,7 @@ h1, h2, h3, h4, p { margin: 0; }
   mix-blend-mode: screen;
   filter: blur(2px);
 }
+.hv-figure.is-hover .hv-glow,
 .hv-figure:hover .hv-glow { opacity: 1; }
 
 /* Horizontal scanline overlay — subtle CRT feel */

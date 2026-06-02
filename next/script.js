@@ -73,6 +73,7 @@
       const ny = Math.max(0, Math.min(1, (e.clientY - r.top)  / r.height));
       targetX = nx; targetY = ny;
       active = true;
+      heroFigure.classList.add('is-hover');
       if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
       // Move the screen glow to follow the mouse (CSS var)
       if (glowEl) {
@@ -83,6 +84,7 @@
     };
     const onLeave = () => {
       active = false;
+      heroFigure.classList.remove('is-hover');
       if (statusEl && statusEl.textContent !== 'online') statusEl.textContent = 'online';
       if (glowEl) {
         glowEl.style.setProperty('--mx', '50%');
