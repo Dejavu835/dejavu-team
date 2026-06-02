@@ -52,11 +52,12 @@
   if (heroFigure && heroSection && okViewport &&
       !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     /* Head tilt + turn. The figure inherits perspective from .hero-visual,
-       so rotateY/rotateX render in 3D. Larger Y range (was 3°*2=6° total)
-       so the head actually "turns" — sides of the CRT monitor visually
-       compress/stretch as it rotates. X stays small (head nod). */
-    const MAX_TILT_X = 5;   // deg  (up/down nod, subtle)
-    const MAX_TILT_Y = 12;  // deg  (left/right head turn, visible)
+       so rotateY/rotateX render in 3D. Larger ranges so the head actually
+       "turns" with a clearly visible motion — sides of the CRT monitor
+       compress/stretch as it rotates. Lerp coefficient increased so the
+       response feels more responsive (was 0.14, now 0.20). */
+    const MAX_TILT_X = 9;    // deg  (up/down nod, now more visible)
+    const MAX_TILT_Y = 20;   // deg  (left/right head turn, very visible)
     let mx = 0.5, my = 0.5;
     let targetX = 0.5, targetY = 0.5;
     let rafId = null;
@@ -64,8 +65,8 @@
 
     const apply = () => {
       rafId = null;
-      mx += (targetX - mx) * 0.14;
-      my += (targetY - my) * 0.14;
+      mx += (targetX - mx) * 0.20;
+      my += (targetY - my) * 0.20;
       const dx = mx - 0.5;
       const dy = my - 0.5;
       heroFigure.style.transform =

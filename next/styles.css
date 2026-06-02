@@ -429,7 +429,7 @@ h1, h2, h3, h4, p { margin: 0; }
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  perspective: 1200px;
+  perspective: 900px;
   overflow: visible;
   padding-right: 0;
 }
