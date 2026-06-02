@@ -108,6 +108,7 @@ body {
 }
 @media (max-width: 880px) {
   body { background-attachment: scroll, scroll, scroll, scroll, scroll, scroll; }
+}
 
 img, svg, video { display: block; max-width: 100%; }
 
@@ -467,26 +468,29 @@ h1, h2, h3, h4, p { margin: 0; }
   height: 54%;
   pointer-events: none;
 }
-/* CRT eyes — CSS dots that track the mouse via --ex/--ey (set by JS) */
+/* CRT eyes — CSS dots that track the mouse via --ex/--ey (set by JS).
+   --ex/--ey are pixel offsets (positive = right/down) applied to
+   translate3d. Centering is done via left/right + top: 50% + translateY(-50%). */
 .hv-eye {
   position: absolute;
   top: 50%;
   width: 9%;
   height: 14%;
+  margin-top: -7%;          /* vertical center: half of height: 14% */
+  margin-left: -4.5%;       /* horizontal center: half of width: 9% */
   border-radius: 50%;
   background: radial-gradient(ellipse at 50% 50%,
     #ffffff 0%,
     #f4f7f8 30%,
     #d8dfe3 65%,
     #aab4ba 100%);
-  transform: translate(calc(-50% + var(--ex, 0px)), calc(-50% + var(--ey, 0px)));
+  transform: translate3d(var(--ex, 0px), var(--ey, 0px), 0);
   transition: transform 0.18s var(--ease);
   will-change: transform;
   box-shadow:
     0 0 10px rgba(255, 255, 255, 0.45),
     0 0 22px rgba(180, 220, 255, 0.30),
     inset 0 1px 2px rgba(255, 255, 255, 0.7);
-  transform-origin: center;
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.25));
 }
 .hv-eye-l { left: 30%; }
@@ -513,7 +517,9 @@ h1, h2, h3, h4, p { margin: 0; }
   filter: blur(3px);
 }
 .hv-figure.is-hover .hv-glow,
-.hv-figure:hover .hv-glow { opacity: 1; }
+.hv-figure:hover .hv-glow,
+.hero.is-hover .hv-glow,
+.hero:hover .hv-glow { opacity: 1; }
 
 /* Screen → body light spill. Subtle warm/green cast falling onto the suit. */
 .hv-spill {
@@ -533,7 +539,9 @@ h1, h2, h3, h4, p { margin: 0; }
   filter: blur(8px);
 }
 .hv-figure.is-hover .hv-spill,
-.hv-figure:hover .hv-spill { opacity: 1; }
+.hv-figure:hover .hv-spill,
+.hero.is-hover .hv-spill,
+.hero:hover .hv-spill { opacity: 1; }
 
 /* Horizontal scanline overlay — subtle CRT feel */
 .hv-scanline {

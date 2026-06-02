@@ -41,9 +41,10 @@
     revealEls.forEach((el) => el.classList.add('is-in'));
   }
 
-  // ---------- 3. hero visual: subtle 3D mouse-tilt only ----------
+  // ---------- 3. hero visual: subtle 3D mouse-tilt + eye/glow tracking ----------
   const heroFigure  = $('#hvFigure');
-  if (heroFigure && window.matchMedia('(min-width: 880px) and (prefers-reduced-motion: no-preference)').matches) {
+  const heroSection = $('.hero');
+  if (heroFigure && heroSection && window.matchMedia('(min-width: 880px) and (prefers-reduced-motion: no-preference)').matches) {
     const MAX_TILT = 3;       // deg  (subtle head turn)
     let mx = 0.5, my = 0.5;
     let targetX = 0.5, targetY = 0.5;
@@ -67,39 +68,49 @@
       }
     };
 
+    // Eye/glow tracking now uses the WHOLE hero section as reference,
+    // not just the figure card. Eyes smoothly track the cursor anywhere
+    // in the hero area; the screen glow is clamped to the figure bounds.
     const onMove = (e) => {
-      const r = heroFigure.getBoundingClientRect();
-      const nx = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-      const ny = Math.max(0, Math.min(1, (e.clientY - r.top)  / r.height));
-      targetX = nx; targetY = ny;
+      // 3D tilt: based on hero section position
+      const hr = heroSection.getBoundingClientRect();
+      const hx = Math.max(0, Math.min(1, (e.clientX - hr.left) / hr.width));
+      const hy = Math.max(0, Math.min(1, (e.clientY - hr.top)  / hr.height));
+      targetX = hx; targetY = hy;
       active = true;
-      heroFigure.classList.add('is-hover');
+      heroSection.classList.add('is-hover');
       if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
-      // Move the screen glow to follow the mouse (CSS var)
-      if (glowEl) {
-        glowEl.style.setProperty('--mx', (nx * 100).toFixed(2) + '%');
-        glowEl.style.setProperty('--my', (ny * 100).toFixed(2) + '%');
-      }
-      // Eye tracking: eyes move with mouse (larger range now since CSS eyes)
-      const MAX_EYE_OFFSET = 14;  // px
-      const MAX_EYE_OFFSET_Y = 10;
-      const ex = (nx - 0.5) * 2 * MAX_EYE_OFFSET;
-      const ey = (ny - 0.5) * 2 * MAX_EYE_OFFSET_Y;
+
+      // Eye tracking: position in hero maps to eye offset across the
+      // full hero width (so cursor at the LEFT EDGE of the hero = eyes
+      // looking full left, even if cursor is on the hero text, not the figure)
+      const MAX_EYE_OFFSET = 18;  // px (slightly more than before)
+      const MAX_EYE_OFFSET_Y = 12;
+      const ex = (hx - 0.5) * 2 * MAX_EYE_OFFSET;
+      const ey = (hy - 0.5) * 2 * MAX_EYE_OFFSET_Y;
       if (eyeL) eyeL.style.setProperty('--ex', ex.toFixed(2) + 'px');
       if (eyeR) eyeR.style.setProperty('--ex', ex.toFixed(2) + 'px');
       if (eyeL) eyeL.style.setProperty('--ey', ey.toFixed(2) + 'px');
       if (eyeR) eyeR.style.setProperty('--ey', ey.toFixed(2) + 'px');
+
+      // Screen glow: still clamped to the figure bounds
+      if (glowEl) {
+        const fr = heroFigure.getBoundingClientRect();
+        const fx = Math.max(0, Math.min(1, (e.clientX - fr.left) / fr.width));
+        const fy = Math.max(0, Math.min(1, (e.clientY - fr.top)  / fr.height));
+        glowEl.style.setProperty('--mx', (fx * 100).toFixed(2) + '%');
+        glowEl.style.setProperty('--my', (fy * 100).toFixed(2) + '%');
+      }
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
     const onLeave = () => {
       active = false;
-      heroFigure.classList.remove('is-hover');
+      heroSection.classList.remove('is-hover');
       if (statusEl && statusEl.textContent !== 'online') statusEl.textContent = 'online';
       if (glowEl) {
         glowEl.style.setProperty('--mx', '50%');
         glowEl.style.setProperty('--my', '50%');
       }
-      // Eyes return to center smoothly
       if (eyeL) eyeL.style.setProperty('--ex', '0px');
       if (eyeR) eyeR.style.setProperty('--ex', '0px');
       if (eyeL) eyeL.style.setProperty('--ey', '0px');
@@ -122,8 +133,9 @@
     };
     setTimeout(blink, 2200);
 
-    heroFigure.addEventListener('mousemove', onMove);
-    heroFigure.addEventListener('mouseleave', onLeave);
+    // Listen on the WHOLE hero section (not just the figure)
+    heroSection.addEventListener('mousemove', onMove);
+    heroSection.addEventListener('mouseleave', onLeave);
   }
 
   // ---------- 4. mobile drawer ----------
