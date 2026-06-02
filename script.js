@@ -126,4 +126,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const progress = docHeight > 0 ? (currentScroll / docHeight * 100) + '%' : '0%';
     document.documentElement.style.setProperty('--scroll-progress', progress);
   }, { passive: true });
+
+  // === Scroll-trigger fade-in (2026-06-02 美化) ===
+  if ('IntersectionObserver' in window) {
+    const fadeEls = document.querySelectorAll('.section-title, .product-card, .team-card, .about-text');
+    fadeEls.forEach(el => el.classList.add('fade-in-on-scroll'));
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+    fadeEls.forEach(el => io.observe(el));
+  }
 });
