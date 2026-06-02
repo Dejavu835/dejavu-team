@@ -123,6 +123,87 @@
     const eyeL = $('#hvEyeL');
     const eyeR = $('#hvEyeR');
 
+    /* ---------- 3b. Gyroscope eye-tracking for mobile ----------
+       On touch-primary devices, listen to DeviceOrientationEvent and
+       map device tilt (gamma = left/right, beta = forward/back) to the
+       eye --ex/--ey offsets. iOS Safari requires a user gesture before
+       requestPermission() can resolve; we wire it to the first tap.
+       Coexists with the mouse listener — whichever fires last wins. */
+    const MAX_EYE_OFFSET   = 18;  // px (must match the const in onMove)
+    const MAX_EYE_OFFSET_Y = 12;
+    const isTouchDevice    = matchMedia('(hover: none)').matches;
+    const isIOS            = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (isTouchDevice && 'DeviceOrientationEvent' in window) {
+      let gyroActive = false;
+      let gyroOnlineTimer = null;
+      const onTilt = (e) => {
+        if (e.gamma == null || e.beta == null) return;
+        // gamma (-90..90, practical -45..45) → left/right
+        const gN = Math.max(0, Math.min(1, (e.gamma + 30) / 60));
+        const ex = (gN - 0.5) * 2 * MAX_EYE_OFFSET;
+        // beta (0=flat, 90=upright, practical 60..120) → up/down
+        // beta 60 = tilted back (look up) → ey negative
+        // beta 120 = tilted forward (look down) → ey positive
+        const bN = Math.max(0, Math.min(1, (e.beta - 60) / 60));
+        const ey = (bN - 0.5) * 2 * MAX_EYE_OFFSET_Y;
+        if (eyeL) {
+          eyeL.style.setProperty('--ex', ex.toFixed(2) + 'px');
+          eyeL.style.setProperty('--ey', ey.toFixed(2) + 'px');
+        }
+        if (eyeR) {
+          eyeR.style.setProperty('--ex', ex.toFixed(2) + 'px');
+          eyeR.style.setProperty('--ey', ey.toFixed(2) + 'px');
+        }
+        // Activate hover state so glow appears on mobile too
+        if (heroSection && !heroSection.classList.contains('is-hover')) {
+          heroSection.classList.add('is-hover');
+        }
+        if (statusEl && statusEl.textContent !== 'tracking') {
+          statusEl.textContent = 'tracking';
+        }
+        // Debounced: if device is still for 1.2s, set back to 'online'
+        clearTimeout(gyroOnlineTimer);
+        gyroOnlineTimer = setTimeout(() => {
+          if (statusEl && statusEl.textContent === 'tracking') {
+            statusEl.textContent = 'online';
+          }
+        }, 1200);
+      };
+
+      const startGyro = () => {
+        if (gyroActive) return;
+        if (isIOS && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          DeviceOrientationEvent.requestPermission()
+            .then((state) => {
+              if (state === 'granted') {
+                window.addEventListener('deviceorientation', onTilt, { passive: true });
+                gyroActive = true;
+              }
+            })
+            .catch((err) => console.warn('gyro permission:', err));
+        } else {
+          window.addEventListener('deviceorientation', onTilt, { passive: true });
+          gyroActive = true;
+        }
+      };
+
+      if (isIOS) {
+        // iOS needs a user gesture to grant sensor permission
+        const onFirstTap = () => {
+          startGyro();
+          document.removeEventListener('touchstart', onFirstTap);
+          document.removeEventListener('click', onFirstTap);
+        };
+        document.addEventListener('touchstart', onFirstTap, { once: true, passive: true });
+        document.addEventListener('click', onFirstTap, { once: true });
+      } else {
+        // Android / non-iOS: just start
+        startGyro();
+      }
+    }
+
     // Blink: schedule random blinks every 3.5–6.5s
     const blink = () => {
       if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
