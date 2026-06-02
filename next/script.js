@@ -41,32 +41,47 @@
     revealEls.forEach((el) => el.classList.add('is-in'));
   }
 
-  // ---------- 3. hero card parallax (subtle) ----------
-  const heroVisual = $('.hero-visual');
-  if (heroVisual && window.matchMedia('(min-width: 880px) and (prefers-reduced-motion: no-preference)').matches) {
-    const cards = $$('.hv-card', heroVisual);
-    const onMouse = (e) => {
-      const r = heroVisual.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      const dx = (e.clientX - cx) / r.width;   // -0.5 .. 0.5
-      const dy = (e.clientY - cy) / r.height;
-      cards.forEach((c, i) => {
-        const k = (i + 1) * 4;                 // depth
-        const tx = dx * k;
-        const ty = dy * k * 0.5;
-        // preserve base rotation by combining with existing transform
-        const base = c.classList.contains('tilt-l') ? -6 : 4;
-        c.style.transform = `translate(${tx}px, ${ty}px) rotate(${base}deg)`;
-      });
+  // ---------- 3. hero visual: subtle 3D mouse-tilt only ----------
+  const heroFigure  = $('#hvFigure');
+  if (heroFigure && window.matchMedia('(min-width: 880px) and (prefers-reduced-motion: no-preference)').matches) {
+    const MAX_TILT = 3;       // deg  (subtle head turn)
+    let mx = 0.5, my = 0.5;
+    let targetX = 0.5, targetY = 0.5;
+    let rafId = null;
+    let active = false;
+
+    const apply = () => {
+      rafId = null;
+      mx += (targetX - mx) * 0.18;
+      my += (targetY - my) * 0.18;
+      const dx = mx - 0.5;
+      const dy = my - 0.5;
+      heroFigure.style.transform = `rotateX(${(-dy * MAX_TILT).toFixed(2)}deg) rotateY(${(dx * MAX_TILT * 2).toFixed(2)}deg)`;
+      if (Math.abs(targetX - mx) > 0.001 || Math.abs(targetY - my) > 0.001) {
+        rafId = requestAnimationFrame(apply);
+      } else if (active) {
+        rafId = requestAnimationFrame(apply);
+      } else {
+        targetX = 0.5; targetY = 0.5;
+        if (mx !== 0.5 || my !== 0.5) rafId = requestAnimationFrame(apply);
+      }
+    };
+
+    const onMove = (e) => {
+      const r = heroFigure.getBoundingClientRect();
+      const nx = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      const ny = Math.max(0, Math.min(1, (e.clientY - r.top)  / r.height));
+      targetX = nx; targetY = ny;
+      active = true;
+      if (rafId === null) rafId = requestAnimationFrame(apply);
     };
     const onLeave = () => {
-      cards.forEach((c) => {
-        c.style.transform = '';
-      });
+      active = false;
+      if (rafId === null) rafId = requestAnimationFrame(apply);
     };
-    heroVisual.addEventListener('mousemove', onMouse);
-    heroVisual.addEventListener('mouseleave', onLeave);
+
+    heroFigure.addEventListener('mousemove', onMove);
+    heroFigure.addEventListener('mouseleave', onLeave);
   }
 
   // ---------- 4. mobile drawer ----------
