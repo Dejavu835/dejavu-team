@@ -90,9 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gamesBackdrop) gamesBackdrop.addEventListener('click', closeGames);
 
     // Menu items: jump to game URL (stage B: hardcoded; stage D: from games.json)
-    // 小游戏二级菜单：只放产品区独立卡未覆盖的新游戏
-    // （坦克/五子棋 已在产品区是独立卡，不在菜单里重复）
+    // 小游戏二级菜单：产品区不展示独立卡，全部从这里进入
     const gameUrlMap = {
+      tank: 'games/tank/index.html',
+      wuziqi: 'games/wuziqi/index.html',
       'wuziqi-skill': 'games/wuziqi-skill/index.html'  // 2026-06-02 上线
     };
     gamesModal.querySelectorAll('.games-menu-item[data-game]').forEach(item => {
