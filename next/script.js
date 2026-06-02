@@ -80,6 +80,15 @@
         glowEl.style.setProperty('--mx', (nx * 100).toFixed(2) + '%');
         glowEl.style.setProperty('--my', (ny * 100).toFixed(2) + '%');
       }
+      // Eye tracking: eyes move with mouse (larger range now since CSS eyes)
+      const MAX_EYE_OFFSET = 14;  // px
+      const MAX_EYE_OFFSET_Y = 10;
+      const ex = (nx - 0.5) * 2 * MAX_EYE_OFFSET;
+      const ey = (ny - 0.5) * 2 * MAX_EYE_OFFSET_Y;
+      if (eyeL) eyeL.style.setProperty('--ex', ex.toFixed(2) + 'px');
+      if (eyeR) eyeR.style.setProperty('--ex', ex.toFixed(2) + 'px');
+      if (eyeL) eyeL.style.setProperty('--ey', ey.toFixed(2) + 'px');
+      if (eyeR) eyeR.style.setProperty('--ey', ey.toFixed(2) + 'px');
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
     const onLeave = () => {
@@ -90,11 +99,18 @@
         glowEl.style.setProperty('--mx', '50%');
         glowEl.style.setProperty('--my', '50%');
       }
+      // Eyes return to center smoothly
+      if (eyeL) eyeL.style.setProperty('--ex', '0px');
+      if (eyeR) eyeR.style.setProperty('--ex', '0px');
+      if (eyeL) eyeL.style.setProperty('--ey', '0px');
+      if (eyeR) eyeR.style.setProperty('--ey', '0px');
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
 
     const statusEl = $('#hvStatus');
     const glowEl  = $('#hvGlow');
+    const eyeL = $('#hvEyeL');
+    const eyeR = $('#hvEyeR');
 
     // Blink: schedule random blinks every 3.5–6.5s
     const blink = () => {
