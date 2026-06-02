@@ -44,7 +44,13 @@
   // ---------- 3. hero visual: subtle 3D mouse-tilt + eye/glow tracking ----------
   const heroFigure  = $('#hvFigure');
   const heroSection = $('.hero');
-  if (heroFigure && heroSection && window.matchMedia('(min-width: 880px) and (prefers-reduced-motion: no-preference)').matches) {
+  // Enable on desktop (>880px, mouse) OR on any touch device. The 3D
+  // tilt respects touch events too (the touch handler below dispatches
+  // synthetic mousemove so the same code path runs on mobile).
+  const okViewport = matchMedia('(min-width: 880px)').matches ||
+                     matchMedia('(hover: none)').matches;
+  if (heroFigure && heroSection && okViewport &&
+      !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     /* Head tilt + turn. The figure inherits perspective from .hero-visual,
        so rotateY/rotateX render in 3D. Larger Y range (was 3°*2=6° total)
        so the head actually "turns" — sides of the CRT monitor visually
@@ -130,85 +136,32 @@
     const eyeL = $('#hvEyeL');
     const eyeR = $('#hvEyeR');
 
-    /* ---------- 3b. Gyroscope eye-tracking for mobile ----------
-       On touch-primary devices, listen to DeviceOrientationEvent and
-       map device tilt (gamma = left/right, beta = forward/back) to the
-       eye --ex/--ey offsets. iOS Safari requires a user gesture before
-       requestPermission() can resolve; we wire it to the first tap.
-       Coexists with the mouse listener — whichever fires last wins. */
-    const MAX_EYE_OFFSET   = 18;  // px (must match the const in onMove)
-    const MAX_EYE_OFFSET_Y = 12;
-    const isTouchDevice    = matchMedia('(hover: none)').matches;
-    const isIOS            = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-    if (isTouchDevice && 'DeviceOrientationEvent' in window) {
-      let gyroActive = false;
-      let gyroOnlineTimer = null;
-      const onTilt = (e) => {
-        if (e.gamma == null || e.beta == null) return;
-        // gamma (-90..90, practical -45..45) → left/right
-        const gN = Math.max(0, Math.min(1, (e.gamma + 30) / 60));
-        const ex = (gN - 0.5) * 2 * MAX_EYE_OFFSET;
-        // beta (0=flat, 90=upright, practical 60..120) → up/down
-        // beta 60 = tilted back (look up) → ey negative
-        // beta 120 = tilted forward (look down) → ey positive
-        const bN = Math.max(0, Math.min(1, (e.beta - 60) / 60));
-        const ey = (bN - 0.5) * 2 * MAX_EYE_OFFSET_Y;
-        if (eyeL) {
-          eyeL.style.setProperty('--ex', ex.toFixed(2) + 'px');
-          eyeL.style.setProperty('--ey', ey.toFixed(2) + 'px');
-        }
-        if (eyeR) {
-          eyeR.style.setProperty('--ex', ex.toFixed(2) + 'px');
-          eyeR.style.setProperty('--ey', ey.toFixed(2) + 'px');
-        }
-        // Activate hover state so glow appears on mobile too
-        if (heroSection && !heroSection.classList.contains('is-hover')) {
-          heroSection.classList.add('is-hover');
-        }
-        if (statusEl && statusEl.textContent !== 'tracking') {
-          statusEl.textContent = 'tracking';
-        }
-        // Debounced: if device is still for 1.2s, set back to 'online'
-        clearTimeout(gyroOnlineTimer);
-        gyroOnlineTimer = setTimeout(() => {
-          if (statusEl && statusEl.textContent === 'tracking') {
-            statusEl.textContent = 'online';
-          }
-        }, 1200);
+    /* ---------- 3b. Touch-based eye-tracking for mobile ----------
+       Gyroscope (DeviceOrientationEvent) was tried first, but on iOS
+       the requestPermission() prompt never fires reliably. Switching
+       to a simpler / more predictable approach: convert touch events
+       into synthetic mousemove/mouseleave on the hero section, so
+       the existing desktop eye-tracking code does the work.
+         - touchstart / touchmove → mousemove (eyes look at touch point)
+         - touchend / touchcancel  → mouseleave (eyes return to center) */
+    const isTouchDevice = matchMedia('(hover: none)').matches;
+    if (isTouchDevice) {
+      const touchToMouse = (e) => {
+        const t = e.touches[0] || (e.changedTouches && e.changedTouches[0]);
+        if (!t) return;
+        heroSection.dispatchEvent(new MouseEvent('mousemove', {
+          clientX: t.clientX,
+          clientY: t.clientY,
+          bubbles: true
+        }));
       };
-
-      const startGyro = () => {
-        if (gyroActive) return;
-        if (isIOS && typeof DeviceOrientationEvent.requestPermission === 'function') {
-          DeviceOrientationEvent.requestPermission()
-            .then((state) => {
-              if (state === 'granted') {
-                window.addEventListener('deviceorientation', onTilt, { passive: true });
-                gyroActive = true;
-              }
-            })
-            .catch((err) => console.warn('gyro permission:', err));
-        } else {
-          window.addEventListener('deviceorientation', onTilt, { passive: true });
-          gyroActive = true;
-        }
+      const touchEndToMouseLeave = () => {
+        heroSection.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
       };
-
-      if (isIOS) {
-        // iOS needs a user gesture to grant sensor permission
-        const onFirstTap = () => {
-          startGyro();
-          document.removeEventListener('touchstart', onFirstTap);
-          document.removeEventListener('click', onFirstTap);
-        };
-        document.addEventListener('touchstart', onFirstTap, { once: true, passive: true });
-        document.addEventListener('click', onFirstTap, { once: true });
-      } else {
-        // Android / non-iOS: just start
-        startGyro();
-      }
+      heroSection.addEventListener('touchstart', touchToMouse, { passive: true });
+      heroSection.addEventListener('touchmove',  touchToMouse, { passive: true });
+      heroSection.addEventListener('touchend',   touchEndToMouseLeave, { passive: true });
+      heroSection.addEventListener('touchcancel',touchEndToMouseLeave, { passive: true });
     }
 
     // Blink: schedule random blinks every 3.5–6.5s
