@@ -438,18 +438,18 @@ h1, h2, h3, h4, p { margin: 0; }
 
 /* Hero monitor screen — light/glow effects that respond to mouse.
    The CRT screen area in the image is roughly:
-   top: 18%, left: 17%, width: 66%, height: 27% */
+   top: 22%, left: 16%, width: 68%, height: 18% */
 .hv-glow {
   position: absolute;
-  top: 18%;
-  left: 17%;
-  width: 66%;
-  height: 27%;
+  top: 22%;
+  left: 16%;
+  width: 68%;
+  height: 18%;
   border-radius: 8px;
   pointer-events: none;
   background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 255, 255, 0.28) 0%,
-    rgba(180, 230, 255, 0.15) 22%,
+    rgba(255, 255, 255, 0.32) 0%,
+    rgba(180, 230, 255, 0.18) 22%,
     transparent 50%);
   opacity: 0;
   transition: opacity 0.4s var(--ease), background 0.3s var(--ease);
@@ -459,13 +459,79 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-figure.is-hover .hv-glow,
 .hv-figure:hover .hv-glow { opacity: 1; }
 
+/* Per-eye glow — subtle warm halo around each eye, gentle pulse. */
+.hv-eye-glow {
+  position: absolute;
+  top: 25%;
+  width: 22%;
+  height: 18%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center,
+    rgba(220, 240, 255, 0.55) 0%,
+    rgba(170, 220, 255, 0.30) 25%,
+    rgba(140, 200, 255, 0.10) 50%,
+    transparent 70%);
+  opacity: 0.40;
+  mix-blend-mode: screen;
+  filter: blur(3px);
+  animation: hv-eye-pulse 3.6s ease-in-out infinite;
+  transition: opacity 0.4s var(--ease);
+}
+.hv-eye-glow-l { left: 19%;  animation-delay: 0s; }
+.hv-eye-glow-r { right: 19%; animation-delay: 0.4s; }
+.hv-figure.is-hover .hv-eye-glow,
+.hv-figure:hover .hv-eye-glow {
+  opacity: 0.85;
+  animation-duration: 1.8s;
+}
+@keyframes hv-eye-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.40; }
+  50%      { transform: scale(1.08); opacity: 0.65; }
+}
+
+/* Screen → body light spill. Subtle warm/green cast falling onto the suit. */
+.hv-spill {
+  position: absolute;
+  top: 38%;
+  left: 18%;
+  width: 64%;
+  height: 18%;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0%,
+    rgba(170, 220, 200, 0.20) 0%,
+    rgba(170, 220, 200, 0.10) 35%,
+    transparent 75%);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease);
+  mix-blend-mode: screen;
+  filter: blur(8px);
+}
+.hv-figure.is-hover .hv-spill,
+.hv-figure:hover .hv-spill { opacity: 1; }
+
+/* Blink: eyes glow dims sharply + scanline intensifies. */
+.hv-blinking .hv-eye-glow {
+  animation: hv-blink-eye 200ms ease-out;
+}
+@keyframes hv-blink-eye {
+  0%   { opacity: 0.85; transform: scale(1); }
+  40%  { opacity: 0.05; transform: scaleY(0.15); }
+  100% { opacity: 0.85; transform: scale(1); }
+}
+.hv-blinking .hv-spill { opacity: 0.3; }
+@media (prefers-reduced-motion: reduce) {
+  .hv-eye-glow { animation: none; }
+  .hv-blinking .hv-eye-glow { animation: none; }
+}
+
 /* Horizontal scanline overlay — subtle CRT feel */
 .hv-scanline {
   position: absolute;
-  top: 18%;
-  left: 17%;
-  width: 66%;
-  height: 27%;
+  top: 22%;
+  left: 16%;
+  width: 68%;
+  height: 18%;
   border-radius: 8px;
   pointer-events: none;
   background: repeating-linear-gradient(
