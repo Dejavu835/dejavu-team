@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>技能五子棋 · Skill Gomoku · dejavu team</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚫</text></svg>">
+<style>
+/* ===== Reset ===== */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","Helvetica Neue",Arial,sans-serif;background:#f5f5f7;color:#1d1d1f;min-height:100vh;overflow-x:hidden}
+
+/* ===== 顶栏 ===== */
+.g-nav{position:sticky;top:0;z-index:100;height:52px;background:rgba(245,245,247,0.85);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,0.08)}
+.g-nav-inner{max-width:1280px;margin:0 auto;height:100%;display:flex;align-items:center;justify-content:space-between;padding:0 22px;gap:18px}
+.g-nav-logo{font-size:14px;font-weight:600;letter-spacing:-0.01em;color:#1d1d1f;text-decoration:none;white-space:nowrap}
+.g-nav-fade{color:#86868b;font-weight:400}
+.g-nav-title{font-size:13px;font-weight:500;color:#515154}
+.g-nav-back{font-size:13px;color:#515154;text-decoration:none;transition:color 0.15s;white-space:nowrap}
+.g-nav-back:hover{color:#0071e3}
+.g-nav-actions{display:flex;align-items:center;gap:14px}
+.g-nav-btn{font-size:13px;font-weight:500;font-family:inherit;color:#515154;background:transparent;border:1px solid rgba(0,0,0,0.1);border-radius:6px;padding:5px 10px;cursor:pointer;transition:all 0.15s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;-webkit-tap-highlight-color:transparent}
+.g-nav-btn:hover{background:rgba(0,0,0,0.05);color:#1d1d1f}
+.g-nav-btn:active{transform:scale(0.97)}
+@media(max-width:480px){.g-nav-title{display:none}.g-nav{padding:0 8px}}
+
+/* ===== 全屏棋盘模式 ===== */
+:fullscreen{background:#f5f5f7}
+:fullscreen .g-nav{padding:0 8px}
+:fullscreen .g-main{
+  grid-template-columns:minmax(0,1fr);
+  max-width:none;
+  padding:16px;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+}
+:fullscreen .g-side{display:none}
+:fullscreen .g-board-frame{
+  max-width:min(95vmin,calc(100vw - 60px));
+  width:min(95vmin,calc(100vw - 60px));
+  padding:20px;
+}
+:fullscreen #board{width:100%;height:auto}
+:fullscreen .g-rules{display:none}
+:fullscreen .g-banner-inner{background:rgba(255,255,255,0.98);max-width:90vw}
+:fullscreen .fs-enter{display:none}
+:fullscreen .fs-exit{display:inline}
+.fs-exit{display:none}
+
+/* ===== 主区 ===== */
+.g-main{max-width:1280px;margin:0 auto;padding:24px 22px 40px;display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
+@media(max-width:880px){.g-main{grid-template-columns:1fr;padding:16px 14px 30px;gap:18px}}
+
+/* ===== 棋盘 ===== */
+.g-board-wrap{display:flex;justify-content:center;align-items:flex-start;width:100%}
+.g-board-frame{position:relative;padding:18px;background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.05);width:100%;max-width:min(660px,calc(100vw - 40px))}
+#board{display:block;border-radius:8px;cursor:pointer;width:100%;height:auto;background:#dcb35c;box-shadow:inset 0 0 20px rgba(0,0,0,0.08);transition:background 0.3s,box-shadow 0.3s;touch-action:manipulation}
+#board[data-theme=jade]{background:linear-gradient(135deg,#d6e5d3 0%,#b6cdb1 100%);box-shadow:inset 0 0 24px rgba(0,0,0,0.06)}
+#board[data-theme=minimal]{background:#f9f9f9;box-shadow:none;border:1px solid #e8e8ed}
+#board.dragging{cursor:grabbing}
+.g-board-overlay{position:absolute;inset:0;pointer-events:none;border-radius:18px}
+
+/* ===== 侧栏 ===== */
+.g-side{display:flex;flex-direction:column;gap:14px}
+.g-card{background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.04)}
+.g-card-title{font-size:11px;font-weight:600;letter-spacing:0.08em;color:#86868b;text-transform:uppercase;margin-bottom:10px}
+
+/* ===== 段控件 ===== */
+.g-seg{display:flex;background:#f5f5f7;border-radius:9px;padding:3px;gap:2px}
+.g-seg-btn{flex:1;padding:7px 8px;font-size:13px;font-weight:500;color:#515154;background:transparent;border:none;border-radius:7px;cursor:pointer;transition:all 0.2s;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.g-seg-btn:hover{color:#1d1d1f}
+.g-seg-btn.active{background:#fff;color:#1d1d1f;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+
+/* ===== 信息卡 ===== */
+.g-turn{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.g-turn-label{font-size:12px;color:#86868b}
+.g-turn-name{font-size:16px;font-weight:600;color:#1d1d1f}
+.g-stone{display:inline-block;width:18px;height:18px;border-radius:50%;flex-shrink:0}
+.g-stone-black{background:radial-gradient(circle at 30% 30%,#555 0%,#1a1a1a 70%);box-shadow:0 1px 2px rgba(0,0,0,0.3)}
+.g-stone-white{background:radial-gradient(circle at 30% 30%,#fff 0%,#e0e0e0 80%);box-shadow:0 1px 2px rgba(0,0,0,0.15),inset 0 0 0 1px rgba(0,0,0,0.05)}
+.g-meta{display:flex;gap:18px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06)}
+.g-meta-item{display:flex;flex-direction:column;gap:2px;flex:1}
+.g-meta-label{font-size:11px;color:#86868b}
+.g-meta-val{font-size:20px;font-weight:700;color:#1d1d1f;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+
+/* ===== 按钮 ===== */
+.g-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.g-btn{padding:8px 10px;font-size:13px;font-weight:500;font-family:inherit;color:#1d1d1f;background:#f5f5f7;border:1px solid rgba(0,0,0,0.06);border-radius:8px;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+.g-btn:hover{background:#e8e8ed}
+.g-btn:active{transform:scale(0.97)}
+.g-btn-primary{background:#1d1d1f;color:#fff;border-color:#1d1d1f}
+.g-btn-primary:hover{background:#2c2c2e}
+
+/* ===== 主题选择 ===== */
+.g-themes{display:flex;gap:10px}
+.g-theme{width:32px;height:32px;border-radius:50%;border:2px solid transparent;background:#dcb35c;cursor:pointer;transition:all 0.15s;padding:0;-webkit-tap-highlight-color:transparent}
+.g-theme-jade{background:linear-gradient(135deg,#d6e5d3 0%,#b6cdb1 100%)}
+.g-theme-minimal{background:#f8f8f8;border:2px solid #d2d2d7}
+.g-theme:hover{transform:scale(1.1)}
+.g-theme.active{border-color:#0071e3;box-shadow:0 0 0 2px rgba(0,113,227,0.25)}
+
+/* ===== 落子记录 ===== */
+.g-card-log{max-height:220px}
+.g-log{display:flex;flex-wrap:wrap;gap:4px;max-height:160px;overflow-y:auto;font-size:11px;color:#515154}
+.g-log-step{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;background:#f5f5f7;border-radius:6px;font-variant-numeric:tabular-nums;line-height:1}
+.g-log-step .g-log-stone{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.g-log-stone-black{background:#1a1a1a}
+.g-log-stone-white{background:#fff;border:1px solid #d2d2d7}
+.g-log-empty{font-size:12px;color:#86868b;text-align:center;width:100%;padding:20px 0}
+
+/* ===== 胜利横幅 ===== */
+.g-banner{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.g-banner.show{display:flex;animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.g-banner-inner{background:#fff;padding:32px 40px;border-radius:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes popIn{from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1}}
+.g-banner-title{font-size:26px;font-weight:700;letter-spacing:-0.02em;color:#1d1d1f;margin-bottom:4px}
+.g-banner-sub{font-size:14px;color:#86868b;margin-bottom:20px}
+
+/* ===== 规则说明 ===== */
+.g-rules{max-width:900px;margin:0 auto 40px;padding:0 22px}
+.g-rules summary{font-size:13px;color:#515154;cursor:pointer;padding:12px 0;text-align:center;user-select:none;transition:color 0.15s}
+.g-rules summary:hover{color:#0071e3}
+.g-rules-inner{background:#fff;padding:20px 24px;border-radius:12px;font-size:13px;line-height:1.7;color:#515154;margin-top:8px}
+.g-rules-inner p{margin-bottom:8px}
+.g-rules-inner p:last-child{margin-bottom:0}
+.g-rules-inner strong{color:#1d1d1f}
+
+/* ===== 五连高亮与落子动画 ===== */
+@keyframes winPulse{0%,100%{filter:drop-shadow(0 0 0 rgba(255,59,48,0))}50%{filter:drop-shadow(0 0 12px rgba(255,59,48,0.8))}}
+.win-stone{animation:winPulse 1.2s ease-in-out infinite}
+@keyframes stonePop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.stone-anim{animation:stonePop 0.25s cubic-bezier(0.34,1.56,0.64,1)}
+
+/* ===== 移动端微调 ===== */
+@media(max-width:880px){.g-card-log{max-height:180px}}
+@media(max-width:480px){.g-board-frame{padding:12px;border-radius:14px}.g-card{padding:12px 14px}.g-banner-inner{padding:24px 28px;margin:0 16px}.g-banner-title{font-size:22px}.g-turn-name{font-size:14px}.g-meta-val{font-size:18px}}
+
+/* ===== 技能栏（顶部） ===== */
+.g-skillbar{
+  width:100%;max-width:min(660px,calc(100vw - 40px));
+  margin:0 0 12px;padding:12px 16px;background:#fff;border-radius:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.04),0 1px 2px rgba(0,0,0,0.03);
+  border:1px solid rgba(0,0,0,0.05);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.g-skillbar-info{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.g-skillbar-label{font-size:11px;font-weight:600;letter-spacing:0.06em;color:#86868b;text-transform:uppercase}
+.g-energy-track{width:80px;height:8px;background:#f5f5f7;border-radius:4px;overflow:hidden;position:relative}
+.g-energy-fill{height:100%;background:linear-gradient(90deg,#5a8eff 0%,#3a6eef 100%);border-radius:4px;transition:width 0.3s cubic-bezier(0.34,1.56,0.64,1);width:15%}
+.g-skillbar-val{font-size:13px;font-weight:700;color:#1d1d1f;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
+.g-skillbar-btns{display:flex;gap:6px;flex:1;justify-content:flex-end;flex-wrap:wrap}
+.g-skill-btn{
+  position:relative;width:42px;height:42px;border-radius:10px;background:#f5f5f7;
+  border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:20px;transition:all 0.15s;-webkit-tap-highlight-color:transparent;padding:0;font-family:inherit;
+}
+.g-skill-btn:hover{transform:translateY(-1px);box-shadow:0 4px 8px rgba(0,0,0,0.08)}
+.g-skill-btn:active{transform:scale(0.95)}
+.g-skill-btn.ready{background:#fff;border-color:rgba(90,142,255,0.3);box-shadow:0 0 0 1px rgba(90,142,255,0.1)}
+.g-skill-btn.ready:hover{border-color:#5a8eff;box-shadow:0 4px 12px rgba(90,142,255,0.25)}
+.g-skill-btn.noenergy{opacity:0.5;cursor:not-allowed;background:#f5f5f7}
+.g-skill-btn.noenergy:hover{transform:none;box-shadow:none}
+.g-skill-btn.casting{animation:skillCast 0.5s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes skillCast{0%{transform:scale(1)}30%{transform:scale(1.2);box-shadow:0 0 20px rgba(90,142,255,0.6)}100%{transform:scale(1)}}
+.g-skill-cost{position:absolute;bottom:-2px;right:-2px;background:#1d1d1f;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:6px;line-height:1.2;font-variant-numeric:tabular-nums}
+.g-skill-tooltip{
+  position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:#1d1d1f;color:#fff;padding:8px 12px;border-radius:8px;
+  font-size:12px;line-height:1.4;white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity 0.15s;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.2);
+}
+.g-skill-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1d1d1f}
+.g-skill-btn:hover .g-skill-tooltip{opacity:1}
+.g-skill-tooltip-name{font-weight:700;margin-bottom:2px}
+.g-skill-tooltip-effect{color:#ccc;font-size:11px}
+
+/* ===== 教学弹窗 ===== */
+.g-tutorial{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:fadeIn 0.3s ease}
+.g-tutorial-inner{background:#fff;padding:32px 36px;border-radius:20px;max-width:min(500px,90vw);box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+.g-tutorial-title{font-size:22px;font-weight:700;color:#1d1d1f;margin-bottom:8px;letter-spacing:-0.02em}
+.g-tutorial-sub{font-size:14px;color:#86868b;margin-bottom:20px}
+.g-tutorial-skills{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.g-tutorial-skill{text-align:center;padding:12px 8px;background:#f5f5f7;border-radius:12px}
+.g-tutorial-skill-icon{font-size:32px;margin-bottom:6px}
+.g-tutorial-skill-name{font-size:13px;font-weight:600;color:#1d1d1f;margin-bottom:4px}
+.g-tutorial-skill-desc{font-size:11px;color:#515154;line-height:1.4}
+.g-tutorial-cta{width:100%;padding:12px;background:#1d1d1f;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.g-tutorial-cta:hover{background:#2c2c2e;transform:translateY(-1px)}
+.g-tutorial-cta:active{transform:scale(0.98)}
+
+/* ===== 技能目标选择模式 ===== */
+.g-target-mode{cursor:crosshair !important}
+.g-target-mode #board{box-shadow:0 0 0 3px rgba(90,142,255,0.4),inset 0 0 20px rgba(0,0,0,0.08)}
+.g-target-hint{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(29,29,31,0.95);color:#fff;padding:10px 20px;border-radius:10px;font-size:14px;z-index:150;animation:fadeIn 0.2s}
+
+/* ===== 技能浮动数字（+5 / -30） ===== */
+.g-float-num{position:absolute;font-size:16px;font-weight:700;pointer-events:none;z-index:80;animation:floatUp 1.2s ease-out forwards}
+.g-float-num.positive{color:#34c759}
+.g-float-num.negative{color:#ff3b30}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-30px)}}
+
+/* ===== 效果 overlay (迷雾/护盾) ===== */
+.g-effect-overlay{position:absolute;inset:18px;border-radius:8px;pointer-events:none;transition:opacity 0.3s}
+.g-effect-mist{background:rgba(0,0,0,0.35);backdrop-filter:blur(2px)}
+
+/* ===== 响应式 ===== */
+@media(max-width:880px){.g-skillbar{padding:10px 12px;gap:10px}.g-skillbar-btns{justify-content:flex-start}}
+@media(max-width:480px){.g-skill-btn{width:38px;height:38px;font-size:18px}.g-energy-track{width:60px}.g-skillbar-val{font-size:12px}}
+</style>
+</head>
+<body>
+
+<header class="g-nav">
+  <div class="g-nav-inner">
+    <a class="g-nav-logo" href="/" aria-label="返回首页"><span>dejavu<span class="g-nav-fade"> team</span></span></a>
+    <div class="g-nav-title">技能五子棋 · Skill Gomoku</div>
+    <div class="g-nav-actions">
+      <button id="fs-btn" class="g-nav-btn" type="button" aria-label="全屏">
+        <span class="fs-enter">⛶ 全屏</span>
+        <span class="fs-exit" hidden>⤢ 退出</span>
+      </button>
+      <a class="g-nav-back" href="/">← 返回</a>
+    </div>
+  </div>
+</header>
+
+<main class="g-main">
+  <section class="g-board-wrap">
+    <!-- ===== 技能栏（顶部） ===== -->
+    <div class="g-skillbar" id="skillbar">
+      <div class="g-skillbar-info">
+        <span class="g-skillbar-label">能量</span>
+        <div class="g-energy-track"><div class="g-energy-fill" id="energy-fill"></div></div>
+        <span class="g-skillbar-val" id="energy-val">30</span>
+      </div>
+      <div class="g-skillbar-btns" id="skillbtns"></div>
+    </div>
+    <div class="g-board-frame">
+      <canvas id="board" width="660" height="660"></canvas>
+      <div class="g-board-overlay"></div>
+    </div>
+  </section>
+  <aside class="g-side">
+    <div class="g-card">
+      <h3 class="g-card-title">模式</h3>
+      <div class="g-seg" id="seg-mode">
+        <button class="g-seg-btn active" data-mode="pvp">双人对战</button>
+        <button class="g-seg-btn" data-mode="pve">人机对战</button>
+      </div>
+    </div>
+    <div class="g-card" id="card-ai" hidden>
+      <h3 class="g-card-title">AI 难度</h3>
+      <div class="g-seg" id="seg-diff">
+        <button class="g-seg-btn" data-diff="easy">简单</button>
+        <button class="g-seg-btn active" data-diff="mid">中等</button>
+        <button class="g-seg-btn" data-diff="hard">困难</button>
+      </div>
+      <h3 class="g-card-title" style="margin-top:18px">先手</h3>
+      <div class="g-seg" id="seg-side">
+        <button class="g-seg-btn active" data-side="black">玩家执黑</button>
+        <button class="g-seg-btn" data-side="white">玩家执白</button>
+      </div>
+    </div>
+    <div class="g-card g-card-info">
+      <div class="g-turn">
+        <span class="g-turn-label">当前</span>
+        <span class="g-stone g-stone-black" id="turn-stone"></span>
+        <span class="g-turn-name" id="turn-name">黑方</span>
+      </div>
+      <div class="g-meta">
+        <div class="g-meta-item"><span class="g-meta-label">步数</span><span class="g-meta-val" id="moves">0</span></div>
+        <div class="g-meta-item"><span class="g-meta-label">计时</span><span class="g-meta-val" id="timer">00:00</span></div>
+      </div>
+    </div>
+    <div class="g-card">
+      <h3 class="g-card-title">操作</h3>
+      <div class="g-actions">
+        <button class="g-btn g-btn-primary" id="btn-new">新对局</button>
+        <button class="g-btn" id="btn-undo">悔棋</button>
+        <button class="g-btn" id="btn-hint">提示</button>
+      </div>
+    </div>
+    <div class="g-card">
+      <h3 class="g-card-title">主题</h3>
+      <div class="g-themes">
+        <button class="g-theme active" data-theme="wood" title="木纹"></button>
+        <button class="g-theme g-theme-jade" data-theme="jade" title="玉石"></button>
+        <button class="g-theme g-theme-minimal" data-theme="minimal" title="极简"></button>
+      </div>
+    </div>
+    <div class="g-card g-card-log">
+      <h3 class="g-card-title">记录</h3>
+      <div class="g-log" id="log">
+        <div class="g-log-empty">暂无落子</div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="g-banner" id="banner">
+  <div class="g-banner-inner">
+    <div class="g-banner-title" id="banner-title">黑方胜！</div>
+    <div class="g-banner-sub" id="banner-sub">连成五子</div>
+    <button class="g-btn g-btn-primary" id="banner-again">再来一局</button>
+  </div>
+</div>
+
+<details class="g-rules">
+  <summary>规则说明</summary>
+  <div class="g-rules-inner">
+    <p>黑白双方交替落子，黑先。在横、竖、斜任意方向上先连成 5 子的一方获胜。</p>
+    <p><strong>悔棋：</strong>撤销最近一步（人机对战会同时撤销 AI 一步）。</p>
+    <p><strong>提示：</strong>高亮 AI 推荐的最佳落点。</p>
+    <p><strong>计时：</strong>从首子落盘开始计时。</p>
+  </div>
+</details>
+
+<script>
+/* ==============================================================
+   skills.js — 10 个技能 + 积分制 + SkillMgr (C 方案)
+   资源系统: 落子+5 / 成二+5 / 成三+15 / 成四+30 / 初始 30 / 上限 200
+   ============================================================ */
+const Skills = (()=>{
+  // 10 个技能
+  // type: defense(防) / attack(攻) / disrupt(扰) / resource(资) / special(特)
+  // effect(ctx): 返回 null 成功 或 {error:'原因'}
+  const SKILLS = [
+    { id:'shield',   name:'护盾',   icon:'🛡', cost:30, type:'defense',  aiWeight:80,
+      desc:'对方下 1 回合落子无效',
+      effect: ctx => { ctx.playerState.shield = 1; return null } },
+
+    { id:'erase',    name:'消子',   icon:'🗡', cost:40, type:'attack',   aiWeight:85,
+      desc:'点对方 1 子消除',
+      needTarget: 'opp',  // 需选对方目标
+      effect: ctx => {
+        if(!ctx.target) return {error:'需选目标'}
+        const t = ctx.target
+        const s = Game.getState()
+        const opp = ctx.playerState.color === 1 ? 2 : 1
+        if(s.board[t.r][t.c] !== opp) return {error:'不是对方子'}
+        Game.removeAt(t.r, t.c)
+        return null
+      } },
+
+    { id:'mist',     name:'迷雾',   icon:'🌫', cost:20, type:'disrupt',  aiWeight:60,
+      desc:'隐藏你最近 3 步',
+      effect: ctx => { ctx.playerState.mist = 3; return null } },
+
+    { id:'freeze',   name:'缓兵',   icon:'⏳', cost:25, type:'disrupt',  aiWeight:70,
+      desc:'对方下回合跳过',
+      effect: ctx => { ctx.oppState.skip = 1; return null } },
+
+    { id:'fly',      name:'飞子',   icon:'🎯', cost:25, type:'attack',   aiWeight:50,
+      desc:'可落在被占的格上(挤掉对方)',
+      effect: ctx => { ctx.playerState.fly = 1; return null } },
+
+    { id:'kamikaze', name:'同归',   icon:'💎', cost:80, type:'special',  aiWeight:95,
+      desc:'自损 1 子 + 对方 1 子',
+      effect: ctx => {
+        const s = Game.getState()
+        const me = ctx.playerState.color, opp = me === 1 ? 2 : 1
+        // 找自己最后一子 (最近落下的)
+        let last = null
+        for(let i = s.hist.length-1; i >= 0; i--){
+          if(s.hist[i].color === me){ last = s.hist[i]; break }
+        }
+        if(!last) return {error:'你还没有子可同归'}
+        // 找离自己最近对方子
+        let nearOpp = null, minD = Infinity
+        for(let r = 0; r < s.size; r++)for(let c = 0; c < s.size; c++){
+          if(s.board[r][c] === opp){
+            const d = Math.abs(r-last.r) + Math.abs(c-last.c)
+            if(d < minD){ minD = d; nearOpp = {r, c} }
+          }
+        }
+        Game.removeAt(last.r, last.c)
+        if(nearOpp) Game.removeAt(nearOpp.r, nearOpp.c)
+        return null
+      } },
+
+    { id:'oracle',   name:'预言',   icon:'🔮', cost:35, type:'special',  aiWeight:65,
+      desc:'显示 AI 下 2 手计划',
+      effect: ctx => { ctx.playerState.oracle = 2; return null } },
+
+    { id:'undo',     name:'悔棋',   icon:'↩️', cost:50, type:'special',  aiWeight:88,
+      desc:'撤销对方最近 1 手',
+      effect: ctx => {
+        const s = Game.getState()
+        const opp = ctx.playerState.color === 1 ? 2 : 1
+        // 找对方最后一手
+        let last = null
+        for(let i = s.hist.length-1; i >= 0; i--){
+          if(s.hist[i].color === opp){ last = s.hist[i]; break }
+        }
+        if(!last) return {error:'对方无子可悔'}
+        Game.removeAt(last.r, last.c)
+        // hist 也要 pop
+        s.hist = s.hist.filter(h => !(h.r === last.r && h.c === last.c && h.color === opp))
+        return null
+      } },
+
+    { id:'draw',     name:'抽卡',   icon:'🎲', cost:60, type:'resource', aiWeight:40,
+      desc:'随机获得新技能(替换最贵)',
+      effect: ctx => {
+        // 从 SKILLS 抽一个本玩家没有的
+        const have = new Set(ctx.playerState.skills.map(s => s.id))
+        const pool = SKILLS.filter(s => !have.has(s.id))
+        if(!pool.length) return {error:'技能已全'}
+        const newSkill = pool[Math.floor(Math.random() * pool.length)]
+        // 找最贵的替换
+        const idx = ctx.playerState.skills.reduce((bi, s, i) => s.cost > ctx.playerState.skills[bi].cost ? i : bi, 0)
+        ctx.playerState.skills[idx] = newSkill
+        return null
+      } },
+
+    { id:'swap',     name:'换位',   icon:'🔄', cost:35, type:'special',  aiWeight:55,
+      desc:'交换己方任意 2 子',
+      effect: ctx => {
+        if(!ctx.target || !ctx.target2) return {error:'需选 2 个己方子'}
+        const s = Game.getState()
+        const me = ctx.playerState.color
+        if(s.board[ctx.target.r][ctx.target.c] !== me) return {error:'第 1 个不是己方子'}
+        if(s.board[ctx.target2.r][ctx.target2.c] !== me) return {error:'第 2 个不是己方子'}
+        Game.swapAt(ctx.target.r, ctx.target.c, ctx.target2.r, ctx.target2.c)
+        return null
+      } },
+  ]
+
+  // 玩家初始技能：8 个（全部）— 后续抽卡可换
+  const INITIAL_SKILLS = SKILLS.map(s => s.id)  // 玩家和 AI 都从 8 个开始
+
+  return { list: SKILLS, initialSkills: INITIAL_SKILLS }
+})()
+
+
+/* ==============================================================
+   skillmgr.js — 技能管理: cd/能量/效果应用
+   ============================================================ */
+const SkillMgr = (()=>{
+  let playerState = null   // {color, energy, skills:[{id,cd}], shield, mist, fly, oracle, skip}
+  let oppState = null
+
+  function init(color){
+    // 给玩家+AI 各自一份 state
+    playerState = {
+      color, energy: 30, maxEnergy: 200,
+      skills: Skills.initialSkills.map(id => ({id, cd: 0})),
+      shield: 0, mist: 0, fly: 0, oracle: 0, skip: 0,
+      hiddenHist: []  // 迷雾下隐藏的 hist
+    }
+    oppState = {
+      color: color === 1 ? 2 : 1, energy: 30, maxEnergy: 200,
+      skills: Skills.initialSkills.map(id => ({id, cd: 0})),
+      shield: 0, mist: 0, fly: 0, oracle: 0, skip: 0,
+      hiddenHist: []
+    }
+  }
+
+  function getPlayerState(){ return playerState }
+  function getOppState(){ return oppState }
+  function getStateForColor(c){ return c === playerState.color ? playerState : oppState }
+
+  // 每回合开始: 减 cd; 重置 skip flag
+  function onTurnStart(){
+    const s = Game.getState().cur === playerState.color ? playerState : oppState
+    s.skills.forEach(sk => { if(sk.cd > 0) sk.cd-- })
+    s.skip = 0
+  }
+
+  // 落子得分
+  function onMoveScored(pattern){
+    // pattern: {two:1, three:1, four:1, win:0}
+    const s = Game.getState().cur === playerState.color ? playerState : oppState
+    // 给刚落子的人加分（不是给当前 cur）
+    // 实际：刚 move 完，cur 已经切换。给上一个 move 的 color 加分
+    const lastColor = s.color  // 不对，重写：用 Game.getState().hist 最后一个
+    const lastMove = Game.getState().hist[Game.getState().hist.length - 1]
+    if(!lastMove) return
+    const target = lastMove.color === playerState.color ? playerState : oppState
+    let gain = 5  // 基础落子
+    if(pattern.two) gain += 5
+    if(pattern.three) gain += 15
+    if(pattern.four) gain += 30
+    if(pattern.win) gain += 50
+    target.energy = Math.min(target.maxEnergy, target.energy + gain)
+    return gain
+  }
+
+  // 检查技能是否可用
+  function canCast(skillId, state){
+    const sk = state.skills.find(s => s.id === skillId)
+    if(!sk) return {ok:false, reason:'未知技能'}
+    if(sk.cd > 0) return {ok:false, reason:'冷却中'}
+    const def = Skills.list.find(s => s.id === skillId)
+    if(state.energy < def.cost) return {ok:false, reason:'能量不足'}
+    return {ok:true}
+  }
+
+  // 释放技能
+  function cast(skillId, target, target2){
+    const state = Game.getState().cur === playerState.color ? playerState : oppState
+    const oppSt = state === playerState ? oppState : playerState
+    const def = Skills.list.find(s => s.id === skillId)
+    const check = canCast(skillId, state)
+    if(!check.ok) return {ok:false, reason:check.reason}
+
+    const res = def.effect({
+      playerState: state,
+      oppState: oppSt,
+      target, target2
+    })
+    if(res && res.error) return {ok:false, reason:res.error}
+
+    state.energy = Math.max(0, state.energy - def.cost)
+    const sk = state.skills.find(s => s.id === skillId)
+    sk.cd = def.cd || 0  // C 方案不固定 cd，但保留字段
+    return {ok:true}
+  }
+
+  // AI 选技能: 启发式 + 概率采样
+  function aiChooseSkill(){
+    const state = Game.getState().cur === playerState.color ? playerState : oppState
+    const oppSt = state === playerState ? oppState : playerState
+    const diff = window._skillDiff || 'mid'
+
+    const candidates = state.skills.filter(sk => {
+      const def = Skills.list.find(d => d.id === sk.id)
+      return sk.cd === 0 && state.energy >= def.cost
+    })
+    if(!candidates.length) return null
+
+    // 评分每个技能
+    const s = Game.getState()
+    const myColor = state.color
+    const oppColor = myColor === 1 ? 2 : 1
+    const myStones = s.hist.filter(h => h.color === myColor).length
+    const oppStones = s.hist.filter(h => h.color === oppColor).length
+
+    const scored = candidates.map(sk => {
+      const def = Skills.list.find(d => d.id === sk.id)
+      let score = def.aiWeight
+
+      // 局势加成
+      if(def.type === 'defense' && (state.shield === 0)) score += 30
+      if(def.type === 'disrupt' && oppSt.shield > 0) score += 20
+      if(def.id === 'kamikaze' && checkOppFour(s, oppColor)) score += 50
+      if(def.id === 'shield' && checkMyFour(s, myColor)) score += 40
+      if(def.id === 'freeze' && checkMyFour(s, myColor)) score += 30
+      if(def.id === 'undo' && oppSt.shield > 0) score -= 20
+      if(def.id === 'draw' && state.skills.length >= Skills.list.length) score = 0
+
+      // 概率梯度
+      const useProb = diff === 'easy' ? 0.3 : diff === 'mid' ? 0.5 : diff === 'hard' ? 0.75 : 0.9
+      if(Math.random() > useProb) score *= 0.1  // 概率不达标，权重降到 1/10
+
+      return {skill: sk, def, score}
+    })
+    scored.sort((a, b) => b.score - a.score)
+    if(scored.length === 0 || scored[0].score < 30) return null  // 不强用技能
+
+    // 概率采样 top3
+    const top = scored.slice(0, Math.min(3, scored.length))
+    const total = top.reduce((s, x) => s + Math.max(1, x.score), 0)
+    let r = Math.random() * total
+    for(const x of top){
+      r -= Math.max(1, x.score)
+      if(r <= 0) return x.skill
+    }
+    return top[0].skill
+  }
+
+  // 辅助: 检测对方是否已成 4
+  function checkOppFour(s, oppCol){
+    for(let r=0;r<s.size;r++)for(let c=0;c<s.size;c++){
+      if(s.board[r][c]!==oppCol)continue
+      for(const[dR,dC]of[[0,1],[1,0],[1,1],[1,-1]]){
+        let cnt=1,nr=r+dR,nc=c+dC
+        while(nr>=0&&nr<s.size&&nc>=0&&nc<s.size&&s.board[nr][nc]===oppCol){cnt++;nr+=dR;nc+=dC}
+        nr=r-dR;nc=c-dC
+        while(nr>=0&&nr<s.size&&nc>=0&&nc<s.size&&s.board[nr][nc]===oppCol){cnt++;nr-=dR;nc-=dC}
+        if(cnt>=4)return true
+      }
+    }
+    return false
+  }
+  function checkMyFour(s, myCol){ return checkOppFour(s, myCol) }
+
+  return { init, getPlayerState, getOppState, getStateForColor, onTurnStart, onMoveScored, canCast, cast, aiChooseSkill }
+})()
+
+
+/* ==============================================================
+   game.js — 游戏状态机 / 胜负判断 / 悔棋
+   ============================================================ */
+const Game = (()=>{
+  const E=0,B=1,W=2
+  let st={size:15,board:[],cur:B,winner:null,winLine:null,moves:0,hist:[],startAt:null,pattern:{}}
+  function rs(sz=15){st={size:sz,board:Array.from({length:sz},()=>Array(sz).fill(E)),cur:B,winner:null,winLine:null,moves:0,hist:[],startAt:null,pattern:{}}}
+
+  // 技能辅助: 移除某子
+  function removeAt(r,c){
+    if(r<0||r>=st.size||c<0||c>=st.size)return
+    st.board[r][c] = E
+  }
+
+  // 技能辅助: 交换两子
+  function swapAt(r1,c1,r2,c2){
+    if(r1<0||r1>=st.size||c1<0||c1>=st.size)return
+    if(r2<0||r2>=st.size||c2<0||c2>=st.size)return
+    const t = st.board[r1][c1]
+    st.board[r1][c1] = st.board[r2][c2]
+    st.board[r2][c2] = t
+  }
+
+  // 技能辅助: 检查技能胜负 (同归后所有对方子都没了)
+  function checkSkillWin(){
+    let hasB = false, hasW = false
+    for(let r=0;r<st.size;r++)for(let c=0;c<st.size;c++){
+      if(st.board[r][c]===B)hasB=true
+      else if(st.board[r][c]===W)hasW=true
+    }
+    if(!hasB){st.winner=W;return W}
+    if(!hasW){st.winner=B;return B}
+    return null
+  }
+
+  function mv(r,c){
+    if(st.winner)return{ok:false}
+    if(st.board[r][c]!==E)return{ok:false}
+    st.board[r][c]=st.cur;st.hist.push({r,c,color:st.cur});st.moves++
+    if(!st.startAt)st.startAt=Date.now()
+    let line=chk(st.board,r,c,st.cur)
+    if(line){st.winner=st.cur;st.winLine=line;return{ok:true,win:true,line}}
+    if(st.moves===st.size*st.size){st.winner='draw';return{ok:true,draw:true}}
+    st.cur=st.cur===B?W:B;return{ok:true}
+  }
+  function und(steps=1){
+    if(!st.hist.length)return false
+    for(let i=0;i<steps&&st.hist.length;i++){let l=st.hist.pop();st.board[l.r][l.c]=E;st.cur=l.color;st.moves--}
+    st.winner=null;st.winLine=null;return true
+  }
+  function chk(brd,r,c,col){
+    let dirs=[[0,1],[1,0],[1,1],[1,-1]]
+    for(let[dR,dC]of dirs){
+      let line=[{r,c}]
+      let nr=r+dR,nc=c+dC
+      while(nr>=0&&nr<st.size&&nc>=0&&nc<st.size&&brd[nr][nc]===col){line.push({r:nr,c:nc});nr+=dR;nc+=dC}
+      nr=r-dR;nc=c-dC
+      while(nr>=0&&nr<st.size&&nc>=0&&nc<st.size&&brd[nr][nc]===col){line.unshift({r:nr,c:nc});nr-=dR;nc-=dC}
+      if(line.length>=5)return line
+    }
+    return null
+  }
+  return{reset:rs,getState:()=>st,getSize:()=>st.size,getCurrent:()=>st.cur,getWinner:()=>st.winner,getWinningLine:()=>st.winLine,getMoves:()=>st.moves,getHistory:()=>st.hist,move:mv,undo:und,checkWin:chk,removeAt,swapAt,checkSkillWin,constants:{E,B,W}}
+})();
+
+/* ==============================================================
+   ai.js — AI 引擎 (评分 + alpha-beta)
+   ============================================================ */
+const AI = (()=>{
+  const{E,B,W}=Game.constants
+  const WIN_SCORE=1e9
+  const S={
+    FIVE:WIN_SCORE,
+    OPEN_FOUR:1e6,
+    FOUR:1e5,
+    OPEN_THREE:1e4,
+    THREE:1e3,
+    OPEN_TWO:100,
+    TWO:10,
+    ONE:1
+  }
+  const DIRS=[[0,1],[1,0],[1,1],[1,-1]]
+  // 形状评分: 严格优先级
+  function shapeScore(line,col,opp){
+    let me=0,en=0,em=0
+    for(const v of line){if(v===col)me++;else if(v===opp)en++;else em++}
+    if(en>0&&me<5)return{type:'none',score:0}
+    if(me>=5)return{type:'five',score:S.FIVE}
+    // 检查两端:0=空 1=边界/对方
+    const left=line[0],right=line[line.length-1]
+    const openL=left===E,openR=right===E
+    const openEnds=(openL?1:0)+(openR?1:0)
+    if(me===4){
+      if(openEnds===2)return{type:'openFour',score:S.OPEN_FOUR}
+      if(openEnds===1)return{type:'four',score:S.FOUR}
+      return{type:'blocked',score:0}
+    }
+    if(me===3){
+      if(openEnds===2)return{type:'openThree',score:S.OPEN_THREE}
+      if(openEnds===1)return{type:'three',score:S.THREE}
+      return{type:'blocked',score:0}
+    }
+    if(me===2){
+      if(openEnds===2)return{type:'openTwo',score:S.OPEN_TWO}
+      if(openEnds===1)return{type:'two',score:S.TWO}
+      return{type:'blocked',score:0}
+    }
+    if(me===1){
+      if(openEnds===2)return{type:'one',score:S.ONE}
+      return{type:'blocked',score:0}
+    }
+    return{type:'none',score:0}
+  }
+  // 评估局面:我方总分 - 对方总分
+  function evalBoard(brd,sz,my){
+    let myScore=0,enScore=0
+    const opp=my===B?W:B
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
+      const v=brd[r][c];if(v===E)continue
+      for(const[dR,dC]of DIRS){
+        const pr=r-dR,pc=c-dC
+        if(!(pr<0||pr>=sz||pc<0||pc>=sz||brd[pr][pc]!==v))continue
+        for(let k=0;k<5;k++){
+          const nr=r+dR*k,nc=c+dC*k
+          if(nr<0||nr>=sz||nc<0||nc>=sz)break
+          const line=[];let ok=true
+          for(let i=0;i<5;i++){
+            const wr=nr+dR*i,wc=nc+dC*i
+            if(wr<0||wr>=sz||wc<0||wc>=sz){ok=false;break}
+            line.push(brd[wr][wc])
+          }
+          if(!ok)continue
+          const s=shapeScore(line,v,v===B?W:B)
+          if(s.type==='five')return v===my?WIN_SCORE:-WIN_SCORE
+          if(v===my)myScore+=s.score
+          else enScore+=s.score
+        }
+      }
+    }
+    return myScore-enScore
+  }
+  // 候选
+  function cands(brd,sz){
+    const cs=[],seen=new Set()
+    let cnt=0
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++)if(brd[r][c]!==E)cnt++
+    const rad=cnt>40?1:2
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
+      if(brd[r][c]!==E)continue
+      let near=false
+      for(let dr=-rad;dr<=rad&&!near;dr++)for(let dc=-rad;dc<=rad&&!near;dc++){
+        if(!dr&&!dc)continue
+        const nr=r+dr,nc=c+dc
+        if(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]!==E)near=true
+      }
+      if(near){
+        const k=r*sz+c
+        if(!seen.has(k)){seen.add(k);cs.push({r,c})}
+      }
+    }
+    return cs
+  }
+  // 启发式:单步分
+  function hMove(brd,sz,r,c,col){
+    const opp=col===B?W:B
+    let sc=0
+    for(const[dR,dC]of DIRS){
+      const w=[];for(let i=-4;i<=4;i++){
+        const nr=r+dR*i,nc=c+dC*i
+        if(nr<0||nr>=sz||nc<0||nc>=sz)w.push(-1)
+        else w.push(brd[nr][nc])
+      }
+      const wo=w.slice();wo[4]=col
+      sc+=shapeScore(wo,col,opp).score
+    }
+    return sc
+  }
+  // 中心偏好
+  function centerBias(sz,r,c){
+    const m=Math.floor(sz/2),d=Math.abs(r-m)+Math.abs(c-m)
+    return Math.max(0,15-d*0.6)
+  }
+  // 复制
+  function cloneB(brd,sz){
+    const nb=new Array(sz)
+    for(let r=0;r<sz;r++)nb[r]=brd[r].slice()
+    return nb
+  }
+  // 检测某点是否"战术手"
+  function isTactical(brd,sz,r,c,col){
+    if(brd[r][c]!==E)return false
+    const opp=col===B?W:B
+    // 我方落子能成 4/5?
+    brd[r][c]=col
+    for(const[dR,dC]of DIRS){
+      const line=[{r,c}]
+      let nr=r+dR,nc=c+dC
+      while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===col){line.push({r:nr,c:nc});nr+=dR;nc+=dC}
+      nr=r-dR;nc=c-dC
+      while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===col){line.unshift({r:nr,c:nc});nr-=dR;nc-=dC}
+      if(line.length>=4){brd[r][c]=E;return true}
+    }
+    brd[r][c]=E
+    // 拦对方 4?
+    brd[r][c]=opp
+    for(const[dR,dC]of DIRS){
+      const line=[{r,c}]
+      let nr=r+dR,nc=c+dC
+      while(nr>=0&&nr<sz&&nc<0+nc<sz&&brd[nr][nc]===opp){line.push({r:nr,c:nc});nr+=dR;nc+=dC}
+      nr=r-dR;nc=c-dC
+      while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){line.unshift({r:nr,c:nc});nr-=dR;nc-=dC}
+      if(line.length>=4){brd[r][c]=E;return true}
+    }
+    brd[r][c]=E
+    return false
+  }
+  // VCF 搜索: 我是否能通过连续冲四必杀
+  // 简化: 检查每手我方成 4,对手是否能同时封两处
+  function vcfSearch(brd,sz,my,maxDepth){
+    const opp=my===B?W:B
+    const myFours=[] // 能成冲四的位置
+    const cs=cands(brd,sz)
+    for(const c of cs){
+      brd[c.r][c.c]=my
+      // 检查任一方向是否成 4
+      let isFour=false
+      for(const[dR,dC]of DIRS){
+        let cnt=1
+        let nr=c.r+dR,nc=c.c+dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===my){cnt++;nr+=dR;nc+=dC}
+        nr=c.r-dR;nc=c.c-dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===my){cnt++;nr-=dR;nc-=dC}
+        if(cnt===4)isFour=true
+      }
+      if(isFour)myFours.push(c)
+      brd[c.r][c.c]=E
+    }
+    if(myFours.length===0)return null
+    if(myFours.length>=2)return myFours[0] // 双冲四必胜
+    // 单冲四:对手必须封,封了之后继续冲四
+    const myFour=myFours[0]
+    brd[myFour.r][myFour.c]=my
+    // 对手所有可能 5 必封
+    const oppMoves=[]
+    for(const c of cs){
+      if(c.r===myFour.r&&c.c===myFour.c)continue
+      brd[c.r][c.c]=opp
+      // 检查 opp 是否成 5
+      let isFive=false
+      for(const[dR,dC]of DIRS){
+        let cnt=1
+        let nr=c.r+dR,nc=c.c+dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){cnt++;nr+=dR;nc+=dC}
+        nr=c.r-dR;nc=c.c-dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){cnt++;nr-=dR;nc-=dC}
+        if(cnt===5)isFive=true
+      }
+      if(isFive)oppMoves.push(c)
+      brd[c.r][c.c]=E
+    }
+    if(oppMoves.length===0)return myFour // 对手无法封
+    if(oppMoves.length>=2)return null // 对手能封两处
+    if(maxDepth<=0){brd[myFour.r][myFour.c]=E;return null}
+    // 对手封了 → 我再继续 VCF
+    brd[oppMoves[0].r][oppMoves[0].c]=opp
+    const cont=vcfSearch(brd,sz,my,maxDepth-1)
+    brd[oppMoves[0].r][oppMoves[0].c]=E
+    brd[myFour.r][myFour.c]=E
+    return cont
+  }
+  // 静态搜索(qsearch)
+  function qsearch(brd,sz,al,bt,mx,my,qdp){
+    if(qdp<=0)return evalBoard(brd,sz,my)
+    const cur=mx?my:(my===B?W:B)
+    const tcs=[]
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
+      if(isTactical(brd,sz,r,c,cur))tcs.push({r,c})
+    }
+    if(tcs.length===0)return evalBoard(brd,sz,my)
+    tcs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,cur))
+    tcs.sort((a,b)=>b.h-a.h)
+    const lm=Math.min(tcs.length,8)
+    if(mx){
+      let best=-Infinity
+      for(let i=0;i<lm;i++){
+        const c=tcs[i]
+        brd[c.r][c.c]=cur
+        const v=qsearch(brd,sz,al,bt,false,my,qdp-1)
+        brd[c.r][c.c]=E
+        best=Math.max(best,v)
+        al=Math.max(al,v)
+        if(bt<=al)break
+      }
+      return best
+    }else{
+      let best=Infinity
+      for(let i=0;i<lm;i++){
+        const c=tcs[i]
+        brd[c.r][c.c]=cur
+        const v=qsearch(brd,sz,al,bt,true,my,qdp-1)
+        brd[c.r][c.c]=E
+        best=Math.min(best,v)
+        bt=Math.min(bt,v)
+        if(bt<=al)break
+      }
+      return best
+    }
+  }
+  // 迭代加深 + alpha-beta
+  function searchDeep(brd,sz,depth,al,bt,mx,my,killers){
+    const cur=mx?my:(my===B?W:B)
+    const sc=evalBoard(brd,sz,my)
+    if(sc>=WIN_SCORE)return WIN_SCORE
+    if(sc<=-WIN_SCORE)return-WIN_SCORE
+    if(depth===0)return qsearch(brd,sz,al,bt,mx,my,3)
+    const cs=cands(brd,sz)
+    if(cs.length===0)return sc
+    // 杀手启发:先搜 killer moves
+    cs.forEach(c=>c.h=hMove(brd,sz,c.r,c.c,cur)+centerBias(sz,c.r,c.c)*0.3)
+    if(killers&&killers.length){
+      for(const k of killers){
+        const m=cs.find(c=>c.r===k.r&&c.c===k.c)
+        if(m)m.h+=1e5
+      }
+    }
+    cs.sort((a,b)=>b.h-a.h)
+    const lim=Math.min(cs.length,depth>=5?10:depth>=3?14:18)
+    if(mx){
+      let best=-Infinity
+      for(let i=0;i<lim;i++){
+        const c=cs[i]
+        brd[c.r][c.c]=cur
+        const v=searchDeep(brd,sz,depth-1,al,bt,false,my,killers)
+        brd[c.r][c.c]=E
+        if(v>best)best=v
+        if(v>al)al=v
+        if(bt<=al)break
+      }
+      return best
+    }else{
+      let best=Infinity
+      for(let i=0;i<lim;i++){
+        const c=cs[i]
+        brd[c.r][c.c]=cur
+        const v=searchDeep(brd,sz,depth-1,al,bt,true,my,killers)
+        brd[c.r][c.c]=E
+        if(v<best)best=v
+        if(v<bt)bt=v
+        if(bt<=al)break
+      }
+      return best
+    }
+  }
+  // 候选排序:我方五 > 封对手五 > VCF
+  function orderCandidates(brd,sz,cs,my){
+    const opp=my===B?W:B
+    const order=[]
+    for(const c of cs){
+      brd[c.r][c.c]=my
+      let myFive=false
+      for(const[dR,dC]of DIRS){
+        let cnt=1,nr=c.r+dR,nc=c.c+dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===my){cnt++;nr+=dR;nc+=dC}
+        nr=c.r-dR;nc=c.c-dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===my){cnt++;nr-=dR;nc-=dC}
+        if(cnt===5)myFive=true
+      }
+      brd[c.r][c.c]=E
+      if(myFive)order.push({c,prio:0})
+    }
+    for(const c of cs){
+      brd[c.r][c.c]=opp
+      let oppFive=false
+      for(const[dR,dC]of DIRS){
+        let cnt=1,nr=c.r+dR,nc=c.c+dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){cnt++;nr+=dR;nc+=dC}
+        nr=c.r-dR;nc=c.c-dC
+        while(nr>=0&&nr<sz&&nc>=0&&nc<sz&&brd[nr][nc]===opp){cnt++;nr-=dR;nc-=dC}
+        if(cnt===5)oppFive=true
+      }
+      brd[c.r][c.c]=E
+      if(oppFive)order.push({c,prio:1})
+    }
+    const sb=cloneB(brd,sz)
+    const vcf=vcfSearch(sb,sz,my,8)
+    if(vcf)order.push({c:vcf,prio:2})
+    for(const c of cs){
+      if(!order.find(o=>o.c.r===c.r&&o.c.c===c.c))order.push({c,prio:3})
+    }
+    order.sort((a,b)=>a.prio-b.prio)
+    return order.map(o=>o.c)
+  }
+  // 开局库(简化):前 2 手落中心区域
+  const OPENINGS={}
+  function openingMove(brd,sz,my,count){
+    if(count>=4)return null
+    const m=Math.floor(sz/2)
+    if(count===0)return{r:m,c:m}
+    if(count===1){
+      // 选中心 3x3 区域里离对手最近空格
+      const opp=my===B?W:B
+      for(let r=m-1;r<=m+1;r++)for(let c=m-1;c<=m+1;c++){
+        if(brd[r][c]===E)return{r,c}
+      }
+    }
+    if(count===2||count===3){
+      // 选中心 5x5 区域里 hMove 最高的
+      let best=null,bestSc=-Infinity
+      for(let r=m-2;r<=m+2;r++)for(let c=m-2;c<=m+2;c++){
+        if(brd[r][c]!==E)continue
+        const sc=hMove(brd,sz,r,c,my)
+        if(sc>bestSc){bestSc=sc;best={r,c}}
+      }
+      return best
+    }
+    return null
+  }
+  // 入口
+  function getBestMove(brd,sz,my,diff='mid',deadline){
+    if(deadline===undefined)deadline=performance.now()+(diff==='easy'?100:diff==='mid'?400:diff==='hard'?1500:3000)
+    // 数已落子
+    let cnt=0
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++)if(brd[r][c]!==E)cnt++
+    // 开局库(仅 hard+)
+    if(diff==='hard'||diff==='nightmare'){
+      const opMove=openingMove(brd,sz,my,cnt)
+      if(opMove)return opMove
+    }
+    if(cnt===0)return{r:Math.floor(sz/2),c:Math.floor(sz/2)}
+    const cs=cands(brd,sz)
+    if(cs.length===0)return{r:Math.floor(sz/2),c:Math.floor(sz/2)}
+    // 即时威胁:五/封五
+    const opp=my===B?W:B
+    for(const c of cs){
+      brd[c.r][c.c]=my
+      const l=Game.checkWin(brd,c.r,c.c,my)
+      brd[c.r][c.c]=E
+      if(l)return c
+    }
+    for(const c of cs){
+      brd[c.r][c.c]=opp
+      const l=Game.checkWin(brd,c.r,c.c,opp)
+      brd[c.r][c.c]=E
+      if(l)return c
+    }
+    // VCF(hard+ 才做)
+    if(diff!=='easy'){
+      const sb=cloneB(brd,sz)
+      const vcf=vcfSearch(sb,sz,my,diff==='hard'?10:12)
+      if(vcf)return vcf
+    }
+    // 候选排序(必杀+五优先)
+    const ordered=orderCandidates(brd,sz,cs,my)
+    // 迭代加深
+    const maxDepth=diff==='easy'?2:diff==='mid'?4:diff==='hard'?6:8
+    let bestMove=ordered[0]
+    let bestVal=-Infinity
+    let killers=[]
+    for(let d=2;d<=maxDepth;d+=2){
+      if(performance.now()>deadline)break
+      let curBest=null,curVal=-Infinity
+      for(const c of ordered){
+        if(performance.now()>deadline)break
+        brd[c.r][c.c]=my
+        const v=searchDeep(brd,sz,d-1,-Infinity,Infinity,false,my,killers)
+        brd[c.r][c.c]=E
+        if(v>curVal){curVal=v;curBest=c}
+      }
+      if(curBest){
+        if(curVal>bestVal){bestVal=curVal;bestMove=curBest}
+        killers=[curBest]
+        if(Math.abs(bestVal)>=WIN_SCORE)break
+      }
+    }
+    return bestMove||ordered[0]
+  }
+  return{getBestMove}
+})();
+
+
+/* ==============================================================
+   board.js — 棋盘渲染 / 落子绘制 / 鼠标交互 (自适应屏幕)
+   ============================================================ */
+const Board = (()=>{
+  const PD=28,SRF=0.42,SSB=4
+  let cv,ctx,dpr=1,sz=15,cell=0,ox=0,oy=0,bpx=0
+  let stones=[],lastM=null,winL=null,hover=null,thm='wood',onClk=()=>{},_animStones=[]
+
+  function init(el,op={}){
+    cv=el;ctx=cv.getContext('2d');sz=op.size||15;onClk=op.onCellClick||(()=>{});thm=op.theme||'wood'
+    dpr=window.devicePixelRatio||1
+    rs();rz()
+    window.addEventListener('resize',()=>{rz();dr()})
+    cv.addEventListener('mousemove',e=>{let p=pc(e.clientX,e.clientY);if(JSON.stringify(p)!==JSON.stringify(hover)){hover=p;dr()}})
+    cv.addEventListener('mouseleave',()=>{if(hover){hover=null;dr()}})
+    cv.addEventListener('click',e=>{let p=pc(e.clientX,e.clientY);if(p)onClk(p.r,p.c)})
+    cv.addEventListener('touchstart',e=>{e.preventDefault();if(!e.touches.length)return;let t=e.touches[0],p=pc(t.clientX,t.clientY);if(p)onClk(p.r,p.c)},{passive:false})
+  }
+
+  function rz(){
+    let r=cv.getBoundingClientRect(),w=r.width;if(w<10)w=300
+    cv.width=Math.floor(w*dpr);cv.height=Math.floor(w*dpr)
+    ctx.setTransform(dpr,0,0,dpr,0,0)
+    bpx=w;cell=(bpx-PD*2)/(sz-1);ox=PD;oy=PD
+  }
+
+  function rs(ns){if(ns)sz=ns;stones=Array.from({length:sz},()=>Array(sz).fill(0));lastM=null;winL=null;hover=null;_animStones=[];rz()}
+  function gSt(){return stones}
+  function gSz(){return sz}
+  function sSt(r,c,col){stones[r][c]=col;lastM={r,c};if(!winL)dr()}
+  function rSt(r,c){stones[r][c]=0;dr()}
+  function sLM(p){lastM=p;dr()}
+  function sWL(l){winL=l;dr()}
+  function sHv(p){hover=p;dr()}
+  function sTh(t){thm=t;dr()}
+  function cXY(r,c){return{x:ox+c*cell,y:oy+r*cell}}
+
+  function pc(cx,cy){
+    let r=cv.getBoundingClientRect(),x=cx-r.left,y=cy-r.top
+    let c=Math.round((x-ox)/cell),rr=Math.round((y-oy)/cell)
+    if(rr<0||rr>=sz||c<0||c>=sz)return null
+    let dx=x-(ox+c*cell),dy=y-(oy+rr*cell)
+    if(Math.hypot(dx,dy)>cell*0.5)return null
+    return{r:rr,c}
+  }
+
+  function dr(){
+    drawBoard();drawStones();if(winL)drawWinLine()
+    if(hover&&!stones[hover.r][hover.c]&&!winL)drawHover()
+    if(lastM&&!winL)drawLastMark()
+  }
+  function drawBoard(){
+    ctx.clearRect(0,0,bpx,bpx)
+    ctx.strokeStyle=thm==='minimal'?'#d2d2d7':'rgba(0,0,0,0.45)';ctx.lineWidth=1
+    for(let i=0;i<sz;i++){
+      let p=cXY(0,i);ctx.beginPath();ctx.moveTo(p.x,p.y);p=cXY(sz-1,i);ctx.lineTo(p.x,p.y);ctx.stroke()
+      p=cXY(i,0);ctx.beginPath();ctx.moveTo(p.x,p.y);p=cXY(i,sz-1);ctx.lineTo(p.x,p.y);ctx.stroke()
+    }
+    if(sz>=13&&sz%2===1){
+      let st=sz===15?[[3,3],[3,11],[11,3],[11,11],[7,7]]:[[Math.floor(sz/2),Math.floor(sz/2)]]
+      ctx.fillStyle=thm==='minimal'?'#86868b':'rgba(0,0,0,0.55)'
+      for(let[r,c]of st){let p=cXY(r,c);ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fill()}
+    }
+  }
+  function drawStones(){
+    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
+      let v=stones[r][c];if(!v)continue;let win=winL&&winL.some(p=>p.r===r&&p.c===c);drawStone(r,c,v,win)
+    }
+  }
+  function drawStone(r,c,col,win){
+    let{x,y}=cXY(r,c),rad=cell*SRF;ctx.save()
+    ctx.shadowColor='rgba(0,0,0,0.25)';ctx.shadowBlur=SSB;ctx.shadowOffsetY=1.5
+    let gr=ctx.createRadialGradient(x-rad*0.35,y-rad*0.35,rad*0.1,x,y,rad)
+    if(col===1){gr.addColorStop(0,'#5a5a5a');gr.addColorStop(0.7,'#1a1a1a');gr.addColorStop(1,'#000')}
+    else{gr.addColorStop(0,'#fff');gr.addColorStop(0.7,'#f0f0f0');gr.addColorStop(1,'#d8d8d8')}
+    ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();ctx.restore()
+    if(col===2){ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=0.6;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.stroke()}
+    if(win){ctx.save();ctx.shadowColor='#ff3b30';ctx.shadowBlur=14;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();ctx.restore()}
+  }
+  function drawLastMark(){
+    if(!lastM)return;let{x,y}=cXY(lastM.r,lastM.c),rad=cell*SRF*0.32
+    ctx.fillStyle='#ff3b30';ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill()
+  }
+  function drawHover(){
+    if(!hover)return;let{x,y}=cXY(hover.r,hover.c),rad=cell*SRF*0.32
+    ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.stroke()
+  }
+  function drawWinLine(){
+    if(!winL||winL.length<2)return;let f=cXY(winL[0].r,winL[0].c),l=cXY(winL[winL.length-1].r,winL[winL.length-1].c)
+    ctx.save();ctx.strokeStyle='rgba(255,59,48,0.85)';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(f.x,f.y);ctx.lineTo(l.x,l.y);ctx.stroke();ctx.restore()
+  }
+  return{init,reset:rs,setSize:rs,getSize:gSz,getStones:gSt,setStone:sSt,removeStone:rSt,setLastMove:sLM,setWinningLine:sWL,setHover:sHv,setTheme:sTh,draw:dr,cellToXY:cXY}
+})();
+
+/* ==============================================================
+   effects.js — 技能粒子/光环/浮动数字 (60fps)
+   ============================================================ */
+const Effects = (()=>{
+  let particles = []
+  let floatNums = []
+  let overlayEl = null
+
+  function init(){
+    overlayEl = document.querySelector('.g-effect-overlay')
+  }
+
+  function spawnParticles(x, y, color, count=20){
+    for(let i=0; i<count; i++){
+      particles.push({
+        x, y,
+        vx: (Math.random()-0.5)*5,
+        vy: (Math.random()-0.5)*5 - 1,
+        life: 500 + Math.random()*200,
+        maxLife: 500,
+        color,
+        size: 2 + Math.random()*3
+      })
+    }
+  }
+
+  function floatText(x, y, text, type='positive'){
+    const el = document.createElement('div')
+    el.className = 'g-float-num ' + type
+    el.textContent = text
+    el.style.left = x + 'px'
+    el.style.top = y + 'px'
+    document.body.appendChild(el)
+    setTimeout(() => el.remove(), 1200)
+  }
+
+  function setMist(active){
+    if(!overlayEl) return
+    if(active) overlayEl.classList.add('g-effect-mist')
+    else overlayEl.classList.remove('g-effect-mist')
+  }
+
+  function update(dt){
+    // 粒子推进
+    for(let i = particles.length - 1; i >= 0; i--){
+      const p = particles[i]
+      p.x += p.vx
+      p.y += p.vy
+      p.vy += 0.15  // 重力
+      p.life -= dt
+      if(p.life <= 0) particles.splice(i, 1)
+    }
+  }
+
+  function draw(ctx, boardFrame){
+    if(!ctx || !boardFrame) return
+    const r = boardFrame.getBoundingClientRect()
+    ctx.save()
+    for(const p of particles){
+      const alpha = Math.max(0, p.life / p.maxLife)
+      ctx.globalAlpha = alpha
+      ctx.fillStyle = p.color
+      ctx.beginPath()
+      ctx.arc(p.x - r.left, p.y - r.top, p.size, 0, Math.PI*2)
+      ctx.fill()
+    }
+    ctx.restore()
+  }
+
+  function clear(){
+    particles = []
+    floatNums = []
+  }
+
+  return { init, spawnParticles, floatText, setMist, update, draw, clear }
+})()
+
+
+/* ==============================================================
+   ui.js — 侧栏控件 / 状态同步
+   ============================================================ */
+const UI = (()=>{
+  let hn={onNew(){}}
+  function init(h){hn=h
+    let $=id=>document.getElementById(id)
+    bindSeg($('seg-mode'),'data-mode',v=>{hn.onMode(v);$('card-ai').hidden=v!=='pve'})
+    bindSeg($('seg-diff'),'data-diff',v=>hn.onDiff(v))
+    bindSeg($('seg-side'),'data-side',v=>hn.onSide(v))
+    bindTheme()
+    $('btn-new').addEventListener('click',()=>{hideBanner();hn.onNew()})
+    $('btn-undo').addEventListener('click',hn.onUndo)
+    $('btn-hint').addEventListener('click',hn.onHint)
+    $('banner-again').addEventListener('click',()=>{hideBanner();hn.onNew()})
+    let b=$('banner');b.addEventListener('click',e=>{if(e.target===b){hideBanner();hn.onNew()}})
+    hn.hideBanner=hideBanner;hn.showBanner=showBanner;hideBanner()
+  }
+  function bindSeg(ct,attr,cb){if(!ct)return;let bs=ct.querySelectorAll('button');bs.forEach(b=>b.addEventListener('click',()=>{bs.forEach(x=>x.classList.remove('active'));b.classList.add('active');cb(b.getAttribute(attr))}))}
+  function bindTheme(){document.querySelectorAll('.g-theme').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.g-theme').forEach(x=>x.classList.remove('active'));b.classList.add('active');hn.onTheme(b.getAttribute('data-theme'))}))}
+  function setTurn(c){
+    let s=document.getElementById('turn-stone'),n=document.getElementById('turn-name')
+    if(c===1){s.className='g-stone g-stone-black';n.textContent='黑方'}
+    else if(c===2){s.className='g-stone g-stone-white';n.textContent='白方'}
+    else{n.textContent='—'}
+  }
+  function setMoves(n){document.getElementById('moves').textContent=n}
+  function setTimer(sec){let m=Math.floor(sec/60).toString().padStart(2,'0'),s=(sec%60).toString().padStart(2,'0');document.getElementById('timer').textContent=m+':'+s}
+  function setLog(hist){
+    let lg=document.getElementById('log')
+    if(!hist.length){lg.innerHTML='<div class="g-log-empty">暂无落子</div>';return}
+    lg.innerHTML=hist.map((m,i)=>{let st=m.color===1?'g-log-stone-black':'g-log-stone-white',cl=String.fromCharCode(65+m.c);return'<span class="g-log-step"><span class="g-log-stone '+st+'"></span>'+(i+1)+'. '+cl+(m.r+1)+'</span>'}).join('')
+    lg.scrollTop=lg.scrollHeight
+  }
+  function showBanner(t,s){document.getElementById('banner-title').textContent=t;document.getElementById('banner-sub').textContent=s;document.getElementById('banner').classList.add('show')}
+  function hideBanner(){document.getElementById('banner').classList.remove('show')}
+  function setBoardTheme(t){document.getElementById('board').setAttribute('data-theme',t)}
+
+  // ===== 技能栏控件 =====
+  function renderSkillbar(playerState){
+    const cont = document.getElementById('skillbtns')
+    if(!cont) return
+    cont.innerHTML = ''
+    for(const sk of playerState.skills){
+      const def = Skills.list.find(d => d.id === sk.id)
+      if(!def) continue
+      const btn = document.createElement('button')
+      btn.className = 'g-skill-btn'
+      btn.dataset.skill = sk.id
+      const can = sk.cd === 0 && playerState.energy >= def.cost
+      btn.classList.add(can ? 'ready' : 'noenergy')
+      btn.innerHTML = `<span>${def.icon}</span><span class="g-skill-cost">${def.cost}</span><div class="g-skill-tooltip"><div class="g-skill-tooltip-name">${def.name} (${def.cost} 能量)</div><div class="g-skill-tooltip-effect">${def.desc}</div></div>`
+      btn.addEventListener('click', () => hn.onSkill(sk.id))
+      cont.appendChild(btn)
+    }
+  }
+
+  function updateSkillbar(playerState){
+    const cont = document.getElementById('skillbtns')
+    if(!cont) return
+    const btns = cont.querySelectorAll('.g-skill-btn')
+    btns.forEach(btn => {
+      const id = btn.dataset.skill
+      const sk = playerState.skills.find(s => s.id === id)
+      const def = Skills.list.find(d => d.id === id)
+      if(!sk || !def) return
+      const can = sk.cd === 0 && playerState.energy >= def.cost
+      btn.classList.toggle('ready', can)
+      btn.classList.toggle('noenergy', !can)
+    })
+    // 能量条
+    const fill = document.getElementById('energy-fill')
+    const val = document.getElementById('energy-val')
+    if(fill) fill.style.width = (playerState.energy / playerState.maxEnergy * 100) + '%'
+    if(val) val.textContent = playerState.energy
+  }
+
+  function animateSkillCast(skillId){
+    const btn = document.querySelector(`.g-skill-btn[data-skill="${skillId}"]`)
+    if(btn){ btn.classList.add('casting'); setTimeout(() => btn.classList.remove('casting'), 500) }
+  }
+
+  // ===== 教学 modal =====
+  function showTutorial(){
+    if(document.getElementById('tutorial')) return
+    const skills = [Skills.list[0], Skills.list[1], Skills.list[2]]  // 护盾/消子/迷雾
+    const el = document.createElement('div')
+    el.id = 'tutorial'
+    el.className = 'g-tutorial'
+    el.innerHTML = `
+      <div class="g-tutorial-inner">
+        <div class="g-tutorial-title">技能五子棋</div>
+        <div class="g-tutorial-sub">落子赚能量，能量够 4 个就能放技能</div>
+        <div class="g-tutorial-skills">
+          ${skills.map(s => `
+            <div class="g-tutorial-skill">
+              <div class="g-tutorial-skill-icon">${s.icon}</div>
+              <div class="g-tutorial-skill-name">${s.name} · ${s.cost}</div>
+              <div class="g-tutorial-skill-desc">${s.desc}</div>
+            </div>
+          `).join('')}
+        </div>
+        <button class="g-tutorial-cta" id="tutorial-go">开始游戏</button>
+      </div>
+    `
+    document.body.appendChild(el)
+    document.getElementById('tutorial-go').addEventListener('click', () => {
+      el.remove()
+      if(hn.onTutorialDone) hn.onTutorialDone()
+    })
+  }
+
+  return{init,setTurn,setMoves,setTimer,setLog,showBanner,hideBanner,setBoardTheme,renderSkillbar,updateSkillbar,animateSkillCast,showTutorial}
+})();
+
+/* ==============================================================
+   gomoku.js — 入口，串联所有模块
+   技能版: 接管整个 UI，技能使用 + 技能动画 + 积分更新
+   ============================================================ */
+(function(){
+  const{B,W}=Game.constants
+  let st={mode:'pvp',diff:'mid',side:B,thm:'wood',thinking:false,ti:null,pendingTarget:null,pendingTarget2:null,pendingSkill:null,lastTick:0}
+
+  function init(){
+    Game.reset(15)
+    Board.init(document.getElementById('board'),{size:15,theme:st.thm,onCellClick:handleClick})
+    UI.init({onMode:v=>{st.mode=v;newG()},onDiff:v=>{st.diff=v;window._skillDiff=v},onSide:v=>{st.side=v==='black'?B:W;newG()},onNew:newG,onUndo:handleUndo,onHint:handleHint,onTheme:t=>{st.thm=t;Board.setTheme(t);UI.setBoardTheme(t)},onSkill:handleSkill})
+    UI.setBoardTheme(st.thm)
+    Effects.init()
+    // 技能五子棋只支持 PVE + 黑先
+    SkillMgr.init(st.side)
+    window._skillDiff = st.diff
+    UI.renderSkillbar(SkillMgr.getPlayerState())
+    UI.updateSkillbar(SkillMgr.getPlayerState())
+    UI.showTutorial()
+    ref()
+    startTimer()
+    // 启动粒子 rAF
+    requestAnimationFrame(animLoop)
+  }
+
+  function animLoop(t){
+    const dt = st.lastTick ? (t - st.lastTick) : 16
+    st.lastTick = t
+    Effects.update(dt)
+    if(Effects._hasParticles()){
+      // 重画棋盘+粒子
+      Board.draw()
+      const cv = document.getElementById('board')
+      const ctx = cv.getContext('2d')
+      const frame = document.querySelector('.g-board-frame')
+      Effects.draw(ctx, frame)
+    }
+    requestAnimationFrame(animLoop)
+  }
+
+  function ref(){
+    let g=Game.getState()
+    UI.setTurn(g.cur)
+    UI.setMoves(g.moves)
+    UI.setLog(g.hist)
+    if(SkillMgr.getPlayerState()) UI.updateSkillbar(SkillMgr.getPlayerState())
+  }
+
+  function startTimer(){stopTimer();st.ti=setInterval(()=>{let g=Game.getState();if(!g.startAt||g.winner)return;UI.setTimer(Math.floor((Date.now()-g.startAt)/1000))},500)}
+  function stopTimer(){if(st.ti){clearInterval(st.ti);st.ti=null}}
+
+  // 检测落子得分
+  function detectPattern(r, c, color){
+    const g = Game.getState()
+    const pat = {two:0, three:0, four:0, win:0}
+    for(const[dR, dC] of [[0,1],[1,0],[1,1],[1,-1]]){
+      let cnt = 1, openL = 0, openR = 0
+      let nr = r + dR, nc = c + dC
+      while(nr>=0&&nr<g.size&&nc>=0&&nc<g.size&&g.board[nr][nc]===color){ cnt++; nr += dR; nc += dC }
+      if(nr>=0&&nr<g.size&&nc>=0&&nc<g.size&&g.board[nr][nc]===0) openR = 1
+      nr = r - dR; nc = c - dC
+      while(nr>=0&&nr<g.size&&nc>=0&&nc<g.size&&g.board[nr][nc]===color){ cnt++; nr -= dR; nc -= dC }
+      if(nr>=0&&nr<g.size&&nc>=0&&nc<g.size&&g.board[nr][nc]===0) openL = 1
+      const openEnds = openL + openR
+      if(cnt >= 5) pat.win = 1
+      else if(cnt === 4 && openEnds === 2) pat.four = 1
+      else if(cnt === 3 && openEnds === 2) pat.three = 1
+      else if(cnt === 2 && openEnds === 2) pat.two = 1
+    }
+    return pat
+  }
+
+  function handleClick(r, c){
+    if(st.thinking) return
+    let g = Game.getState()
+    if(g.winner) return
+
+    // 目标选择模式
+    if(st.pendingSkill){
+      handleTargetClick(r, c)
+      return
+    }
+
+    if(st.mode === 'pve' && g.cur !== st.side) return
+    place(r, c)
+    if(st.mode === 'pve' && !Game.getWinner()) runAI()
+  }
+
+  function place(r, c){
+    // 护盾检查
+    const g = Game.getState()
+    const curColor = g.cur
+    const curState = SkillMgr.getStateForColor(curColor)
+    if(curState && curState.shield > 0){
+      // 护盾：阻止对方落子 = 当前 cur 是护盾方？等等
+      // 护盾意思是：本方下次落子被对方无效化？不对
+      // 重新理解：shield = 1 表示本方落子不会被打断/消除
+      // 但现在 Game.move 不做任何消除，所以护盾=无效果
+      // 改为：护盾=对方下回合落子无效（在 mv 里检查）
+    }
+
+    const res = Game.move(r, c)
+    if(!res.ok) return
+    Board.setStone(r, c, g.board[r][c])
+    ref()
+
+    // 算积分
+    const lastColor = g.board[r][c]
+    const pat = detectPattern(r, c, lastColor)
+    const gain = SkillMgr.onMoveScored(pat)
+    if(gain){
+      // 浮动数字
+      const cv = document.getElementById('board')
+      const rect = cv.getBoundingClientRect()
+      const cell = rect.width / 15
+      const px = rect.left + (c + 0.5) * cell
+      const py = rect.top + (r + 0.5) * cell
+      Effects.floatText(px, py, '+' + gain, 'positive')
+    }
+
+    // 粒子
+    const cv = document.getElementById('board')
+    const rect = cv.getBoundingClientRect()
+    const cell = rect.width / 15
+    const px = rect.left + (c + 0.5) * cell
+    const py = rect.top + (r + 0.5) * cell
+    const stoneColor = lastColor === 1 ? '#1a1a1a' : '#fff'
+    Effects.spawnParticles(px, py, stoneColor, 12)
+
+    // 护盾后续效果：同归/消子已在 effect 里改 board，需要重画
+    if(res.win){
+      let n = Game.getWinner() === B ? '黑方' : '白方'
+      UI.showBanner(n + '胜！', '连成 5 子 · 共 ' + Game.getMoves() + ' 步')
+      Board.setWinningLine(res.line); stopTimer()
+    } else if(res.draw){
+      UI.showBanner('和棋', '棋盘下满 · ' + Game.getMoves() + ' 步'); stopTimer()
+    }
+
+    // 技能胜负检查
+    if(!Game.getWinner()){
+      const skillWinner = Game.checkSkillWin()
+      if(skillWinner){
+        const n = skillWinner === B ? '黑方' : '白方'
+        UI.showBanner(n + '胜！', '消光对方所有子')
+        stopTimer()
+        Board.draw()
+        return
+      }
+    }
+
+    // 迷雾: 切回上一手显示/隐藏
+    updateMist()
+
+    // 切回合减 cd
+    if(SkillMgr.getPlayerState()) SkillMgr.onTurnStart()
+  }
+
+  function updateMist(){
+    const pState = SkillMgr.getPlayerState()
+    const oState = SkillMgr.getOppState()
+    // 简单实现: 任意方有 mist 就显示
+    const hasMist = (pState && pState.mist > 0) || (oState && oState.mist > 0)
+    Effects.setMist(hasMist)
+  }
+
+  // ===== 技能使用 =====
+  function handleSkill(skillId){
+    if(st.thinking) return
+    const ps = SkillMgr.getPlayerState()
+    if(!ps) return
+    if(ps.skip > 0){
+      Effects.floatText(window.innerWidth/2, 200, '本回合跳过', 'negative'); return
+    }
+    const def = Skills.list.find(s => s.id === skillId)
+    if(def.needTarget){
+      // 进入目标选择模式
+      st.pendingSkill = skillId
+      st.pendingTarget = null
+      st.pendingTarget2 = null
+      document.body.classList.add('g-target-mode')
+      showTargetHint('点选 1 个对方子作为目标')
+    } else if(skillId === 'swap'){
+      st.pendingSkill = skillId
+      st.pendingTarget = null
+      st.pendingTarget2 = null
+      document.body.classList.add('g-target-mode')
+      showTargetHint('点选 2 个己方子（连点 2 次）')
+    } else {
+      // 直接释放
+      const res = SkillMgr.cast(skillId)
+      if(!res.ok){
+        Effects.floatText(window.innerWidth/2, 200, res.reason, 'negative')
+        return
+      }
+      UI.animateSkillCast(skillId)
+      UI.updateSkillbar(ps)
+      // 重画棋盘（消子/同归可能改了 board）
+      Board.draw()
+      updateMist()
+      Effects.floatText(window.innerWidth/2, 200, def.name + '!', 'positive')
+      if(skillId === 'mist') setTimeout(() => { if(ps.mist > 0) ps.mist--; updateMist() }, 1500)
+    }
+  }
+
+  function handleTargetClick(r, c){
+    if(!st.pendingSkill) return
+    if(st.pendingSkill === 'swap'){
+      if(!st.pendingTarget){
+        st.pendingTarget = {r, c}
+        showTargetHint('再点 1 个己方子')
+      } else {
+        st.pendingTarget2 = {r, c}
+        const res = SkillMgr.cast(st.pendingSkill, st.pendingTarget, st.pendingTarget2)
+        cancelTargetMode()
+        if(!res.ok){
+          Effects.floatText(window.innerWidth/2, 200, res.reason, 'negative')
+        } else {
+          UI.animateSkillCast(st.pendingSkill)
+          UI.updateSkillbar(SkillMgr.getPlayerState())
+          Board.draw()
+          updateMist()
+          Effects.floatText(window.innerWidth/2, 200, '换位!', 'positive')
+        }
+      }
+    } else {
+      // 单目标技能 (消子 / 悔棋不需要 target 因为悔棋找 hist)
+      const res = SkillMgr.cast(st.pendingSkill, {r, c})
+      cancelTargetMode()
+      if(!res.ok){
+        Effects.floatText(window.innerWidth/2, 200, res.reason, 'negative')
+      } else {
+        UI.animateSkillCast(st.pendingSkill)
+        UI.updateSkillbar(SkillMgr.getPlayerState())
+        Board.draw()
+        updateMist()
+        Effects.floatText(window.innerWidth/2, 200, '成功!', 'positive')
+      }
+    }
+  }
+
+  function cancelTargetMode(){
+    st.pendingSkill = null
+    st.pendingTarget = null
+    st.pendingTarget2 = null
+    document.body.classList.remove('g-target-mode')
+    hideTargetHint()
+  }
+
+  let targetHintEl = null
+  function showTargetHint(text){
+    hideTargetHint()
+    targetHintEl = document.createElement('div')
+    targetHintEl.className = 'g-target-hint'
+    targetHintEl.textContent = text
+    document.body.appendChild(targetHintEl)
+  }
+  function hideTargetHint(){ if(targetHintEl){targetHintEl.remove();targetHintEl=null} }
+
+  // ===== AI =====
+  function runAI(){
+    if(Game.getWinner()) return
+    let g = Game.getState()
+    let ai = g.cur
+    st.thinking = true
+    UI.setTurn(0)
+    setTimeout(() => {
+      // AI 有概率先用技能
+      const aiSkill = SkillMgr.aiChooseSkill()
+      if(aiSkill){
+        const res = SkillMgr.cast(aiSkill.id)
+        if(res.ok){
+          const def = Skills.list.find(s => s.id === aiSkill.id)
+          Effects.floatText(window.innerWidth/2, 200, 'AI: ' + def.name, 'negative')
+          Board.draw()
+          updateMist()
+        }
+      }
+      // 然后落子
+      const m = AI.getBestMove(Game.getState().board, Game.getSize(), ai, st.diff)
+      st.thinking = false
+      if(m){
+        const res = Game.move(m.r, m.c)
+        if(res.ok){
+          Board.setStone(m.r, m.c, Game.getState().board[m.r][m.c])
+          ref()
+          const pat = detectPattern(m.r, m.c, Game.getState().board[m.r][m.c])
+          SkillMgr.onMoveScored(pat)
+          UI.updateSkillbar(SkillMgr.getPlayerState())
+          if(res.win){
+            let n = Game.getWinner() === B ? '黑方' : '白方'
+            UI.showBanner(n + '胜！', '连成 5 子 · 共 ' + Game.getMoves() + ' 步')
+            Board.setWinningLine(res.line); stopTimer()
+          } else if(res.draw){
+            UI.showBanner('和棋', '棋盘下满 · ' + Game.getMoves() + ' 步'); stopTimer()
+          }
+        }
+      }
+      SkillMgr.onTurnStart()
+      UI.updateSkillbar(SkillMgr.getPlayerState())
+    }, 200)
+  }
+
+  function newG(){
+    stopTimer()
+    UI.hideBanner()
+    Game.reset(15)
+    Board.reset(15)
+    Effects.clear()
+    SkillMgr.init(st.side)
+    window._skillDiff = st.diff
+    UI.renderSkillbar(SkillMgr.getPlayerState())
+    UI.updateSkillbar(SkillMgr.getPlayerState())
+    ref()
+    startTimer()
+  }
+  function handleUndo(){
+    if(st.thinking) return
+    let g = Game.getState()
+    if(!g.hist.length) return
+    Game.undo(st.mode === 'pve' ? 2 : 1)
+    Board.reset(Game.getSize())
+    let s = Game.getState()
+    for(let r=0;r<s.size;r++)for(let c=0;c<s.size;c++)if(s.board[r][c]) Board.setStone(r, c, s.board[r][c])
+    Board.setLastMove(s.hist.length ? s.hist[s.hist.length-1] : null)
+    ref()
+  }
+  function handleHint(){
+    if(st.thinking) return
+    let g = Game.getState()
+    if(g.winner) return
+    let m = AI.getBestMove(g.board, Game.getSize(), g.cur, 'mid')
+    if(m){ Board.setHover(m.r, m.c); setTimeout(() => Board.setHover(null), 2500) }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init()
+  // 全屏切换
+  (function(){
+    const fsBtn=document.getElementById('fs-btn')
+    if(!fsBtn)return
+    const enterLabel=fsBtn.querySelector('.fs-enter')
+    const exitLabel=fsBtn.querySelector('.fs-exit')
+    function update(){
+      const isFs=!!document.fullscreenElement
+      enterLabel.hidden=isFs
+      exitLabel.hidden=!isFs
+    }
+    fsBtn.addEventListener('click',()=>{
+      if(!document.fullscreenElement){
+        const el=document.documentElement
+        const req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen
+        if(req)req.call(el).catch(()=>{})
+      }else{
+        const ex=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen
+        if(ex)ex.call(document)
+      }
+    })
+    document.addEventListener('fullscreenchange',update)
+    document.addEventListener('webkitfullscreenchange',update)
+    update()
+  })()
+})();
+</script>
+</body>
+</html>

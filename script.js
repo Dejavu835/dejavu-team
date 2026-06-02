@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameUrlMap = {
       tank: 'games/tank/index.html',
       wuziqi: 'games/wuziqi/index.html',
-      'wuziqi-skill': null  // 暂未上线
+      'wuziqi-skill': 'games/wuziqi-skill/index.html'  // 2026-06-02 上线
     };
     gamesModal.querySelectorAll('.games-menu-item[data-game]').forEach(item => {
       item.addEventListener('click', () => {
