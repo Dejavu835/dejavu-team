@@ -58,8 +58,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (musicCard && musicModal) {
     musicCard.addEventListener('click', () => {
-      musicModal.classList.add('active');
-      document.body.style.overflow = 'hidden';
+      // 点击激活动画：脉冲一次后弹模态
+      musicCard.classList.add('activating');
+      setTimeout(() => musicCard.classList.remove('activating'), 600);
+      setTimeout(() => {
+        musicModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }, 150);
     });
     function closeMusicModal() {
       musicModal.classList.remove('active');
@@ -83,7 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
       gamesModal.classList.remove('active');
       document.body.style.overflow = '';
     };
-    gamesTrigger.addEventListener('click', openGames);
+    gamesTrigger.addEventListener('click', () => {
+      // 小游戏卡点击：脉冲一次后开菜单
+      gamesTrigger.classList.add('opening')
+      setTimeout(() => gamesTrigger.classList.remove('opening'), 400)
+      openGames()
+    });
     const gamesCloseBtn = gamesModal.querySelector('.detail-close-games');
     const gamesBackdrop = gamesModal.querySelector('.detail-backdrop');
     if (gamesCloseBtn) gamesCloseBtn.addEventListener('click', closeGames);
