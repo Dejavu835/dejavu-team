@@ -98,6 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     gamesModal.querySelectorAll('.games-menu-item[data-game]').forEach(item => {
       item.addEventListener('click', () => {
+        // 敬请期待项不可点击
+        if(item.classList.contains('games-menu-item-soon') || item.getAttribute('aria-disabled') === 'true'){
+          return;
+        }
         const game = item.dataset.game;
         const url = gameUrlMap[game];
         if (url) {

@@ -22,11 +22,11 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
 .inv-slot .slot-tooltip{display:none;position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:#fff;padding:3px 6px;border-radius:4px;font-size:10px;white-space:nowrap;z-index:10;pointer-events:none}
 .inv-slot:hover .slot-tooltip{display:block}
 #inv-label{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.05em;margin-right:4px;font-family:monospace}
-#controls{display:flex;width:100%;max-width:640px;padding:10px 14px;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0;margin:0 auto;touch-action:none}
+#controls{display:flex;width:100%;max-width:720px;padding:10px 14px;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0;margin:0 auto;touch-action:none}
 /* 圆形遥杆 — 替换原 3x3 D-Pad */
-#joystick{position:relative;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.18);flex-shrink:0;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+#joystick{position:relative;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.18);flex-shrink:0;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 .joystick-base{position:absolute;inset:8px;border-radius:50%;background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.15);pointer-events:none}
-.joystick-knob{position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.4);top:50%;left:50%;transform:translate(-50%,-50%);transition:background 0.1s;pointer-events:none}
+.joystick-knob{position:absolute;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.4);top:50%;left:50%;transform:translate(-50%,-50%);transition:background 0.1s;pointer-events:none}
 .joystick-knob.active{background:rgba(120,200,255,0.4);border-color:rgba(120,200,255,0.7)}
 #fire-zone{display:flex;flex-direction:column;gap:10px;align-items:center}
 #fire-btn{width:72px;height:72px;border-radius:50%;background:rgba(255,80,80,0.15);border:2.5px solid rgba(255,80,80,0.4);color:rgba(255,100,100,0.9);font-size:11px;font-weight:bold;font-family:monospace;letter-spacing:0.08em;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;transition:background 0.1s,transform 0.1s}
@@ -39,13 +39,16 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
 #pause-btn{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);font-size:10px;font-family:monospace;letter-spacing:0.05em;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;align-items:center;justify-content:center;flex-shrink:0}
 #pause-btn:active{background:rgba(255,255,255,0.2)}
 /* 桌面：控件紧凑 */
-@media(min-width:541px){
-  #joystick{width:120px;height:120px}
-  .joystick-knob{width:46px;height:46px}
-  #fire-btn{width:60px;height:60px;font-size:10px}
-  #start-btn{width:58px;height:58px;font-size:10px}
-  #pause-btn{width:44px;height:44px;font-size:9px}
-  canvas{max-height:calc(100vh - 160px)}
+@media(min-width:541px) and (max-width:880px){
+  #joystick{width:150px;height:150px}
+  .joystick-knob{width:54px;height:54px}
+  #fire-btn{width:68px;height:68px;font-size:11px}
+  #start-btn{width:66px;height:66px;font-size:11px}
+  #pause-btn{width:50px;height:50px;font-size:10px}
+  canvas{max-height:calc(100vh - 200px)}
+}
+@media(min-width:881px){
+  canvas{max-height:calc(100vh - 200px)}
 }
 /* 超宽屏：控件限位避免被拉太开 */
 @media(min-width:1100px){
@@ -53,15 +56,15 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
 }
 /* 手机小屏 */
 @media(max-width:540px),(max-height:600px){
-  #joystick{width:110px;height:110px}
-  .joystick-knob{width:42px;height:42px}
-  #fire-btn{width:64px;height:64px}
-  #start-btn{width:64px;height:64px}
-  #pause-btn{width:48px;height:48px}
+  #joystick{width:135px;height:135px}
+  .joystick-knob{width:50px;height:50px}
+  #fire-btn{width:70px;height:70px}
+  #start-btn{width:70px;height:70px}
+  #pause-btn{width:50px;height:50px}
   #pause-label{display:block!important}
-  canvas{max-height:calc(100vh - 240px)}
+  canvas{max-height:calc(100vh - 260px)}
 }
-@media(orientation:portrait) and (max-width:540px){#wrapper{justify-content:flex-start;padding-top:10px}canvas{max-height:calc(100vh - 260px)}}
+@media(orientation:portrait) and (max-width:540px){#wrapper{justify-content:flex-start;padding-top:10px}canvas{max-height:calc(100vh - 280px)}}
 /* ─── Settings Modal + Gear Button ────────────────── */
 #settings-modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:100}
 #settings-modal.show{display:flex}
@@ -78,15 +81,16 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;borde
 #settings-btn:active{transform:scale(0.92)}
 #settings-btn.hidden{display:none}
 /* ─── D-Pad Fallback (十字) ─────────────────────────── */
-#dpad-fallback{display:none;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:2px;width:130px;height:130px;flex-shrink:0;touch-action:none;user-select:none;-webkit-user-select:none}
-#dpad-fallback .dpad-btn{background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.18);border-radius:5px;color:rgba(255,255,255,0.55);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-appearance:none;font-family:monospace;padding:0;line-height:1}
+/* 2026-06-02 扩大：手机端从 110→135，桌面从 130→170，按钮间 gap 4px 避免误触 */
+#dpad-fallback{display:none;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,54px);gap:4px;width:170px;height:170px;flex-shrink:0;touch-action:none;user-select:none;-webkit-user-select:none}
+#dpad-fallback .dpad-btn{background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.22);border-radius:7px;color:rgba(255,255,255,0.65);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-appearance:none;font-family:monospace;padding:0;line-height:1;min-width:44px;min-height:44px}
 #dpad-fallback .dpad-btn:active,#dpad-fallback .dpad-btn.pressed{background:rgba(120,200,255,0.25);border-color:rgba(120,200,255,0.6);color:#78c8ff}
-#dpad-fallback .dpad-center{background:rgba(255,255,255,0.03);border:1.5px dashed rgba(255,255,255,0.15);cursor:default;font-size:9px;color:rgba(255,255,255,0.3);pointer-events:none;letter-spacing:0.08em}
-@media(min-width:541px){
-  #dpad-fallback{width:120px;height:120px;grid-template-columns:repeat(3,38px);grid-template-rows:repeat(3,38px)}
+#dpad-fallback .dpad-center{background:rgba(255,255,255,0.03);border:1.5px dashed rgba(255,255,255,0.15);cursor:default;font-size:10px;color:rgba(255,255,255,0.3);pointer-events:none;letter-spacing:0.08em}
+@media(min-width:541px) and (max-width:880px){
+  #dpad-fallback{width:150px;height:150px;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px)}
 }
 @media(max-width:540px),(max-height:600px){
-  #dpad-fallback{width:110px;height:110px;grid-template-columns:repeat(3,35px);grid-template-rows:repeat(3,35px)}
+  #dpad-fallback{width:135px;height:135px;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px)}
 }
 </style>
 </head>
