@@ -415,7 +415,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-figure {
   position: relative;
   width: clamp(320px, 38vw, 480px);
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 10 / 13;
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow:
