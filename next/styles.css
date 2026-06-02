@@ -437,8 +437,8 @@ h1, h2, h3, h4, p { margin: 0; }
   position: relative;
   width: clamp(360px, 48vw, 560px);
   aspect-ratio: 3 / 5;
-  border-radius: var(--radius-lg);
-  overflow: visible;
+  border-radius: var(--radius-xl);   /* match studio/products: consistent 32px rounded rect */
+  overflow: hidden;                  /* clip image + overlays to the rounded shape */
   box-shadow:
     0 40px 80px rgba(40, 30, 20, 0.18),
     0 12px 28px rgba(40, 30, 20, 0.10);

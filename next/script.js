@@ -45,7 +45,12 @@
   const heroFigure  = $('#hvFigure');
   const heroSection = $('.hero');
   if (heroFigure && heroSection && window.matchMedia('(min-width: 880px) and (prefers-reduced-motion: no-preference)').matches) {
-    const MAX_TILT = 3;       // deg  (subtle head turn)
+    /* Head tilt + turn. The figure inherits perspective from .hero-visual,
+       so rotateY/rotateX render in 3D. Larger Y range (was 3°*2=6° total)
+       so the head actually "turns" — sides of the CRT monitor visually
+       compress/stretch as it rotates. X stays small (head nod). */
+    const MAX_TILT_X = 5;   // deg  (up/down nod, subtle)
+    const MAX_TILT_Y = 12;  // deg  (left/right head turn, visible)
     let mx = 0.5, my = 0.5;
     let targetX = 0.5, targetY = 0.5;
     let rafId = null;
@@ -53,11 +58,13 @@
 
     const apply = () => {
       rafId = null;
-      mx += (targetX - mx) * 0.18;
-      my += (targetY - my) * 0.18;
+      mx += (targetX - mx) * 0.14;
+      my += (targetY - my) * 0.14;
       const dx = mx - 0.5;
       const dy = my - 0.5;
-      heroFigure.style.transform = `rotateX(${(-dy * MAX_TILT).toFixed(2)}deg) rotateY(${(dx * MAX_TILT * 2).toFixed(2)}deg)`;
+      heroFigure.style.transform =
+        `rotateX(${(-dy * MAX_TILT_X).toFixed(2)}deg) ` +
+        `rotateY(${(dx * MAX_TILT_Y).toFixed(2)}deg)`;
       if (Math.abs(targetX - mx) > 0.001 || Math.abs(targetY - my) > 0.001) {
         rafId = requestAnimationFrame(apply);
       } else if (active) {
