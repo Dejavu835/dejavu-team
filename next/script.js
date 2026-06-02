@@ -73,12 +73,16 @@
       const ny = Math.max(0, Math.min(1, (e.clientY - r.top)  / r.height));
       targetX = nx; targetY = ny;
       active = true;
+      if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
     const onLeave = () => {
       active = false;
+      if (statusEl && statusEl.textContent !== 'online') statusEl.textContent = 'online';
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
+
+    const statusEl = $('#hvStatus');
 
     heroFigure.addEventListener('mousemove', onMove);
     heroFigure.addEventListener('mouseleave', onLeave);

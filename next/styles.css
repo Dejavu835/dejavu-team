@@ -436,6 +436,52 @@ h1, h2, h3, h4, p { margin: 0; }
   -webkit-user-drag: none;
 }
 
+/* Hero status chip — small, monospace, live dot. */
+.hv-status {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-secondary);
+  background: rgba(255, 255, 255, 0.78);
+  padding: 5px 11px 5px 10px;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: color 0.4s var(--ease), background 0.4s var(--ease);
+  backdrop-filter: blur(6px) saturate(1.2);
+  -webkit-backdrop-filter: blur(6px) saturate(1.2);
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.06);
+}
+.hv-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: hv-pulse 2.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.hv-figure:hover .hv-status {
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.92);
+}
+@keyframes hv-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.85); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv-status::before { animation: none; }
+}
+
 /* ===========================================================
    SECTIONS — common
    =========================================================== */
