@@ -895,11 +895,22 @@ const UI = (()=>{
     fsBtn.addEventListener('click',()=>{
       if(!document.fullscreenElement){
         const el=document.documentElement
-        const req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen
-        if(req)req.call(el).catch(()=>{})
+        const req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen
+        if(!req){
+          console.warn('[fs] 当前浏览器不支持 Fullscreen API')
+          alert('当前浏览器不支持全屏，请用 Chrome / Edge / Firefox 打开')
+          return
+        }
+        const p=req.call(el)
+        if(p&&p.catch)p.catch(err=>{
+          console.warn('[fs] requestFullscreen 失败:',err)
+          alert('全屏请求被拒绝：'+err.message+'\n可能是 iframe 嵌入或浏览器策略限制')
+        })
       }else{
-        const ex=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen
-        if(ex)ex.call(document)
+        const ex=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen
+        if(!ex)return
+        const p=ex.call(document)
+        if(p&&p.catch)p.catch(err=>console.warn('[fs] exitFullscreen 失败:',err))
       }
     })
     document.addEventListener('fullscreenchange',update)
