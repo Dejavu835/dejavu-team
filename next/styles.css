@@ -26,7 +26,7 @@
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --fs-display:   clamp(40px, 5.2vw, 64px);
+  --fs-display:   clamp(34px, 5.2vw, 64px);
   --fs-h2:        clamp(28px, 3.6vw, 44px);
   --fs-h3:        20px;
   --fs-body-lg:   18px;
@@ -71,6 +71,7 @@
 
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 
+html { overflow-x: hidden; }
 body {
   margin: 0;
   font-family: var(--font-sans);
@@ -105,6 +106,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
+@media (max-width: 880px) {
+  body { background-attachment: scroll, scroll, scroll, scroll, scroll, scroll; }
 
 img, svg, video { display: block; max-width: 100%; }
 
@@ -1195,8 +1198,16 @@ h1, h2, h3, h4, p { margin: 0; }
   .nav-inner { grid-template-columns: 1fr auto; }
   .hero { padding-top: calc(var(--nav-h) + var(--space-2xl)); }
   .hero-inner { grid-template-columns: 1fr; gap: var(--space-2xl); }
-  .hero-visual { max-width: 480px; margin: 0 auto; width: 100%; }
-  .hv-figure { width: min(100%, 360px); }
+  .hero-visual {
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+    margin-right: auto;  /* disable figure bleed on mobile */
+  }
+  .hv-figure {
+    width: min(100%, 360px);
+    margin-right: 0;  /* no bleed on mobile */
+  }
   .member-grid { grid-template-columns: 1fr; }
   .cap-grid { grid-template-columns: repeat(2, 1fr); }
   .process-list { grid-template-columns: 1fr; }
@@ -1213,6 +1224,17 @@ h1, h2, h3, h4, p { margin: 0; }
   .hero-actions { gap: var(--space-md); }
   .btn-lg { padding: 16px 22px; font-size: 16px; }
   .contact-actions { flex-direction: column; gap: var(--space-md); }
+  .hero-sub { font-size: 13px; }
+  .hero-tags { gap: 10px 14px; }
+  .hero-tags a { font-size: 11px; }
+}
+
+/* Mid-size desktop: slightly larger figure, still no overflow */
+@media (min-width: 1281px) and (max-width: 1600px) {
+  .hv-figure { width: clamp(440px, 42vw, 600px); }
+}
+@media (min-width: 1601px) {
+  .hv-figure { width: clamp(480px, 36vw, 640px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
