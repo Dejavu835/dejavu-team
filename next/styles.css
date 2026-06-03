@@ -454,47 +454,33 @@ h1, h2, h3, h4, p { margin: 0; }
   perspective: 1200px;
 }
 
-/* ---------- BODY: photo with the head area masked out ---------- */
+/* ---------- BODY: headless photo (top is background-colored) ---------- */
 .hv-body {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 35%;   /* frame the chest/shoulder area */
+  object-position: center bottom;   /* shoulders + chest fill the figure */
   display: block;
   user-select: none;
   -webkit-user-drag: none;
   border-radius: var(--radius-xl);
-  /* Mask the top 50% of the image out with a gradient so the
-     "neckline" fades into the page background and the CSS head
-     can sit on top with no hard edge. y=50% in the photo is the
-     seam between the CRT (top) and the body (bottom). */
-  -webkit-mask-image: linear-gradient(180deg,
-    transparent 0%,
-    transparent 45%,
-    rgba(0, 0, 0, 0.5) 49%,
-    #000 53%,
-    #000 100%);
-          mask-image: linear-gradient(180deg,
-    transparent 0%,
-    transparent 45%,
-    rgba(0, 0, 0, 0.5) 49%,
-    #000 53%,
-    #000 100%);
   z-index: 1;
+  /* The image's top ~50% is the same warm cream as the page background
+     (genuinely headless, no body parts up there), so it dissolves into
+     the hero and the CSS 3D head can sit on top with no visible seam. */
 }
 
 /* ---------- HEAD: pure-CSS 3D CRT cube, more realistic ---------- */
 .hv-head {
   position: absolute;
-  top: 6%;
+  top: 1%;
   left: 50%;
-  width: 64%;
-  /* Push forward in 3D so the head sits in front of the body
-     (the body photo is at z=0). */
+  width: 60%;                     /* 60% of figure width, like a real head */
+  height: 42%;                    /* bottom floats just above the shoulders */
+  /* Push forward in 3D so the head sits in front of the body. */
   transform: translateX(-50%) translateZ(36px);
-  aspect-ratio: 1.18 / 1;        /* slightly wider than tall, CRT-like */
   transform-style: preserve-3d;
   z-index: 2;
   /* JS will set transform: rotateX/rotateY based on cursor */
@@ -604,8 +590,8 @@ h1, h2, h3, h4, p { margin: 0; }
 /* CRT eyes — sit on the screen, track the mouse */
 .hv-eye {
   position: absolute; top: 50%;
-  width: 12%; height: 17%;
-  margin-top: -8.5%; margin-left: -6%;
+  width: 16%; height: 22%;
+  margin-top: -11%; margin-left: -8%;
   border-radius: 50%;
   background: radial-gradient(ellipse at 50% 45%,
     #ffffff 0%, #e8f4f8 25%, #b8d0d8 60%, #6a7a82 100%);
@@ -619,8 +605,8 @@ h1, h2, h3, h4, p { margin: 0; }
   filter: drop-shadow(0 0 5px rgba(160, 220, 200, 0.30));
   z-index: 2;
 }
-.hv-eye-l { left: 33%; }
-.hv-eye-r { left: 67%; }
+.hv-eye-l { left: 28%; }
+.hv-eye-r { left: 72%; }
 
 /* Base details (Mac-Classic style) */
 .hv-base-sticker {
