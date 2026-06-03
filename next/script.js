@@ -41,26 +41,21 @@
     revealEls.forEach((el) => el.classList.add('is-in'));
   }
 
-  // ---------- 3. hero visual: 3D head tilt + pixel-eye frame swap ----------
+  // ---------- 3. hero visual: 3D head tilt + continuous eye tracking ----------
   const heroFigure  = $('#hvFigure');
   const heroHead    = $('#hvHead');          // 3D cube (only the head turns)
   const heroSection = $('.hero');
-  const pixelFrame  = $('#hvPixelFrame');
   const eyeL = $('#hvEyeL');
   const eyeR = $('#hvEyeR');
   const statusEl = $('#hvStatus');
-  // Enable on desktop (>880px, mouse) OR on any touch device. The 3D
-  // tilt respects touch events too (the touch handler below dispatches
-  // synthetic mousemove so the same code path runs on mobile).
+  // Enable on desktop (>880px, mouse) OR on any touch device.
   const okViewport = matchMedia('(min-width: 880px)').matches ||
                      matchMedia('(hover: none)').matches;
-  if (heroFigure && heroHead && heroSection && okViewport &&
+  if (heroFigure && heroHead && heroSection && eyeL && eyeR && okViewport &&
       !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    /* Tilt ONLY the CSS-3D head cube. The body image is a real photo
-       and stays still (product 360° convention). The cube is positioned
-       with translateX(-50%) translateZ(36px) so the mouse rotation
-       composes ON TOP of that — the final transform is rotation +
-       base translate. */
+    /* Tilt ONLY the CSS-3D head cube. Body photo stays still.
+       The cube is positioned with translateX(-50%) translateZ(36px) so
+       the mouse rotation composes ON TOP of that base position. */
     const MAX_TILT_X = 14;    // deg  (up/down nod)
     const MAX_TILT_Y = 26;    // deg  (left/right head turn)
     let mx = 0.5, my = 0.5;
@@ -90,25 +85,14 @@
       }
     };
 
-    // Pixel-art eye tracking: 5 discrete eye-position frames
-    // (left / lmid / center / rmid / right) based on mouse X.
-    // Eyes are CSS elliptical point-lights positioned absolutely;
-    // JS swaps their `left` value to snap to one of 5 columns.
-    // Higher 'refresh rate' feel than 3 frames — small mouse shifts
-    // still trigger a frame swap.
-    const EYE_POSITIONS_PCT = [21, 30, 39, 48, 57];   // left eye center
-    const EYE_GAP = 16;                                // right eye offset to right
-    let lastEyeFrame = -1;
-    const setEyeFrame = (idx) => {
-      if (idx === lastEyeFrame) return;
-      lastEyeFrame = idx;
-      if (!eyeL || !eyeR) return;
-      const leftPct = EYE_POSITIONS_PCT[idx];
-      const rightPct = leftPct + EYE_GAP;
-      eyeL.style.left = leftPct + '%';
-      eyeR.style.left = rightPct + '%';
-    };
-
+    // Eye tracking — smooth continuous translation, not frame-swap.
+    // The eyes are 2 CSS ovals at fixed left:22% / 60% baseline; we
+    // apply a translate3d offset based on mouse X/Y so they appear
+    // to "look around" the CRT screen.
+    const EYE_BASE_L = 22;       // baseline left% of left eye
+    const EYE_BASE_R = 60;       // baseline left% of right eye
+    const EYE_RANGE_X = 12;       // px each eye can move horizontally
+    const EYE_RANGE_Y = 6;        // px each eye can move vertically
     const onMove = (e) => {
       const hr = heroSection.getBoundingClientRect();
       const hx = Math.max(0, Math.min(1, (e.clientX - hr.left) / hr.width));
@@ -118,9 +102,19 @@
       heroSection.classList.add('is-hover');
       if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
 
-      // 5 frame buckets at 20% mouse-X widths
-      const idx = Math.min(4, Math.max(0, Math.floor(hx * 5)));
-      setEyeFrame(idx);
+      // Normalized -1..+1
+      const nx = (hx - 0.5) * 2;
+      const ny = (hy - 0.5) * 2;
+
+      // Move both eyes in the same direction (parallel motion)
+      const lx = (nx * EYE_RANGE_X).toFixed(2) + 'px';
+      const ly = (ny * EYE_RANGE_Y).toFixed(2) + 'px';
+      // Use translate3d on top of the base 'left' positioning
+      eyeL.style.transform = `translate3d(${lx}, ${ly}, 4px)`;
+      eyeR.style.transform = `translate3d(${lx}, ${ly}, 4px)`;
+      // Re-set base 'left' (just to be safe — CSS left was set in stylesheet)
+      eyeL.style.left = EYE_BASE_L + '%';
+      eyeR.style.left = EYE_BASE_R + '%';
 
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
@@ -128,7 +122,9 @@
       active = false;
       heroSection.classList.remove('is-hover');
       if (statusEl && statusEl.textContent !== 'online') statusEl.textContent = 'online';
-      setEyeFrame(2);  // reset to center
+      // Reset eyes to center
+      eyeL.style.transform = 'translate3d(0, 0, 4px)';
+      eyeR.style.transform = 'translate3d(0, 0, 4px)';
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
 

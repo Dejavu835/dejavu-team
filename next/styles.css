@@ -534,267 +534,220 @@ h1, h2, h3, h4, p { margin: 0; }
   border-radius: 18px 18px 22px 22px;
 }
 
-/* Plastic seam lines (top and bottom of front face) */
-.hv-face-seam {
-  position: absolute;
-  left: 6%; right: 6%;
-  height: 1px;
-  background: rgba(60, 45, 25, 0.35);
-  pointer-events: none;
-}
-.hv-face-seam-top    { top: 67.5%; }
-.hv-face-seam-bottom { top: 68.5%; height: 1px; background: rgba(255, 245, 220, 0.35); }
-
-/* CRT screen sub-element — the green phosphor area.
-   The 8-bit pixel art lives here. The screen container is a rounded
-   green-tinted backdrop; the pixel sprite is layered on top. */
-.hv-crt-screen {
-  position: absolute;
-  top: 7%;
-  left: 9%;
-  width: 82%;
-  height: 58%;
-  border-radius: 12px;
-  background: radial-gradient(ellipse 95% 75% at 50% 50%,
-    #2e5230 0%, #1a341e 35%, #0d1f10 70%, #040a05 100%);
-  box-shadow:
-    inset 0 0 0 3px rgba(40, 30, 20, 0.7),
-    inset 0 0 0 4px rgba(180, 200, 175, 0.10),
-    inset 0 0 28px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* === Pixel-art head === */
-:root {
-  /* 24x18 sprite, eyes LEFT TRANSPARENT in the sprite itself so the
-     CSS-rendered elliptical point-light eyes can show through. */
-  --pixel-head: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAASCAYAAABB7B6eAAAAi0lEQVR42mNgoDFghDGi7GT+U9PgZYeeMDIwMDCwIAtWVeVQxfC2tilwNhOtg4gFXcAtaRLFhu6al8fAwDDl/7JDTxhZsCkQKNAjy+APEy4x7JqXx9DWNgUeBzQPolELRi2gQUaDpWdygVvSJJSMNvCF3Y5t+4gy0MPLCU0ET1FBnAG4HYBcVNA8iADTbTcexHHJhAAAAABJRU5ErkJggg==");
-}
-
-.hv-pixel-screen {
-  position: relative;
-  width: 92%;
-  height: 90%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.hv-pixel-frame {
-  width: 100%;
-  height: 100%;
-  background-image: var(--pixel-head);
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 100% 100%;
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(0 0 6px rgba(106, 216, 192, 0.5));
-}
-
-/* === Elliptical point-light eyes ===
-   Layered on top of the pixel sprite inside the green screen region.
-   Each eye is a soft radial-gradient ellipse with a multi-layer
-   drop-shadow for the "bright pinpoint" look. JS swaps horizontal
-   position (left%) to "look" in 5 directions. */
-.hv-eye-light {
-  position: absolute;
-  top: 46%;                   /* vertically centered in screen area */
-  width: 7%;
-  height: 16%;
-  border-radius: 50%;
-  /* Soft radial gradient: bright white core, cyan halo, fade out */
-  background: radial-gradient(ellipse at 50% 50%,
-    #ffffff 0%,
-    #e8f8ff 25%,
-    #a0d8e0 55%,
-    rgba(160, 220, 200, 0) 75%);
-  transform: translate3d(0, 0, 8px);
-  filter:
-    drop-shadow(0 0 4px rgba(255, 255, 255, 0.85))
-    drop-shadow(0 0 10px rgba(160, 230, 220, 0.55))
-    drop-shadow(0 0 20px rgba(106, 216, 192, 0.30));
-  left: 0;
-  mix-blend-mode: screen;
-  z-index: 2;
-  pointer-events: none;
-}
-
-/* Subtle CRT scanline overlay on top of the pixel art (preserves
-   retro CRT feel without blurring the pixels themselves) */
-.hv-pixel-scanline {
+/* Plastic seam lines removed (no black bezel per user feedback) */
+/* ===========================================================
+   HEAD — Mac Color Classic style monitor, CSS-rendered
+   Replaces the earlier pixel-art approach. 5-frame pixel eyes
+   were too "plastic 8-bit"; the reference image is photo-realistic
+   with 2 bright glowing oval eyes on a curved CRT screen.
+   =========================================================== */
+.hv-monitor {
   position: absolute;
   inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 6% 7% 6% 7%;
+}
+
+/* CRT screen — the big dark green glass with curved corners.
+   No black bezel between shell and screen (per the reference). */
+.hv-screen {
+  position: relative;
+  flex: 1 1 auto;
+  border-radius: 18px 18px 18px 18px;
+  /* Dark olive-green glass with a slight inner depth illusion.
+     Sampled from the reference: edge #3A3515 → center #5C6C3D. */
+  background:
+    radial-gradient(ellipse 95% 80% at 50% 50%,
+      #5e6f3c 0%,
+      #475432 30%,
+      #2f3818 65%,
+      #1a1f0c 95%);
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 28px rgba(0, 0, 0, 0.65),       /* glass depth */
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);   /* top sheen */
+}
+
+/* Subtle curved-glass reflection — a single soft highlight that
+   doesn't move (real reflection stays in place regardless of
+   cursor position) */
+.hv-screen-glass {
+  position: absolute; inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(0deg,
-    rgba(0, 0, 0, 0.10) 0px, rgba(0, 0, 0, 0.10) 1px,
-    transparent 1px, transparent 3px);
-  mix-blend-mode: multiply;
-  border-radius: inherit;
+  background:
+    linear-gradient(115deg,
+      transparent 32%,
+      rgba(255, 255, 255, 0.04) 40%,
+      rgba(255, 255, 255, 0.10) 50%,
+      rgba(255, 255, 255, 0.04) 60%,
+      transparent 68%);
+  mix-blend-mode: screen;
   z-index: 3;
 }
 
-/* Base details (Mac-Classic style) */
-.hv-base-sticker {
-  position: absolute; left: 8%; bottom: 8%;
-  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
-  letter-spacing: 0.06em; line-height: 1.05;
-  color: rgba(70, 55, 30, 0.78);
-  text-shadow: 0 1px 0 rgba(255, 245, 220, 0.5);
-  pointer-events: none; user-select: none;
-  text-transform: uppercase;
+/* Soft horizontal scanlines — the signature CRT look, very subtle */
+.hv-screen-vignette {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(0, 0, 0, 0.12) 0px, rgba(0, 0, 0, 0.12) 1px,
+      transparent 1px, transparent 3px),
+    /* slight outer darkening to feel like a real curved glass */
+    radial-gradient(ellipse 92% 80% at 50% 50%,
+      transparent 55%,
+      rgba(0, 0, 0, 0.35) 100%);
+  z-index: 2;
 }
-.hv-base-floppy {
-  position: absolute; left: 38%; bottom: 12%;
-  width: 32%; height: 7.5%; border-radius: 2px;
-  background: linear-gradient(180deg, #1a1410 0%, #0d0a08 50%, #1a1410 100%);
+
+/* ===========================================================
+   THE 2 EYES — the focal point of the whole head
+   Each eye is a vertical oval (slightly taller than wide)
+   with a soft radial gradient (white core → cyan halo → deep
+   green → transparent) plus 3 stacked drop-shadows for the
+   "bright point light" glow. JS swaps left position based on
+   mouse X (continuous, no frame skip).
+   =========================================================== */
+.hv-eye {
+  position: absolute;
+  top: 50%;
+  /* Slightly taller than wide: vertical oval like the reference */
+  width: 18%;
+  height: 38%;
+  margin-top: -19%;
+  border-radius: 50%;
+  transform: translate3d(0, 0, 4px);
+  /* Multi-stop radial: bright white core → light cyan-green halo →
+     deeper green → fully transparent edge.
+     Sampled from the reference image. */
+  background: radial-gradient(ellipse 50% 50% at 50% 50%,
+    #ffffff 0%,
+    #f0fcf8 8%,
+    #c8efd8 22%,
+    #8ac5a0 45%,
+    rgba(102, 145, 95, 0.4) 70%,
+    rgba(60, 100, 60, 0) 95%);
+  /* 3-layer glow: tight bright + medium green halo + soft outer.
+     These layers blur OUTSIDE the eye and make the CRT feel alive. */
+  filter:
+    drop-shadow(0 0 3px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 14px rgba(180, 240, 200, 0.65))
+    drop-shadow(0 0 30px rgba(106, 180, 130, 0.35));
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* Eye positions updated by JS (translate3d via --eye-x). */
+.hv-eye-l { left: 22%; }
+.hv-eye-r { left: 60%; }
+
+/* ===========================================================
+   BASE — DEJA VU label + thin floppy slot + Vesta brand
+   The reference image shows this row at the bottom of the monitor:
+   small text on the left, slim dark slot in the center, small
+   brand text on the right. All three at roughly the same height.
+   =========================================================== */
+.hv-base {
+  position: relative;
+  flex: 0 0 auto;
+  margin-top: 5%;
+  height: 12%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2%;
+  font-family: var(--font-mono);
+  user-select: none;
+}
+
+.hv-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.05;
+  color: rgba(50, 30, 12, 0.65);
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 245, 220, 0.4);
+}
+.hv-label-deja { text-align: left; }
+.hv-label-vesta { text-align: right; font-size: 8px; opacity: 0.7; }
+
+/* Thin floppy slot — narrow black bar with a small finger notch */
+.hv-floppy {
+  width: 28%;
+  height: 30%;
+  border-radius: 2px;
+  background: linear-gradient(180deg,
+    #1a1410 0%,
+    #0a0806 50%,
+    #1a1410 100%);
   box-shadow:
     inset 0 1px 0 rgba(0, 0, 0, 0.6),
-    inset 0 -1px 0 rgba(255, 245, 220, 0.05),
     0 1px 0 rgba(255, 245, 220, 0.25);
-  pointer-events: none;
+  position: relative;
+  align-self: center;
 }
-.hv-base-speaker {
-  position: absolute; right: 6%; bottom: 10%;
-  width: 14%; height: 14%;
-  display: flex; flex-direction: column; justify-content: space-between;
-  pointer-events: none;
-}
-.hv-base-speaker span {
-  display: block; width: 100%; height: 2px;
-  background: rgba(60, 45, 25, 0.55);
+.hv-floppy::before {
+  content: '';
+  position: absolute;
+  top: 40%; left: 25%; right: 25%;
+  height: 20%;
+  background: rgba(0, 0, 0, 0.8);
   border-radius: 1px;
-  box-shadow: 0 1px 0 rgba(255, 245, 220, 0.35);
 }
 
-/* BACK face — rear of the CRT (vents + ports) */
+/* BACK face — clean solid beige (no vents/ports, minimalist) */
 .hv-face-back {
   transform: rotateY(180deg) translateZ(calc(var(--D) / 2));
-  background: linear-gradient(180deg, #9b8762 0%, #7a6a48 50%, #5a4830 100%);
-  border-radius: 18px;
-  box-shadow: inset 0 0 0 1.5px rgba(60, 45, 25, 0.35);
-}
-.hv-back-vents {
-  position: absolute;
-  top: 14%; left: 18%; right: 18%;
-  height: 50%;
-  background: repeating-linear-gradient(0deg,
-    rgba(40, 28, 15, 0.65) 0 3px,
-    transparent 3px 8px);
-  border-radius: 6px;
-  box-shadow: inset 0 0 0 1px rgba(40, 28, 15, 0.4);
-}
-.hv-back-ports {
-  position: absolute;
-  bottom: 14%; left: 22%; right: 22%;
-  height: 8%;
-  display: flex; gap: 8%;
-  align-items: center; justify-content: center;
-  pointer-events: none;
-}
-.hv-back-ports span {
-  flex: 0 0 30%;
-  height: 60%;
-  background: rgba(40, 28, 15, 0.6);
-  border-radius: 2px;
-  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.6);
+  background: linear-gradient(180deg, #d6c39a 0%, #c4ad7e 50%, #9b8762 100%);
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1.5px rgba(60, 45, 25, 0.25);
 }
 
-/* SIDE faces — share base material but with subtle vent slits */
+/* SIDE faces — same beige, slightly darker for 3D depth */
 .hv-face-right, .hv-face-left, .hv-face-top, .hv-face-bottom {
   background: linear-gradient(180deg, #d6c39a 0%, #c4ad7e 45%, #9b8762 100%);
 }
 .hv-face-right {
   left: 100%; width: var(--D); height: 100%;
   transform-origin: left center; transform: rotateY(90deg);
-  background:
-    linear-gradient(180deg,
-      #bfa477 0%, #a8946c 50%, #7a6a48 100%),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 30%);
-  background-blend-mode: multiply, normal;
+  background: linear-gradient(180deg, #bfa477 0%, #a8946c 50%, #7a6a48 100%);
   border-radius: 4px 14px 14px 4px;
-  box-shadow: inset 0 0 0 1px rgba(60, 45, 25, 0.18);
 }
 .hv-face-left {
   right: 100%; width: var(--D); height: 100%;
   transform-origin: right center; transform: rotateY(-90deg);
-  background:
-    linear-gradient(180deg,
-      #bfa477 0%, #a8946c 50%, #7a6a48 100%),
-    linear-gradient(-90deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 30%);
-  background-blend-mode: multiply, normal;
+  background: linear-gradient(180deg, #bfa477 0%, #a8946c 50%, #7a6a48 100%);
   border-radius: 14px 4px 4px 14px;
-  box-shadow: inset 0 0 0 1px rgba(60, 45, 25, 0.18);
-}
-/* side vent slits (horizontal lines that suggest heat dissipation) */
-.hv-side-vents {
-  position: absolute;
-  top: 12%; left: 12%; right: 12%; bottom: 12%;
-  background: repeating-linear-gradient(0deg,
-    rgba(40, 28, 15, 0.4) 0 2px,
-    transparent 2px 6px);
-  border-radius: 3px;
-  opacity: 0.7;
 }
 .hv-face-top {
   top: auto; bottom: 100%; width: 100%; height: var(--D);
   transform-origin: center bottom; transform: rotateX(90deg);
   background: linear-gradient(90deg, #c4ad7e 0%, #d8c69e 50%, #c4ad7e 100%);
   border-radius: 14px 14px 4px 4px;
-  box-shadow: inset 0 0 0 1px rgba(60, 45, 25, 0.15);
 }
 .hv-face-bottom {
   bottom: auto; top: 100%; width: 100%; height: var(--D);
   transform-origin: center top; transform: rotateX(-90deg);
   background: linear-gradient(90deg, #8a7a58 0%, #6e5e40 50%, #8a7a58 100%);
   border-radius: 4px 4px 14px 14px;
-  box-shadow: inset 0 0 0 1px rgba(40, 28, 15, 0.3);
 }
-/* rubber feet on the bottom face */
-.hv-foot {
-  position: absolute;
-  bottom: 18%;
-  width: 14%;
-  height: 32%;
-  background: radial-gradient(ellipse at 50% 50%, #2a2520 0%, #1a1410 70%);
-  border-radius: 50%;
-  box-shadow: inset 0 -1px 1px rgba(0, 0, 0, 0.4);
-}
-.hv-foot-1 { left: 14%; }
-.hv-foot-2 { right: 14%; }
-
-/* ---------- HOVER states for screen effects ---------- */
-.hv-figure.is-hover .hv-screen-glow,
-.hv-figure:hover .hv-screen-glow,
-.hero.is-hover .hv-screen-glow,
-.hero:hover .hv-screen-glow { opacity: 1; }
 
 /* ---------- BLINK animation: brief screen flash ---------- */
-.hv-blinking .hv-screen-scanline {
+.hv-blinking .hv-screen-vignette {
   animation: hv-blink 180ms ease-out;
 }
 @keyframes hv-blink {
-  0%   { opacity: 0.55; }
-  30%  { opacity: 1.0; }
-  60%  { opacity: 1.0; }
-  100% { opacity: 0.55; }
-}
-.hv-blinking .hv-screen-glow {
-  animation: hv-blink-glow 180ms ease-out;
-}
-@keyframes hv-blink-glow {
-  0%   { opacity: 0; }
-  30%  { opacity: 0.4; }
-  100% { opacity: 0; }
+  0%   { filter: brightness(0.6); }
+  30%  { filter: brightness(1.0); }
+  60%  { filter: brightness(1.0); }
+  100% { filter: brightness(0.6); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hv-blinking .hv-screen-scanline,
-  .hv-blinking .hv-screen-glow { animation: none; }
+  .hv-blinking .hv-screen-vignette { animation: none; }
 }
 
 /* Hero status chip — small, monospace, live dot. */

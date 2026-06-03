@@ -96,25 +96,22 @@
               <div class="hv-cube">
                 <!-- Front: beige plastic + green CRT screen + base details -->
                 <div class="hv-face hv-face-front">
-                  <div class="hv-face-seam hv-face-seam-top" aria-hidden="true"></div>
-                  <!-- Pixel-art head: 24x18 sprite for body/CRT shell/base.
-                       Eyes are LEFT TRANSPARENT in the sprite — they're
-                       rendered as CSS elliptical point-lights on top so
-                       they have a soft "light source" glow rather than
-                       hard 2x2 pixel blocks. JS swaps eye horizontal
-                       position in 5 buckets (left/lmid/center/rmid/right). -->
-                  <div class="hv-pixel-screen" id="hvPixelScreen">
-                    <div class="hv-pixel-frame" id="hvPixelFrame"></div>
-                    <span class="hv-eye-light" id="hvEyeL"></span>
-                    <span class="hv-eye-light" id="hvEyeR"></span>
-                    <div class="hv-pixel-scanline"></div>
+                  <div class="hv-monitor">
+                    <!-- CRT screen: dark green glass with curved corners -->
+                    <div class="hv-screen" id="hvScreen">
+                      <div class="hv-screen-glass" aria-hidden="true"></div>
+                      <!-- 2 glowing eyes (the focal point) -->
+                      <span class="hv-eye" id="hvEyeL"></span>
+                      <span class="hv-eye" id="hvEyeR"></span>
+                      <div class="hv-screen-vignette" aria-hidden="true"></div>
+                    </div>
+                    <!-- Base details: "DEJA VU" + thin floppy slot + "Vesta" brand -->
+                    <div class="hv-base">
+                      <span class="hv-label hv-label-deja" aria-hidden="true">DEJA<br>VU</span>
+                      <div class="hv-floppy" aria-hidden="true"></div>
+                      <span class="hv-label hv-label-vesta" aria-hidden="true">▸ Vesta</span>
+                    </div>
                   </div>
-                  <div class="hv-base-sticker" aria-hidden="true">Color<br>Classic</div>
-                  <div class="hv-base-floppy" aria-hidden="true"></div>
-                  <div class="hv-base-speaker" aria-hidden="true">
-                    <span></span><span></span><span></span><span></span><span></span>
-                  </div>
-                  <div class="hv-face-seam hv-face-seam-bottom" aria-hidden="true"></div>
                 </div>
                 <!-- Back: rear of the CRT (vents + ports) -->
                 <div class="hv-face hv-face-back">
