@@ -627,16 +627,18 @@ h1, h2, h3, h4, p { margin: 0; }
   width: 280px;
   transform-origin: right center;
   transform: scaleX(0);
+  /* Gradient: 100% (eye end, right edge) is the HOTTEST (white-hot
+     plasma core where the beam originates). It fades through orange
+     and red as it travels leftward to the beam tip. */
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(255, 80, 30, 0.4) 8%,
-    rgba(255, 140, 50, 0.85) 18%,
-    rgba(255, 220, 130, 1) 35%,
-    rgba(255, 255, 240, 1) 50%,
-    rgba(255, 220, 130, 1) 65%,
-    rgba(255, 140, 50, 0.85) 82%,
-    rgba(255, 80, 30, 0.4) 92%,
-    transparent 100%);
+    rgba(255, 60, 30, 0.2) 5%,
+    rgba(255, 100, 50, 0.45) 15%,
+    rgba(255, 160, 70, 0.7) 30%,
+    rgba(255, 220, 130, 0.92) 55%,
+    rgba(255, 255, 240, 1) 85%,
+    rgba(255, 255, 255, 1) 100%  /* PEAK at the eye (100% = right edge) */
+  );
 }
 .hv-laser-r {
   /* Beam shoots RIGHT from the right eye (at 68% of screen — R eye
@@ -645,16 +647,17 @@ h1, h2, h3, h4, p { margin: 0; }
   width: 280px;
   transform-origin: left center;
   transform: scaleX(0);
+  /* Gradient: 100% (eye end, left edge) is the HOTTEST. Fades
+     rightward to the beam tip. */
   background: linear-gradient(270deg,
     transparent 0%,
-    rgba(255, 80, 30, 0.4) 8%,
-    rgba(255, 140, 50, 0.85) 18%,
-    rgba(255, 220, 130, 1) 35%,
-    rgba(255, 255, 240, 1) 50%,
-    rgba(255, 220, 130, 1) 65%,
-    rgba(255, 140, 50, 0.85) 82%,
-    rgba(255, 80, 30, 0.4) 92%,
-    transparent 100%);
+    rgba(255, 60, 30, 0.2) 5%,
+    rgba(255, 100, 50, 0.45) 15%,
+    rgba(255, 160, 70, 0.7) 30%,
+    rgba(255, 220, 130, 0.92) 55%,
+    rgba(255, 255, 240, 1) 85%,
+    rgba(255, 255, 255, 1) 100%  /* PEAK at the eye (100% = left edge) */
+  );
 }
 
 /* When the figure has .is-firing, the beams become visible, scale
@@ -1044,8 +1047,142 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 /* Eye positions updated by JS (translate3d via --eye-x). */
+/* Eye baseline horizontal positions (always applied, not firing-only) */
 .hv-eye-l { left: 30%; }
 .hv-eye-r { left: 60%; }
+
+/* Eyes turn red when firing — override the green radial + green glows.
+   Now also: a ROOT FLARE via ::after that extends in the laser's
+   direction (left for L, right for R). This is the super-bright
+   "fire from the eye" core that the user asked for — the laser
+   appears to ORIGINATE from a hot plasma point in the eye, not
+   from somewhere in the middle of the beam. */
+.hv-figure.is-firing .hv-eye {
+  background: radial-gradient(ellipse 50% 50% at 50% 50%,
+    #ffffff 0%,
+    #fff4d0 8%,
+    #ffaa50 18%,
+    #ff4400 42%,
+    rgba(255, 80, 30, 0.45) 70%,
+    rgba(255, 30, 0, 0) 95%) !important;
+  filter:
+    drop-shadow(0 0 4px rgba(255, 255, 200, 0.95))
+    drop-shadow(0 0 18px rgba(255, 80, 50, 0.9))
+    drop-shadow(0 0 42px rgba(255, 30, 0, 0.7))
+    drop-shadow(0 0 80px rgba(255, 50, 30, 0.45)) !important;
+  /* No continuous eye-glow-pulse during firing — stays bright red */
+  animation: none !important;
+}
+/* Root FLARE ::after on the L eye — a short hot plume that extends
+   LEFT from the L eye (toward the laser's leftward direction).
+   Bright white-yellow core fading to red. Has 3-layer drop-shadow
+   for the "fire from the eye" feel. */
+.hv-figure.is-firing .hv-eye-l::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 60px;
+  height: 14px;
+  margin-top: -7px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 100, 50, 0.6) 10%,
+    rgba(255, 200, 100, 0.95) 30%,
+    rgba(255, 255, 240, 1) 50%,
+    rgba(255, 220, 130, 0.9) 75%,
+    rgba(255, 80, 30, 0.5) 95%,
+    transparent 100%);
+  filter:
+    drop-shadow(0 0 4px rgba(255, 255, 220, 0.95))
+    drop-shadow(0 0 12px rgba(255, 180, 80, 0.8))
+    drop-shadow(0 0 24px rgba(255, 80, 50, 0.6));
+  animation: root-flare-flicker 0.05s steps(2) infinite;
+}
+/* Same for the R eye — extends RIGHT */
+.hv-figure.is-firing .hv-eye-r::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 60px;
+  height: 14px;
+  margin-top: -7px;
+  pointer-events: none;
+  background: linear-gradient(270deg,
+    transparent 0%,
+    rgba(255, 100, 50, 0.6) 10%,
+    rgba(255, 200, 100, 0.95) 30%,
+    rgba(255, 255, 240, 1) 50%,
+    rgba(255, 220, 130, 0.9) 75%,
+    rgba(255, 80, 30, 0.5) 95%,
+    transparent 100%);
+  filter:
+    drop-shadow(0 0 4px rgba(255, 255, 220, 0.95))
+    drop-shadow(0 0 12px rgba(255, 180, 80, 0.8))
+    drop-shadow(0 0 24px rgba(255, 80, 50, 0.6));
+  animation: root-flare-flicker 0.05s steps(2) infinite;
+  animation-delay: 0.02s;
+}
+@keyframes root-flare-flicker {
+  0%   { opacity: 1; transform: scaleX(1.08); }
+  50%  { opacity: 0.88; transform: scaleX(0.95); }
+  100% { opacity: 1; transform: scaleX(1.08); }
+}
+
+/* Flying EMBERS — tiny bright dots that animate FROM the eye
+   outward in the laser's direction. Two rings of embers (one
+   outgoing, one slightly behind it) for a continuous stream feel. */
+.hv-figure.is-firing .hv-eye::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+  background: #ffffff;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 5;
+  /* 8 embers in a horizontal fan, animated outward. The eye type
+     (L or R) determines direction via the per-side .is-firing rules
+     below. */
+  box-shadow:
+    0 -1px 0 -0.5px rgba(255, 220, 130, 0.9),
+    0 1px 0 -0.5px rgba(255, 180, 80, 0.8),
+    -4px -2px 0 -0.5px rgba(255, 200, 100, 0.85),
+    4px 2px 0 -0.5px rgba(255, 200, 100, 0.85),
+    -8px -3px 0 -0.5px rgba(255, 180, 80, 0.7),
+    8px 3px 0 -0.5px rgba(255, 180, 80, 0.7),
+    -12px -1px 0 -1px rgba(255, 150, 70, 0.55),
+    12px 1px 0 -1px rgba(255, 150, 70, 0.55);
+  animation: ember-pulse 0.18s steps(2) infinite;
+}
+@keyframes ember-pulse {
+  0%   { opacity: 1; transform: scale(1.4); }
+  50%  { opacity: 0.6; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1.4); }
+}
+/* L eye embers fly LEFT */
+.hv-figure.is-firing .hv-eye-l::before {
+  animation: ember-fly-l 0.6s linear infinite, ember-pulse 0.18s steps(2) infinite;
+}
+/* R eye embers fly RIGHT */
+.hv-figure.is-firing .hv-eye-r::before {
+  animation: ember-fly-r 0.6s linear infinite, ember-pulse 0.18s steps(2) infinite;
+}
+@keyframes ember-fly-l {
+  0%   { transform: translate(0, 0) scale(1); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(-50px, 0) scale(0.4); opacity: 0; }
+}
+@keyframes ember-fly-r {
+  0%   { transform: translate(0, 0) scale(1); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(50px, 0) scale(0.4); opacity: 0; }
+}
 
 /* ===========================================================
    BASE — DEJA VU label + thin floppy slot + Vesta brand
