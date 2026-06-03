@@ -791,9 +791,12 @@ h1, h2, h3, h4, p { margin: 0; }
      3. Combined across both eyes, this creates a
         fan-shaped X pattern radiating outward from the face.
 
-   ANGLE: 28° from horizontal. This is dramatic enough to
-   be clearly diagonal, but shallow enough that the beams
-   still read as lasers (not falling confetti).
+   ANGLE: 42° from horizontal. Steeper than before — the
+   user feedback said the previous 28° was too shallow and
+   the 4 beams read as 2 parallel-ish "up arrows" forming
+   a V. 42° gives a much clearer X pattern (one beam from
+   each eye goes up-right, the other goes down-left at a
+   steeper angle, both visible within the figure).
 
    Each beam is:
      - 3px tall white core
@@ -840,7 +843,7 @@ h1, h2, h3, h4, p { margin: 0; }
   left: 35%;
   width: 220px;
   transform-origin: left center;
-  transform: scaleX(0) rotate(-28deg);
+  transform: scaleX(0) rotate(-42deg);
   background: linear-gradient(90deg,
     rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
     rgba(255, 240, 200, 0.85) 40%,
@@ -856,7 +859,7 @@ h1, h2, h3, h4, p { margin: 0; }
   right: 65%;
   width: 220px;
   transform-origin: right center;
-  transform: scaleX(0) rotate(28deg);
+  transform: scaleX(0) rotate(42deg);
   background: linear-gradient(270deg,
     rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
     rgba(255, 240, 200, 0.85) 40%,
@@ -872,7 +875,7 @@ h1, h2, h3, h4, p { margin: 0; }
   left: 48.5%;
   width: 220px;
   transform-origin: left center;
-  transform: scaleX(0) rotate(-28deg);
+  transform: scaleX(0) rotate(-42deg);
   background: linear-gradient(90deg,
     rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
     rgba(255, 240, 200, 0.85) 40%,
@@ -888,7 +891,7 @@ h1, h2, h3, h4, p { margin: 0; }
   right: 51.5%;
   width: 220px;
   transform-origin: right center;
-  transform: scaleX(0) rotate(28deg);
+  transform: scaleX(0) rotate(42deg);
   background: linear-gradient(270deg,
     rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
     rgba(255, 240, 200, 0.85) 40%,
@@ -909,14 +912,14 @@ h1, h2, h3, h4, p { margin: 0; }
              laser-flicker 0.06s 0.18s steps(2, end) infinite;
 }
 @keyframes laser-shoot-up {
-  0%   { transform: scaleX(0) rotate(-28deg); }
-  70%  { transform: scaleX(1.06) rotate(-28deg); }
-  100% { transform: scaleX(1) rotate(-28deg); }
+  0%   { transform: scaleX(0) rotate(-42deg); }
+  70%  { transform: scaleX(1.06) rotate(-42deg); }
+  100% { transform: scaleX(1) rotate(-42deg); }
 }
 @keyframes laser-shoot-down {
-  0%   { transform: scaleX(0) rotate(28deg); }
-  70%  { transform: scaleX(1.06) rotate(28deg); }
-  100% { transform: scaleX(1) rotate(28deg); }
+  0%   { transform: scaleX(0) rotate(42deg); }
+  70%  { transform: scaleX(1.06) rotate(42deg); }
+  100% { transform: scaleX(1) rotate(42deg); }
 }
 @keyframes laser-flicker {
   /* Two state variations: baseline + brightened. The flicker
