@@ -125,8 +125,85 @@
       // Reset eyes to center
       eyeL.style.transform = 'translate3d(0, 0, 4px)';
       eyeR.style.transform = 'translate3d(0, 0, 4px)';
+      // Trigger one quick blink when cursor leaves
+      triggerBlink();
+      // Then start random gaze drift (eyes look around while idle)
+      scheduleGazeDrift();
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
+
+    /* ===========================================================
+       EYE LIFE — blink, glow pulse, screen sweep, random gaze
+       =========================================================== */
+
+    // === Bootup sequence: page load → eyes open with a bright flash
+    if (eyeL && eyeR) {
+      eyeL.classList.add('is-booting');
+      eyeR.classList.add('is-booting');
+      setTimeout(() => {
+        if (eyeL) eyeL.classList.remove('is-booting');
+        if (eyeR) eyeR.classList.remove('is-booting');
+        // First random blink 2-3s after bootup
+        scheduleBlink(2000 + Math.random() * 1000);
+      }, 1200);
+    }
+
+    // === Blink — vertical squash. Triggered randomly every 3-7s
+    // and once when mouse leaves the hero.
+    let blinkTimeout = null;
+    const triggerBlink = () => {
+      if (!eyeL || !eyeR) return;
+      eyeL.classList.add('is-blinking');
+      eyeR.classList.add('is-blinking');
+      setTimeout(() => {
+        if (eyeL) eyeL.classList.remove('is-blinking');
+        if (eyeR) eyeR.classList.remove('is-blinking');
+      }, 200);
+    };
+    const scheduleBlink = (delay) => {
+      if (blinkTimeout) clearTimeout(blinkTimeout);
+      blinkTimeout = setTimeout(() => {
+        triggerBlink();
+        scheduleBlink(3000 + Math.random() * 4000); // 3-7s
+      }, delay);
+    };
+
+    // === Random gaze drift — when mouse leaves, eyes occasionally
+    // dart to a random point on the CRT and back. Gives the head
+    // a sense of being "alive" even when the user isn't interacting.
+    let gazeTimeout = null;
+    let gazeActive = false;       // true while drift is overriding
+    const startGazeDrift = () => {
+      if (!eyeL || !eyeR) return;
+      gazeActive = true;
+      const dx = (Math.random() - 0.5) * 2 * EYE_RANGE_X;
+      const dy = (Math.random() - 0.5) * 2 * EYE_RANGE_Y;
+      eyeL.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 4px)`;
+      eyeR.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 4px)`;
+    };
+    const scheduleGazeDrift = () => {
+      if (gazeTimeout) clearTimeout(gazeTimeout);
+      gazeTimeout = setTimeout(() => {
+        if (!active && gazeActive) {
+          // dart to a random point for 1-2.5s, then back to center
+          startGazeDrift();
+          setTimeout(() => {
+            if (!active) {  // only reset if mouse is still outside
+              if (eyeL) eyeL.style.transform = 'translate3d(0, 0, 4px)';
+              if (eyeR) eyeR.style.transform = 'translate3d(0, 0, 4px)';
+            }
+            scheduleGazeDrift();  // schedule next drift
+          }, 1000 + Math.random() * 1500);
+        }
+      }, 1500 + Math.random() * 2500);
+    };
+    // Stop drift when mouse comes back
+    const onEnter = () => {
+      gazeActive = false;
+      if (gazeTimeout) clearTimeout(gazeTimeout);
+    };
+    heroSection.addEventListener('mouseenter', onEnter);
+
 
     /* ---------- 3b. Touch-based eye-tracking for mobile ----------
        Gyroscope (DeviceOrientationEvent) was tried first, but on iOS

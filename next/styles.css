@@ -601,6 +601,58 @@ h1, h2, h3, h4, p { margin: 0; }
   z-index: 2;
 }
 
+/* Scanline SWEEP — a soft bright line that travels top to bottom
+   of the screen every ~7s. The classic CRT "rolling refresh"
+   you see on real CRTs. */
+.hv-screen-sweep {
+  position: absolute;
+  left: 0; right: 0;
+  height: 6px;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(180, 240, 200, 0) 30%,
+    rgba(200, 250, 220, 0.55) 50%,
+    rgba(180, 240, 200, 0) 70%,
+    transparent 100%);
+  filter: blur(2px);
+  animation: hv-sweep 7s linear infinite;
+}
+@keyframes hv-sweep {
+  0%   { top: -10px; opacity: 0; }
+  5%   { opacity: 0.65; }
+  92%  { top: 100%; opacity: 0; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* BOOTUP — eyes fade in with a brighter initial glow when the
+   page first loads. Toggled by JS via .is-booting class. */
+.hv-eye.is-booting {
+  animation: eye-bootup 1.2s ease-out;
+}
+@keyframes eye-bootup {
+  0%   {
+    transform: translate3d(0, 0, 4px) scaleY(0.05);
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))
+            drop-shadow(0 0 8px rgba(180, 240, 200, 0.3))
+            drop-shadow(0 0 16px rgba(106, 180, 130, 0.15));
+  }
+  20%  {
+    transform: translate3d(0, 0, 4px) scaleY(1);
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 1))
+            drop-shadow(0 0 30px rgba(180, 240, 200, 1))
+            drop-shadow(0 0 60px rgba(106, 180, 130, 0.85));
+  }
+  100% {
+    transform: translate3d(0, 0, 4px) scaleY(1);
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.95))
+            drop-shadow(0 0 14px rgba(180, 240, 200, 0.65))
+            drop-shadow(0 0 30px rgba(106, 180, 130, 0.35));
+  }
+}
+
 /* ===========================================================
    THE 2 EYES — the focal point of the whole head
    Each eye is a vertical oval (slightly taller than wide)
@@ -629,15 +681,49 @@ h1, h2, h3, h4, p { margin: 0; }
     rgba(102, 145, 95, 0.4) 70%,
     rgba(60, 100, 60, 0) 95%);
   /* 3-layer glow: tight bright + medium green halo + soft outer.
-     These layers blur OUTSIDE the eye and make the CRT feel alive. */
+     These layers blur OUTSIDE the eye and make the CRT feel alive.
+     Slow brightness pulse animates the filter (4s cycle). */
   filter:
     drop-shadow(0 0 3px rgba(255, 255, 255, 0.95))
     drop-shadow(0 0 14px rgba(180, 240, 200, 0.65))
     drop-shadow(0 0 30px rgba(106, 180, 130, 0.35));
+  animation: eye-glow-pulse 4.2s ease-in-out infinite;
   left: 0;
   z-index: 2;
   pointer-events: none;
   mix-blend-mode: screen;
+  transform-origin: center center;
+  will-change: transform, filter;
+}
+
+/* Glow pulse — slow brightness/halo expansion cycle. The filter
+   values interpolate between the keyframes (0%/100% = base,
+   50% = brighter, larger halo). */
+@keyframes eye-glow-pulse {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 3px rgba(255, 255, 255, 0.95))
+      drop-shadow(0 0 14px rgba(180, 240, 200, 0.65))
+      drop-shadow(0 0 30px rgba(106, 180, 130, 0.35));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 5px rgba(255, 255, 255, 1))
+      drop-shadow(0 0 22px rgba(180, 240, 200, 0.85))
+      drop-shadow(0 0 48px rgba(106, 180, 130, 0.55));
+  }
+}
+
+/* BLINK — vertical squash. Toggled by JS via .is-blinking class.
+   The animation runs once and then the class is removed. */
+.hv-eye.is-blinking {
+  animation: eye-blink 180ms ease-in-out;
+}
+@keyframes eye-blink {
+  0%   { transform: translate3d(var(--eye-dx, 0px), var(--eye-dy, 0px), 4px) scaleY(1); }
+  45%  { transform: translate3d(var(--eye-dx, 0px), var(--eye-dy, 0px), 4px) scaleY(0.05); }
+  55%  { transform: translate3d(var(--eye-dx, 0px), var(--eye-dy, 0px), 4px) scaleY(0.05); }
+  100% { transform: translate3d(var(--eye-dx, 0px), var(--eye-dy, 0px), 4px) scaleY(1); }
 }
 
 /* Eye positions updated by JS (translate3d via --eye-x). */
