@@ -41,13 +41,11 @@
     revealEls.forEach((el) => el.classList.add('is-in'));
   }
 
-  // ---------- 3. hero visual: 3D head tilt + eye/glow tracking ----------
+  // ---------- 3. hero visual: 3D head tilt + pixel-eye frame swap ----------
   const heroFigure  = $('#hvFigure');
   const heroHead    = $('#hvHead');          // 3D cube (only the head turns)
   const heroSection = $('.hero');
-  const eyeL = $('#hvEyeL');
-  const eyeR = $('#hvEyeR');
-  const glowEl = $('#hvGlow');
+  const pixelFrame  = $('#hvPixelFrame');
   const statusEl = $('#hvStatus');
   // Enable on desktop (>880px, mouse) OR on any touch device. The 3D
   // tilt respects touch events too (the touch handler below dispatches
@@ -90,22 +88,19 @@
       }
     };
 
-    // Eye/glow tracking uses the WHOLE hero section as reference so
-    // the user can be on the hero text and still control the eyes.
-    // Also drives the 4 parallax layers in the CRT screen for the
-    // autostereoscopic (bare-eye 3D) effect: each layer gets its own
-    // --p-x/--p-y at a different magnitude (far layers move less,
-    // near layers move more), so the screen reads as 3D depth.
-    const irL = $('#hvEyeIrisL');
-    const irR = $('#hvEyeIrisR');
-    const screenBg = document.querySelector('.hv-screen-bg');
-    const screenOverlay = document.querySelector('.hv-screen-overlay');
-    const screenEyes = document.querySelector('.hv-screen-eyes');
-    const screenReflect = document.querySelector('.hv-screen-reflect');
-    const sphereL = eyeL ? eyeL.querySelector('.hv-eye-sphere') : null;
-    const sphereR = eyeR ? eyeR.querySelector('.hv-eye-sphere') : null;
-    const pupilL = eyeL ? eyeL.querySelector('.hv-eye-pupil') : null;
-    const pupilR = eyeR ? eyeR.querySelector('.hv-eye-pupil') : null;
+    // Pixel-art eye tracking: swap between 3 hard frames (left/center/right)
+    // based on mouse X. This is the classic 8-bit-game look — eyes jump
+    // discretely, no smooth interpolation. The 3D head rotation (rotateX/Y)
+    // stays smooth though, so the body of the head still feels real.
+    let lastFrame = -1;
+    const setPixelFrame = (idx) => {
+      if (idx === lastFrame) return;
+      lastFrame = idx;
+      if (!pixelFrame) return;
+      const f = ['--pixel-left', '--pixel-center', '--pixel-right'][idx];
+      pixelFrame.style.setProperty('--pixel-active', `var(${f})`);
+      pixelFrame.style.backgroundImage = `var(${f})`;
+    };
 
     const onMove = (e) => {
       const hr = heroSection.getBoundingClientRect();
@@ -116,107 +111,20 @@
       heroSection.classList.add('is-hover');
       if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
 
-      // Normalized -1..+1 offset from center
-      const nx = (hx - 0.5) * 2;
-      const ny = (hy - 0.5) * 2;
+      // Swap pixel frame based on horizontal position:
+      // hx < 0.33  → left   (0)
+      // hx 0.33–0.67 → center (1)
+      // hx > 0.67  → right  (2)
+      const idx = hx < 0.33 ? 0 : (hx > 0.67 ? 2 : 1);
+      setPixelFrame(idx);
 
-      // --- Parallax layer offsets (autostereoscopic 3D) ---
-      // Far layers move less, near layers move more. This is the
-      // head-coupled-perspective trick that makes the screen feel 3D.
-      const farX = nx * 6,   farY = ny * 4;     // z=-28 (bg)
-      const midX = nx * 9,   midY = ny * 5;     // z=-14 (overlay)
-      const nearX = nx * 16, nearY = ny * 9;    // z=+12 (eyes)
-      const refX  = nx * 4,  refY  = ny * 2;    // z=+24 (reflect, dampened)
-
-      if (screenBg) {
-        screenBg.style.setProperty('--p-x', farX.toFixed(2) + 'px');
-        screenBg.style.setProperty('--p-y', farY.toFixed(2) + 'px');
-      }
-      if (screenOverlay) {
-        screenOverlay.style.setProperty('--p-x', midX.toFixed(2) + 'px');
-        screenOverlay.style.setProperty('--p-y', midY.toFixed(2) + 'px');
-      }
-      if (screenEyes) {
-        screenEyes.style.setProperty('--p-x', nearX.toFixed(2) + 'px');
-        screenEyes.style.setProperty('--p-y', nearY.toFixed(2) + 'px');
-      }
-      if (screenReflect) {
-        screenReflect.style.setProperty('--p-x', refX.toFixed(2) + 'px');
-        screenReflect.style.setProperty('--p-y', refY.toFixed(2) + 'px');
-      }
-
-      // --- Eye-internal parallax: iris (small) + pupil (bigger) ---
-      // Sphere tilt: the whole eyeball rolls slightly toward the cursor
-      const sphereYaw   = nx * 18;   // deg
-      const spherePitch = ny * 12;   // deg
-      if (sphereL) {
-        sphereL.style.setProperty('--sphere-y', sphereYaw.toFixed(2) + 'deg');
-        sphereL.style.setProperty('--sphere-x', spherePitch.toFixed(2) + 'deg');
-      }
-      if (sphereR) {
-        sphereR.style.setProperty('--sphere-y', sphereYaw.toFixed(2) + 'deg');
-        sphereR.style.setProperty('--sphere-x', spherePitch.toFixed(2) + 'deg');
-      }
-      // Iris offset (larger for stronger "looking around" effect)
-      const irX = nx * 5, irY = ny * 3;
-      if (irL) {
-        irL.style.setProperty('--ir-x', irX.toFixed(2) + 'px');
-        irL.style.setProperty('--ir-y', irY.toFixed(2) + 'px');
-      }
-      if (irR) {
-        irR.style.setProperty('--ir-x', irX.toFixed(2) + 'px');
-        irR.style.setProperty('--ir-y', irY.toFixed(2) + 'px');
-      }
-      // Pupil offset (even larger, since it's closer to viewer)
-      const pupX = nx * 7, pupY = ny * 4;
-      if (pupilL) {
-        pupilL.style.setProperty('--pup-x', pupX.toFixed(2) + 'px');
-        pupilL.style.setProperty('--pup-y', pupY.toFixed(2) + 'px');
-      }
-      if (pupilR) {
-        pupilR.style.setProperty('--pup-x', pupX.toFixed(2) + 'px');
-        pupilR.style.setProperty('--pup-y', pupY.toFixed(2) + 'px');
-      }
-
-      // Cursor glow clamped to the head (figure) bounds
-      if (glowEl) {
-        const fr = heroFigure.getBoundingClientRect();
-        const fx = Math.max(0, Math.min(1, (e.clientX - fr.left) / fr.width));
-        const fy = Math.max(0, Math.min(1, (e.clientY - fr.top)  / fr.height));
-        glowEl.style.setProperty('--mx', (fx * 100).toFixed(2) + '%');
-        glowEl.style.setProperty('--my', (fy * 100).toFixed(2) + '%');
-      }
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
     const onLeave = () => {
       active = false;
       heroSection.classList.remove('is-hover');
       if (statusEl && statusEl.textContent !== 'online') statusEl.textContent = 'online';
-      if (glowEl) {
-        glowEl.style.setProperty('--mx', '50%');
-        glowEl.style.setProperty('--my', '50%');
-      }
-      // Reset all parallax + eye offsets
-      [screenBg, screenOverlay, screenEyes, screenReflect].forEach(el => {
-        if (!el) return;
-        el.style.setProperty('--p-x', '0px');
-        el.style.setProperty('--p-y', '0px');
-      });
-      [sphereL, sphereR].forEach(el => {
-        if (!el) return;
-        el.style.setProperty('--sphere-y', '0deg');
-        el.style.setProperty('--sphere-x', '0deg');
-      });
-      [irL, irR].forEach(el => {
-        if (!el) return;
-        el.style.setProperty('--ir-x', '0px');
-        el.style.setProperty('--ir-y', '0px');
-      });
-      [pupilL, pupilR].forEach(el => {
-        if (!el) return;
-        el.style.setProperty('--pup-x', '0px');
-        el.style.setProperty('--pup-y', '0px');
-      });
+      setPixelFrame(1);  // reset to center
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
 
