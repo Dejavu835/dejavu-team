@@ -475,10 +475,10 @@ h1, h2, h3, h4, p { margin: 0; }
 /* ---------- HEAD: pure-CSS 3D CRT cube, more realistic ---------- */
 .hv-head {
   position: absolute;
-  top: 1%;
+  top: 2%;
   left: 50%;
-  width: 60%;                     /* 60% of figure width, like a real head */
-  height: 42%;                    /* bottom floats just above the shoulders */
+  width: 64%;                     /* 64% of figure width, like a real head */
+  height: 54%;                    /* bottom lands ~4% above the body shoulder line */
   /* Push forward in 3D so the head sits in front of the body. */
   transform: translateX(-50%) translateZ(36px);
   transform-style: preserve-3d;
