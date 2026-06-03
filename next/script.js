@@ -41,23 +41,26 @@
     revealEls.forEach((el) => el.classList.add('is-in'));
   }
 
-  // ---------- 3. hero visual: subtle 3D mouse-tilt + eye/glow tracking ----------
+  // ---------- 3. hero visual: 3D mouse-tilt + eye/glow tracking ----------
   const heroFigure  = $('#hvFigure');
+  const heroChar    = $('#hvCharacter');     // preserve-3d container (the actual 3D scene)
   const heroSection = $('.hero');
+  const eyeL = $('#hvEyeL');
+  const eyeR = $('#hvEyeR');
+  const glowEl = $('#hvGlow');
+  const statusEl = $('#hvStatus');
   // Enable on desktop (>880px, mouse) OR on any touch device. The 3D
   // tilt respects touch events too (the touch handler below dispatches
   // synthetic mousemove so the same code path runs on mobile).
   const okViewport = matchMedia('(min-width: 880px)').matches ||
                      matchMedia('(hover: none)').matches;
-  if (heroFigure && heroSection && okViewport &&
+  if (heroFigure && heroChar && heroSection && okViewport &&
       !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    /* Head tilt + turn. The figure inherits perspective from .hero-visual,
-       so rotateY/rotateX render in 3D. Larger ranges so the head actually
-       "turns" with a clearly visible motion — sides of the CRT monitor
-       compress/stretch as it rotates. Lerp coefficient increased so the
-       response feels more responsive (was 0.14, now 0.20). */
-    const MAX_TILT_X = 9;    // deg  (up/down nod, now more visible)
-    const MAX_TILT_Y = 20;   // deg  (left/right head turn, very visible)
+    /* Tilt the whole CSS-3D character (head + neck + torso) so the user
+       can see real 3D thickness on every part as it turns. Ranges are
+       generous — this is the whole point of the 3D rebuild. */
+    const MAX_TILT_X = 14;    // deg  (up/down nod)
+    const MAX_TILT_Y = 24;    // deg  (left/right head turn)
     let mx = 0.5, my = 0.5;
     let targetX = 0.5, targetY = 0.5;
     let rafId = null;
@@ -65,11 +68,13 @@
 
     const apply = () => {
       rafId = null;
-      mx += (targetX - mx) * 0.20;
-      my += (targetY - my) * 0.20;
+      mx += (targetX - mx) * 0.22;
+      my += (targetY - my) * 0.22;
       const dx = mx - 0.5;
       const dy = my - 0.5;
-      heroFigure.style.transform =
+      // Apply the rotation to the preserve-3d character container, so
+      // every 3D face inside it (cube head, suit body) tilts together.
+      heroChar.style.transform =
         `rotateX(${(-dy * MAX_TILT_X).toFixed(2)}deg) ` +
         `rotateY(${(dx * MAX_TILT_Y).toFixed(2)}deg)`;
       if (Math.abs(targetX - mx) > 0.001 || Math.abs(targetY - my) > 0.001) {
@@ -82,11 +87,9 @@
       }
     };
 
-    // Eye/glow tracking now uses the WHOLE hero section as reference,
-    // not just the figure card. Eyes smoothly track the cursor anywhere
-    // in the hero area; the screen glow is clamped to the figure bounds.
+    // Eye/glow tracking uses the WHOLE hero section as reference so
+    // the user can be on the hero text and still control the eyes.
     const onMove = (e) => {
-      // 3D tilt: based on hero section position
       const hr = heroSection.getBoundingClientRect();
       const hx = Math.max(0, Math.min(1, (e.clientX - hr.left) / hr.width));
       const hy = Math.max(0, Math.min(1, (e.clientY - hr.top)  / hr.height));
@@ -95,11 +98,8 @@
       heroSection.classList.add('is-hover');
       if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
 
-      // Eye tracking: position in hero maps to eye offset across the
-      // full hero width (so cursor at the LEFT EDGE of the hero = eyes
-      // looking full left, even if cursor is on the hero text, not the figure)
-      const MAX_EYE_OFFSET = 18;  // px (slightly more than before)
-      const MAX_EYE_OFFSET_Y = 12;
+      const MAX_EYE_OFFSET = 16;
+      const MAX_EYE_OFFSET_Y = 10;
       const ex = (hx - 0.5) * 2 * MAX_EYE_OFFSET;
       const ey = (hy - 0.5) * 2 * MAX_EYE_OFFSET_Y;
       if (eyeL) eyeL.style.setProperty('--ex', ex.toFixed(2) + 'px');
@@ -107,7 +107,7 @@
       if (eyeL) eyeL.style.setProperty('--ey', ey.toFixed(2) + 'px');
       if (eyeR) eyeR.style.setProperty('--ey', ey.toFixed(2) + 'px');
 
-      // Screen glow: still clamped to the figure bounds
+      // Screen glow clamped to the head (figure) bounds
       if (glowEl) {
         const fr = heroFigure.getBoundingClientRect();
         const fx = Math.max(0, Math.min(1, (e.clientX - fr.left) / fr.width));
@@ -131,11 +131,6 @@
       if (eyeR) eyeR.style.setProperty('--ey', '0px');
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
-
-    const statusEl = $('#hvStatus');
-    const glowEl  = $('#hvGlow');
-    const eyeL = $('#hvEyeL');
-    const eyeR = $('#hvEyeR');
 
     /* ---------- 3b. Touch-based eye-tracking for mobile ----------
        Gyroscope (DeviceOrientationEvent) was tried first, but on iOS

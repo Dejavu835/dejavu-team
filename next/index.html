@@ -78,14 +78,57 @@
 
         <div class="hero-visual" id="heroVisual">
           <div class="hv-figure" id="hvFigure">
-            <img class="hv-img" id="hvImg" src="assets/hero-robot.jpg" alt="CRT-headed AI assistant" draggable="false" />
-            <div class="hv-screen" id="hvScreen" aria-hidden="true">
-              <span class="hv-eye hv-eye-l" id="hvEyeL"></span>
-              <span class="hv-eye hv-eye-r" id="hvEyeR"></span>
+            <!-- Pure-CSS 3D character. No external image. The whole stack
+                 lives inside .hv-character which inherits rotateX/rotateY
+                 from the JS on mousemove, so the user can rotate the
+                 character and see real 3D thickness on every part. -->
+            <div class="hv-character" id="hvCharacter">
+
+              <!-- === HEAD: real CSS cube, Mac-Classic style === -->
+              <div class="hv-head" id="hvHead" aria-hidden="true">
+                <div class="hv-cube">
+                  <div class="hv-face hv-face-front">
+                    <div class="hv-crt-screen">
+                      <div class="hv-screen-glow" id="hvGlow"></div>
+                      <div class="hv-screen-scanline" id="hvScanline"></div>
+                      <span class="hv-eye hv-eye-l" id="hvEyeL"></span>
+                      <span class="hv-eye hv-eye-r" id="hvEyeR"></span>
+                      <div class="hv-screen-vignette"></div>
+                    </div>
+                    <div class="hv-base-logo">DEJA<br>VU</div>
+                    <div class="hv-base-floppy" aria-hidden="true"></div>
+                    <div class="hv-base-speaker" aria-hidden="true">
+                      <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                  </div>
+                  <div class="hv-face hv-face-back"></div>
+                  <div class="hv-face hv-face-right"></div>
+                  <div class="hv-face hv-face-left"></div>
+                  <div class="hv-face hv-face-top"></div>
+                  <div class="hv-face hv-face-bottom"></div>
+                </div>
+              </div>
+
+              <!-- === NECK: simple cylinder band === -->
+              <div class="hv-neck" aria-hidden="true"></div>
+
+              <!-- === SHOULDERS + TORSO: warm-grey suit block === -->
+              <div class="hv-torso" aria-hidden="true">
+                <div class="hv-collar hv-collar-l"></div>
+                <div class="hv-collar hv-collar-r"></div>
+                <div class="hv-tie" aria-hidden="true">
+                  <div class="hv-tie-knot"></div>
+                  <div class="hv-tie-body"></div>
+                </div>
+                <div class="hv-pocket-l" aria-hidden="true"></div>
+                <div class="hv-pocket-r" aria-hidden="true"></div>
+              </div>
+
+              <!-- === Soft ground shadow under the character === -->
+              <div class="hv-shadow" aria-hidden="true"></div>
+
             </div>
-            <div class="hv-glow" id="hvGlow" aria-hidden="true"></div>
-            <div class="hv-spill" id="hvSpill" aria-hidden="true"></div>
-            <div class="hv-scanline" id="hvScanline" aria-hidden="true"></div>
+
             <span class="hv-status" id="hvStatus" aria-hidden="true">online</span>
           </div>
         </div>
