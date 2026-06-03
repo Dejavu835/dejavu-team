@@ -90,8 +90,8 @@
     // The eyes are 2 CSS ovals at fixed left:22% / 60% baseline; we
     // apply a translate3d offset based on mouse X/Y so they appear
     // to "look around" the CRT screen.
-    const EYE_BASE_L = 22;       // baseline left% of left eye (symmetric pair with right)
-    const EYE_BASE_R = 62;       // baseline left% of right eye (22 + 16 + 8 = 46/2; with width 16% = symmetric center)
+    const EYE_BASE_L = 30;       // baseline left% of left eye (more centered, smaller gap)
+    const EYE_BASE_R = 60;       // baseline left% of right eye (L center 38%, R center 68%, 30% gap)
     const EYE_RANGE_X = 12;       // px each eye can move horizontally
     const EYE_RANGE_Y = 6;        // px each eye can move vertically
     const onMove = (e) => {

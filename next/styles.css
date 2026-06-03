@@ -614,11 +614,12 @@ h1, h2, h3, h4, p { margin: 0; }
     drop-shadow(0 0 32px rgba(255, 30, 0, 0.5));
 }
 .hv-laser-l {
-  /* Beam shoots LEFT from the left eye (at 30% of screen). Right edge
-     anchored to ~70% (= left eye center), width 200% so the beam
-     extends way past the figure boundary. */
-  right: 70%;
-  width: 200%;
+  /* Beam shoots LEFT from the left eye (at 38% of screen — the L eye
+     is at left:30%, width:16%, so its center is at 38%). The beam's
+     right edge is anchored to that center, and the beam extends ~280px
+     leftward (past the figure boundary). */
+  right: 38%;
+  width: 280px;
   transform-origin: right center;
   transform: scaleX(0);
   background: linear-gradient(90deg,
@@ -633,9 +634,10 @@ h1, h2, h3, h4, p { margin: 0; }
     transparent 100%);
 }
 .hv-laser-r {
-  /* Beam shoots RIGHT from the right eye (at 70% of screen). */
-  left: 70%;
-  width: 200%;
+  /* Beam shoots RIGHT from the right eye (at 68% of screen — R eye
+     is at left:60%, width:16%, center at 68%). */
+  left: 68%;
+  width: 280px;
   transform-origin: left center;
   transform: scaleX(0);
   background: linear-gradient(270deg,
@@ -901,7 +903,7 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 /* Eye positions updated by JS (translate3d via --eye-x). */
-.hv-eye-l { left: 22%; }
+.hv-eye-l { left: 30%; }
 .hv-eye-r { left: 60%; }
 
 /* ===========================================================
