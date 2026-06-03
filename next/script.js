@@ -46,6 +46,8 @@
   const heroHead    = $('#hvHead');          // 3D cube (only the head turns)
   const heroSection = $('.hero');
   const pixelFrame  = $('#hvPixelFrame');
+  const eyeL = $('#hvEyeL');
+  const eyeR = $('#hvEyeR');
   const statusEl = $('#hvStatus');
   // Enable on desktop (>880px, mouse) OR on any touch device. The 3D
   // tilt respects touch events too (the touch handler below dispatches
@@ -88,20 +90,23 @@
       }
     };
 
-    // Pixel-art eye tracking: swap between 5 hard frames
+    // Pixel-art eye tracking: 5 discrete eye-position frames
     // (left / lmid / center / rmid / right) based on mouse X.
-    // This is the classic 8-bit-game look — eyes jump discretely
-    // at higher frame rate than 3-frame so movement feels more
-    // responsive. 5 frames × 1 col shift each = 5 distinct eye
-    // positions across the green screen.
-    const FRAME_VARS = ['--pixel-left', '--pixel-lmid', '--pixel-center', '--pixel-rmid', '--pixel-right'];
-    let lastFrame = -1;
-    const setPixelFrame = (idx) => {
-      if (idx === lastFrame) return;
-      lastFrame = idx;
-      if (!pixelFrame) return;
-      const v = FRAME_VARS[idx];
-      pixelFrame.style.backgroundImage = `var(${v})`;
+    // Eyes are CSS elliptical point-lights positioned absolutely;
+    // JS swaps their `left` value to snap to one of 5 columns.
+    // Higher 'refresh rate' feel than 3 frames — small mouse shifts
+    // still trigger a frame swap.
+    const EYE_POSITIONS_PCT = [21, 30, 39, 48, 57];   // left eye center
+    const EYE_GAP = 16;                                // right eye offset to right
+    let lastEyeFrame = -1;
+    const setEyeFrame = (idx) => {
+      if (idx === lastEyeFrame) return;
+      lastEyeFrame = idx;
+      if (!eyeL || !eyeR) return;
+      const leftPct = EYE_POSITIONS_PCT[idx];
+      const rightPct = leftPct + EYE_GAP;
+      eyeL.style.left = leftPct + '%';
+      eyeR.style.left = rightPct + '%';
     };
 
     const onMove = (e) => {
@@ -113,10 +118,9 @@
       heroSection.classList.add('is-hover');
       if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
 
-      // 5 frame buckets: hx 0.0-0.2 / 0.2-0.4 / 0.4-0.6 / 0.6-0.8 / 0.8-1.0
-      // Using Math.floor(hx * 5) clamps to 0..4 cleanly.
+      // 5 frame buckets at 20% mouse-X widths
       const idx = Math.min(4, Math.max(0, Math.floor(hx * 5)));
-      setPixelFrame(idx);
+      setEyeFrame(idx);
 
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
@@ -124,7 +128,7 @@
       active = false;
       heroSection.classList.remove('is-hover');
       if (statusEl && statusEl.textContent !== 'online') statusEl.textContent = 'online';
-      setPixelFrame(2);  // reset to center
+      setEyeFrame(2);  // reset to center
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
 

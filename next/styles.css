@@ -570,11 +570,9 @@ h1, h2, h3, h4, p { margin: 0; }
 
 /* === Pixel-art head === */
 :root {
-  --pixel-left:  url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAASCAYAAABB7B6eAAAAyElEQVR42mNgoDFghDGi7GT+U9PgZYeeMDIwMDCwIAtWVeVQxfC2tilwNhOtg4gFXcAtaRLFhu6al8fAwDDl/7JDTxhZsCkQKNAjy+APEy4x7JqXx9DWNgV7HCCDa2U7GEkxXKvLA2sioXkcYLXgaul2hv///2N10X8ooMgCmvtAu9uTgZGREWscMELBoPEBC6mpgioWfJhwiWwD3ZImoWS0gSvsvgg4MAQFBTEwMDAwrFu3Ds7GXTQwMOh4VDASHQcwgwd9fQAAGaZIR+tT81oAAAAASUVORK5CYII=");
-  --pixel-lmid:  url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAASCAYAAABB7B6eAAAAuUlEQVR42mNgoDFghDGi7GT+U9PgZYeeMDIwMDCwIAtWVeVQxfC2tilwNhOtg4gFXcAtaRLFhu6al8fAwDDl/7JDTxhZsCkQKNAjy+APEy4x7JqXx9DWNgV7HCCDa2U7GEkxXKvLA2sioXkc4LXgPxSQKkd3H+CMA0ZGRkZy5AaPD3ClCqpY8GHCJbINdEuahJLRBq6w+yLgwBAUFMTAwMDAsG7dOjgbd9HAwKDjUcFIdBzADB709QEAOUxJQUf3cHYAAAAASUVORK5CYII=");
-  --pixel-center: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAASCAYAAABB7B6eAAAAu0lEQVR42mNgoDFghDGi7GT+U9PgZYeeMDIwMDCwIAtWVeVQxfC2tilwNhOtg4gFXcAtaRLFhu6al8fAwDDl/7JDTxhZsCkQKNAjy+APEy4x7JqXx9DWNgV7HCCDa2U7GEkxXKvLA2sioXkcELTgPxSQKjdwqQgjJzIyMpIjN/A+wJUqqGLBhwmXyDbQLWkSSkYbuMLui4ADQ1BQEAMDAwPDunXr4GzcRQMDg45HBSNJqWjdunWDvz4AALl9SUFhI4UcAAAAAElFTkSuQmCC");
-  --pixel-rmid:  url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAASCAYAAABB7B6eAAAAuklEQVR42mNgoDFghDGi7GT+U9PgZYeeMDIwMDCwIAtWVeVQxfC2tilwNhOtg4gFXcAtaRLFhu6al8fAwDDl/7JDTxhZsCkQKNAjy+APEy4x7JqXx9DWNgV7HCCDa2U7GEkxXKvLA2sioXkcELTgPxSQKkdXH7DgzYWMjIzkyA0OH+BKFVSx4MOES2Qb6JY0CSWjDVxh90XAgSEoKIiBgYGBYd26dXA27qKBgUHHo4KRpFS0bt26wV8fAAD5XUlB1TGzlQAAAABJRU5ErkJggg==");
-  --pixel-right: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAASCAYAAABB7B6eAAAAtUlEQVR42mNgoDFghDGi7GT+U9PgZYeeMDIwMDCwIAtWVeVQxfC2tilwNhOtg4gFXcAtaRLFhu6al8fAwDDl/7JDTxhZsCkQKNAjy+APEy4x7JqXx9DWNgV7HCCDa2U7GEkxXKvLA2sioXkc4LTgPxSQKkd3H7DgzYWMjIzkyA0OH+BKFVSx4MOES2Qb6JY0CSWjDVxh90XAgSEoKIiBgYGBYd26dXA27qKBgUHHo4KRpFS0bt26wV8fAAD5XUlB1TGzlQAAAABJRU5ErkJggg==");
+  /* 24x18 sprite, eyes LEFT TRANSPARENT in the sprite itself so the
+     CSS-rendered elliptical point-light eyes can show through. */
+  --pixel-head: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAASCAYAAABB7B6eAAAAi0lEQVR42mNgoDFghDGi7GT+U9PgZYeeMDIwMDCwIAtWVeVQxfC2tilwNhOtg4gFXcAtaRLFhu6al8fAwDDl/7JDTxhZsCkQKNAjy+APEy4x7JqXx9DWNgUeBzQPolELRi2gQUaDpWdygVvSJJSMNvCF3Y5t+4gy0MPLCU0ET1FBnAG4HYBcVNA8iADTbTcexHHJhAAAAABJRU5ErkJggg==");
 }
 
 .hv-pixel-screen {
@@ -586,10 +584,9 @@ h1, h2, h3, h4, p { margin: 0; }
   justify-content: center;
 }
 .hv-pixel-frame {
-  /* 18x13 native pixel art, scaled up with nearest-neighbor */
   width: 100%;
   height: 100%;
-  background-image: var(--pixel-center);
+  background-image: var(--pixel-head);
   background-repeat: no-repeat;
   background-position: center;
   background-size: 100% 100%;
@@ -597,8 +594,36 @@ h1, h2, h3, h4, p { margin: 0; }
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
   filter: drop-shadow(0 0 6px rgba(106, 216, 192, 0.5));
-  transition: filter 0.3s var(--ease);
 }
+
+/* === Elliptical point-light eyes ===
+   Layered on top of the pixel sprite inside the green screen region.
+   Each eye is a soft radial-gradient ellipse with a multi-layer
+   drop-shadow for the "bright pinpoint" look. JS swaps horizontal
+   position (left%) to "look" in 5 directions. */
+.hv-eye-light {
+  position: absolute;
+  top: 46%;                   /* vertically centered in screen area */
+  width: 7%;
+  height: 16%;
+  border-radius: 50%;
+  /* Soft radial gradient: bright white core, cyan halo, fade out */
+  background: radial-gradient(ellipse at 50% 50%,
+    #ffffff 0%,
+    #e8f8ff 25%,
+    #a0d8e0 55%,
+    rgba(160, 220, 200, 0) 75%);
+  transform: translate3d(0, 0, 8px);
+  filter:
+    drop-shadow(0 0 4px rgba(255, 255, 255, 0.85))
+    drop-shadow(0 0 10px rgba(160, 230, 220, 0.55))
+    drop-shadow(0 0 20px rgba(106, 216, 192, 0.30));
+  left: 0;
+  mix-blend-mode: screen;
+  z-index: 2;
+  pointer-events: none;
+}
+
 /* Subtle CRT scanline overlay on top of the pixel art (preserves
    retro CRT feel without blurring the pixels themselves) */
 .hv-pixel-scanline {
@@ -610,6 +635,7 @@ h1, h2, h3, h4, p { margin: 0; }
     transparent 1px, transparent 3px);
   mix-blend-mode: multiply;
   border-radius: inherit;
+  z-index: 3;
 }
 
 /* Base details (Mac-Classic style) */

@@ -97,11 +97,16 @@
                 <!-- Front: beige plastic + green CRT screen + base details -->
                 <div class="hv-face hv-face-front">
                   <div class="hv-face-seam hv-face-seam-top" aria-hidden="true"></div>
-                  <!-- Pixel-art head: one of 3 frames (left/center/right),
-                       swapped hard on mouse X. 18x13 native px, rendered
-                       with image-rendering:pixelated for crisp 8-bit look. -->
+                  <!-- Pixel-art head: 24x18 sprite for body/CRT shell/base.
+                       Eyes are LEFT TRANSPARENT in the sprite — they're
+                       rendered as CSS elliptical point-lights on top so
+                       they have a soft "light source" glow rather than
+                       hard 2x2 pixel blocks. JS swaps eye horizontal
+                       position in 5 buckets (left/lmid/center/rmid/right). -->
                   <div class="hv-pixel-screen" id="hvPixelScreen">
                     <div class="hv-pixel-frame" id="hvPixelFrame"></div>
+                    <span class="hv-eye-light" id="hvEyeL"></span>
+                    <span class="hv-eye-light" id="hvEyeR"></span>
                     <div class="hv-pixel-scanline"></div>
                   </div>
                   <div class="hv-base-sticker" aria-hidden="true">Color<br>Classic</div>
