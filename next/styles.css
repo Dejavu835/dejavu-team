@@ -591,8 +591,15 @@ h1, h2, h3, h4, p { margin: 0; }
    clicking the head, revealing red underneath. */
 .hv-eye-cover {
   position: absolute;
-  width: 9%;
-  height: 14%;
+  /* Width/height per eye (left vs right) — set below in
+     .hv-eye-cover-l / .hv-eye-cover-r. The covers are
+     proportional to the actual red eye sizes in the AI
+     image (left eye 6.6%×4.5% → cover 10%×6.5%; right
+     eye 4.9%×3.1% → cover 7%×4.5%). The left is
+     ~1.4x bigger than the right, matching the red eye
+     size ratio. */
+  width: 10%;
+  height: 6.5%;
   border-radius: 50%;
   pointer-events: none;
   z-index: 3;
@@ -648,8 +655,19 @@ h1, h2, h3, h4, p { margin: 0; }
     inset 0 0 calc(2px + (1 - var(--eye-cover-opacity, 1)) * 4px)
       rgba(255, 100, 50, calc((1 - var(--eye-cover-opacity, 1)) * 0.4));
 }
-.hv-eye-cover-l { left: 35%; top: 32%; }
-.hv-eye-cover-r { left: 48.5%; top: 32%; animation-delay: 0.5s; }
+.hv-eye-cover-l {
+  left: 35%;
+  top: 32%;
+  width: 10%;          /* bigger — matches the larger LEFT red eye (6.6%×4.5%) */
+  height: 6.5%;
+}
+.hv-eye-cover-r {
+  left: 48.5%;
+  top: 32%;
+  width: 7%;           /* smaller — matches the smaller RIGHT red eye (4.9%×3.1%) */
+  height: 4.5%;
+  animation-delay: 0.5s;
+}
 @keyframes hv-eye-cover-breathe {
   0%, 100% { filter: blur(2.5px) brightness(1); }
   50%      { filter: blur(2.5px) brightness(1.15); }
@@ -683,8 +701,12 @@ h1, h2, h3, h4, p { margin: 0; }
    around when idle, snaps to mouse position on hover). */
 .hv-eye-iris {
   position: absolute;
+  /* Width/height per eye (left vs right) — set below in
+     .hv-eye-iris-l / .hv-eye-iris-r. The irises are
+     proportional to the red eyes: left ~1.4x bigger than right
+     (matches the underlying red eye size ratio). */
   width: 3.5%;
-  height: 6%;
+  height: 5.2%;
   border-radius: 50%;
   pointer-events: none;
   z-index: 4;
@@ -697,17 +719,24 @@ h1, h2, h3, h4, p { margin: 0; }
   );
   filter: blur(0.4px);
   transform: translate(-50%, -50%) translateZ(0);
-  transform: translate(-50%, -50%);
   opacity: var(--iris-opacity, 0.9);
   top: calc(32% + var(--iris-y, 0px));
   left: calc(var(--iris-base-x, 35%) + var(--iris-x, 0px));
-  transition: 
-    top 0.3s var(--ease), 
-    left 0.3s var(--ease), 
-    transform 0.3s var(--ease), 
+  transition:
+    top 0.3s var(--ease),
+    left 0.3s var(--ease),
+    transform 0.3s var(--ease),
     opacity 0.4s var(--ease);
 }
-.hv-eye-iris-r { --iris-base-x: 48.5%; }
+.hv-eye-iris-l {
+  width: 3.8%;
+  height: 5.5%;
+}
+.hv-eye-iris-r {
+  --iris-base-x: 48.5%;
+  width: 2.8%;
+  height: 3.8%;
+}
 
 /* STATE: detected — iris stays in place (no jumping, no
    tremble — user feedback said the jumping was weird). Just
@@ -743,13 +772,25 @@ h1, h2, h3, h4, p { margin: 0; }
        the AI image (prevents separation during tilt) */
 .hv-eye-wisp {
   position: absolute;
-  top: 32%;
+  /* The y position is set per eye (left vs right) below — the
+     two wisps are at DIFFERENT vertical positions so they don't
+     merge into a single horizontal line. */
   height: 2px;
   margin-top: -1px;
-  width: 45%;
+  /* WISP GROWTH: the width scales with --wisp-extension
+     (set by JS based on state). Base = 45% figure width. On
+     click 1 (detected) it extends to 1.4x (63%), on click 2
+     (warning) it extends to 2.0x (90%) — at 2.0x the wisp
+     extends BEYOND the hero card edges, giving the 'light
+     growing out' effect the user wanted. */
+  width: calc(45% * var(--wisp-extension, 1));
   pointer-events: none;
   z-index: 3;
-  transform: translateX(-50%) translateZ(0);
+  /* Per-eye transform: translateX(-50%) centers, rotate gives
+     the 'aggressive' tilt (left tilts down, right tilts up
+     — like a menacing scowl), translateZ(0) keeps the wisp
+     on the same 3D plane as the AI image. */
+  transform: translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translateZ(0);
   background:
     /* Inner brighter core (smaller, more intense) */
     linear-gradient(90deg,
@@ -769,10 +810,25 @@ h1, h2, h3, h4, p { margin: 0; }
   filter: blur(0.4px);
   opacity: 0.85;
   mix-blend-mode: screen;
-  transition: opacity 0.5s var(--ease);
+  transition: opacity 0.5s var(--ease), width 0.6s var(--ease);
 }
-.hv-eye-wisp-l { left: 35%; }
-.hv-eye-wisp-r { left: 48.5%; }
+/* LEFT wisp: at y=31.8% (slightly higher than right), tilted -4deg
+   (slight downward angle — the right side of the wisp dips down,
+   pointing toward the eye in a 'menacing scowl'). */
+.hv-eye-wisp-l {
+  left: 35%;
+  top: 31.8%;
+  --wisp-tilt: -4deg;
+}
+/* RIGHT wisp: at y=32.3% (slightly lower than left), tilted +4deg
+   (slight upward angle — the right side rises up, mirroring the
+   left). The DIFFERENT y + DIFFERENT tilt means the two wisps
+   never line up — they always read as two distinct lines. */
+.hv-eye-wisp-r {
+  left: 48.5%;
+  top: 32.3%;
+  --wisp-tilt: 4deg;
+}
 /* The wisp fades as the cover fades to red (so it doesn't
    compete with the red glow). In warning state (cover 0%),
    the wisp is barely visible. */

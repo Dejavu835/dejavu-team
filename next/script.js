@@ -117,16 +117,26 @@
       // the 3rd click, the cover is fully transparent (red eyes
       // fully revealed), red ambient at 0.9, and after the
       // decay window the state cycles back to detected/calm.
+      // WISP EXTENSION per state. Base is 1.0 (45% figure width).
+      // On click 1 (detected) it grows to 1.4 (63%). On click 2
+      // (warning) it grows to 2.0 (90%) — at 2.0x the wisp extends
+      // BEYOND the hero card edges, giving the 'light growing
+      // out' effect the user wanted. The wisp's 0.6s CSS transition
+      // on width makes the growth smooth.
       const params = {
-        calm:      { cover: 1.0,  ambient: 0.0,  irisY: 0, shake: 0,   irisX: 0 },
-        detected:  { cover: 0.7,  ambient: 0.18, irisY: 0, shake: 0.5, irisX: 0 },
-        warning:   { cover: 0.0,  ambient: 0.9,  irisY: 0, shake: 1.0, irisX: 0 }
+        calm:      { cover: 1.0,  ambient: 0.0,  irisY: 0, shake: 0,   irisX: 0, wispExt: 1.0  },
+        detected:  { cover: 0.7,  ambient: 0.18, irisY: 0, shake: 0.5, irisX: 0, wispExt: 1.4  },
+        warning:   { cover: 0.0,  ambient: 0.9,  irisY: 0, shake: 1.0, irisX: 0, wispExt: 2.0  }
       };
       const p = params[newState];
       setCoverOpacity(p.cover);
       setRedAmbient(p.ambient);
       setIris(p.irisX, p.irisY);
       setShakeLevel(p.shake);
+      // Wisp growth: set the --wisp-extension CSS var on the figure.
+      // The .hv-eye-wisp selectors use calc(45% * var(--wisp-extension))
+      // to scale their width.
+      heroFigure.style.setProperty('--wisp-extension', String(p.wispExt));
 
       // Update status text
       if (statusEl) statusEl.textContent = STATE_LABELS[newState];
