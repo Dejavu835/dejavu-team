@@ -471,6 +471,15 @@ h1, h2, h3, h4, p { margin: 0; }
      白色眼睛脱离红色眼睛"). With preserve-3d, the cover
      and image rotate together and stay aligned. */
   transform-style: preserve-3d;
+  /* IPAD SAFARI FIX: explicit transform: translateZ(0) on the
+     figure forces it onto its own GPU compositing layer.
+     iPad Safari (and some iOS Safari versions) has a bug
+     where aspect-ratio + transform-style: preserve-3d causes
+     the children to be re-positioned to (0, 0) of the
+     figure on the first interaction (the 'eyes fly to top-
+     left' bug). Setting translateZ(0) prevents this. */
+  transform: translateZ(0);
+  will-change: transform;
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-xl);
   background:
@@ -792,20 +801,26 @@ h1, h2, h3, h4, p { margin: 0; }
      on the same 3D plane as the AI image. */
   transform: translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translateZ(0);
   background:
-    /* Inner brighter core (smaller, more intense) */
+    /* Inner brighter core — RED-ORANGE (user wanted the wispy
+       strand to be RED/red-orange, not white. White read as
+       'soft/harmless'; red-orange reads as 'menacing/danger').
+       Brightest center is warm orange (almost white-hot),
+       fading to deep red at the edges. */
     linear-gradient(90deg,
       transparent 0%,
-      rgba(255, 245, 220, 0.2) 15%,
-      rgba(255, 250, 235, 0.55) 50%,
-      rgba(255, 245, 220, 0.2) 85%,
+      rgba(255, 100, 50, 0.15) 12%,
+      rgba(255, 200, 130, 0.45) 40%,
+      rgba(255, 245, 210, 0.7) 50%,     /* bright orange-white core */
+      rgba(255, 200, 130, 0.45) 60%,
+      rgba(255, 100, 50, 0.15) 88%,
       transparent 100%
     ),
-    /* Outer soft halo (wider, softer) */
+    /* Outer soft halo — DEEP RED (the 'glow' around the strand) */
     radial-gradient(
-      ellipse 60% 200% at 50% 50%,
-      rgba(255, 240, 200, 0.35) 0%,
-      rgba(255, 220, 160, 0.2) 40%,
-      transparent 80%
+      ellipse 80% 300% at 50% 50%,
+      rgba(255, 80, 30, 0.45) 0%,
+      rgba(255, 50, 10, 0.25) 30%,
+      transparent 75%
     );
   filter: blur(0.4px);
   opacity: 0.85;
@@ -829,12 +844,15 @@ h1, h2, h3, h4, p { margin: 0; }
   top: 32.3%;
   --wisp-tilt: 4deg;
 }
-/* The wisp fades as the cover fades to red (so it doesn't
-   compete with the red glow). In warning state (cover 0%),
-   the wisp is barely visible. */
-.hv-figure.is-detected .hv-eye-wisp,
+/* The wisp STAYS VISIBLE through the state progression — it
+   intensifies in warning state (the 'aggressive' red strand
+   is most visible at the climax). */
+.hv-figure.is-detected .hv-eye-wisp {
+  opacity: 1.1;     /* slightly brighter than calm */
+}
 .hv-figure.is-warning .hv-eye-wisp {
-  opacity: 0.3;
+  opacity: 1.4;     /* climax — the red strand is fully blazing */
+  filter: blur(0.4px) brightness(1.25);
 }
 
 /* Invisible click TRIGGER — covers the head/CRT area of the

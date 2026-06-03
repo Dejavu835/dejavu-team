@@ -192,11 +192,16 @@
         shakeY = (Math.random() - 0.5) * shakeLevel * 7;
       }
 
-      // Combined transform: shake (translate) + 3D tilt
+      // Combined transform: shake (translate) + 3D tilt +
+      // translateZ(0) at the end forces the figure onto its own
+      // GPU compositing layer (iPad Safari fix — without
+      // translateZ(0), the children can re-position to (0, 0)
+      // of the figure on the first interaction).
       heroFigure.style.transform =
         `translate(${shakeX.toFixed(2)}px, ${shakeY.toFixed(2)}px) ` +
         `rotateX(${(-dy * MAX_TILT_X).toFixed(2)}deg) ` +
-        `rotateY(${(dx * MAX_TILT_Y).toFixed(2)}deg)`;
+        `rotateY(${(dx * MAX_TILT_Y).toFixed(2)}deg) ` +
+        `translateZ(0)`;
 
       // Keep animating
       if (Math.abs(targetX - mx) > 0.001 ||
