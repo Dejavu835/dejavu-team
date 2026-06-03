@@ -571,13 +571,13 @@ h1, h2, h3, h4, p { margin: 0; }
    clicking the head, revealing red underneath. */
 .hv-eye-cover {
   position: absolute;
-  width: 11%;
-  aspect-ratio: 1;
+  width: 9%;
+  height: 14%;
   border-radius: 50%;
   pointer-events: none;
   z-index: 3;
   background: radial-gradient(
-    circle at 50% 50%,
+    ellipse 50% 50% at 50% 50%,
     #fff4d6 0%,            /* warm cream center */
     #ffe6b8 25%,           /* warm peach */
     #f0c890 55%,           /* warm amber */
@@ -636,13 +636,13 @@ h1, h2, h3, h4, p { margin: 0; }
    around when idle, snaps to mouse position on hover). */
 .hv-eye-iris {
   position: absolute;
-  width: 4.5%;
-  aspect-ratio: 1;
+  width: 3.5%;
+  height: 6%;
   border-radius: 50%;
   pointer-events: none;
   z-index: 4;
   background: radial-gradient(
-    circle at 50% 50%,
+    ellipse 50% 50% at 50% 50%,
     #ffffff 0%,
     #fff8dc 35%,
     rgba(255, 248, 220, 0.4) 70%,
@@ -785,31 +785,34 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 /* ===========================================================
-   LASER EYES (easter egg) — Homelander-style red laser beams
-   The user complained the previous 22px-thick gradient strip
-   looked "cheap" and "not optical". This new approach uses
-   a 3px WHITE CORE plus 7 layers of drop-shadows that simulate
-   atmospheric scattering (the warm halo + red glow + deep red
-   ambient that the reference photo shows).
+   LASER EYES (easter egg) — Homelander-style X-pattern
+   The user wants:
+     1. Each eye shoots 2 beams in DIAGONAL directions:
+        - one to UPPER-RIGHT (going up and to the right)
+        - one to LOWER-LEFT (going down and to the left)
+     2. The 2 beams from each eye form a small "X" centered
+        on the eye.
+     3. Combined across both eyes, this creates a
+        fan-shaped X pattern radiating outward from the face.
 
-   Each beam:
-     - 3px tall white core (very thin, like the photo)
+   ANGLE: 28° from horizontal. This is dramatic enough to
+   be clearly diagonal, but shallow enough that the beams
+   still read as lasers (not falling confetti).
+
+   Each beam is:
+     - 3px tall white core
+     - 7-layer optical drop-shadow (white-hot, cream, warm
+       halo, orange, red, deep red, atmospheric scatter)
      - Bright white peak at the eye, fading to transparent
-     - 7 drop-shadow layers: white-hot, warm cream, orange,
-       red, deep red, red ambient, wide red atmospheric
-     - The drop-shadows have larger blur radii to look like
-       the light is scattering in air, not painted on
-     - Combined with the separate .hv-laser-source at the
-       eye, the beam appears to ORIGINATE from a hot plasma
-       point rather than a flat line
+       at the far end
+     - 220px long (tighter than before to stay in figure)
 
-   Both eyes fire simultaneously (previous bug: only one fired
-   because the left laser's right:65% + width:320px put the
-   beam mostly off-screen on the left; both beams are now
-   tightened to 260px so they stay visible in the figure).
+   Combined with the .hv-laser-source (bright plasma point
+   at the eye) and .hv-eye-wisp (horizontal strand of light
+   passing through the eye), the laser reads as optical,
+   not painted.
 
-   Eye position: left 35% / right 49% horizontal, top 32% v.
-   Beams shoot OUTWARD from each eye with -2°/+2° tilt.
+   Eye position: left 35% / right 48.5% horizontal, top 32% v.
    =========================================================== */
 .hv-laser {
   position: absolute;
@@ -825,58 +828,99 @@ h1, h2, h3, h4, p { margin: 0; }
      The drop-shadows give the beam its 'light in the air' feel
      by stacking color halos of increasing blur radius. */
   filter:
-    drop-shadow(0 0 1px rgba(255, 255, 255, 1))             /* white-hot center */
-    drop-shadow(0 0 2px rgba(255, 255, 240, 1))            /* cream */
-    drop-shadow(0 0 5px rgba(255, 220, 160, 0.95))         /* warm halo */
-    drop-shadow(0 0 10px rgba(255, 130, 70, 0.85))         /* orange */
-    drop-shadow(0 0 18px rgba(255, 60, 30, 0.7))          /* red */
-    drop-shadow(0 0 36px rgba(255, 30, 10, 0.45))          /* deep red */
-    drop-shadow(0 0 72px rgba(255, 80, 30, 0.25));         /* atmospheric scatter */
+    drop-shadow(0 0 1px rgba(255, 255, 255, 1))
+    drop-shadow(0 0 2px rgba(255, 255, 240, 1))
+    drop-shadow(0 0 5px rgba(255, 220, 160, 0.95))
+    drop-shadow(0 0 10px rgba(255, 130, 70, 0.85))
+    drop-shadow(0 0 18px rgba(255, 60, 30, 0.7))
+    drop-shadow(0 0 36px rgba(255, 30, 10, 0.45))
+    drop-shadow(0 0 72px rgba(255, 80, 30, 0.25));
 }
-.hv-laser-l {
-  right: 65%;                          /* right edge = left eye, shoots left */
-  width: 260px;                        /* tightened from 320 to stay visible */
-  transform-origin: right center;
-  transform: scaleX(0) rotate(-2deg);
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 100, 60, 0.15) 20%,
-    rgba(255, 180, 110, 0.45) 50%,
-    rgba(255, 240, 200, 0.85) 80%,
-    rgba(255, 255, 255, 1) 100%        /* PEAK at the eye */
-  );
-}
-.hv-laser-r {
-  left: 49%;                           /* left edge = right eye, shoots right */
-  width: 260px;                        /* tightened from 320 to stay visible */
+
+/* LEFT eye, UPPER-RIGHT beam — extends RIGHT from the left
+   eye, then tilts UP (-28°). The beam starts at the eye
+   (left edge) and extends to the upper-right. */
+.hv-laser-l-up {
+  left: 35%;
+  width: 220px;
   transform-origin: left center;
-  transform: scaleX(0) rotate(2deg);
-  background: linear-gradient(270deg,
-    transparent 0%,
-    rgba(255, 100, 60, 0.15) 20%,
-    rgba(255, 180, 110, 0.45) 50%,
-    rgba(255, 240, 200, 0.85) 80%,
-    rgba(255, 255, 255, 1) 100%
+  transform: scaleX(0) rotate(-28deg);
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
+    rgba(255, 240, 200, 0.85) 40%,
+    rgba(255, 180, 110, 0.45) 70%,
+    transparent 100%
   );
 }
+
+/* LEFT eye, LOWER-LEFT beam — extends LEFT from the left
+   eye, then tilts DOWN (+28°). The beam starts at the eye
+   (right edge) and extends to the lower-left. */
+.hv-laser-l-down {
+  right: 65%;
+  width: 220px;
+  transform-origin: right center;
+  transform: scaleX(0) rotate(28deg);
+  background: linear-gradient(270deg,
+    rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
+    rgba(255, 240, 200, 0.85) 40%,
+    rgba(255, 180, 110, 0.45) 70%,
+    transparent 100%
+  );
+}
+
+/* RIGHT eye, UPPER-RIGHT beam — extends RIGHT from the right
+   eye, then tilts UP (-28°). Parallel to the left eye's
+   upper-right beam (offset by the eye spacing). */
+.hv-laser-r-up {
+  left: 48.5%;
+  width: 220px;
+  transform-origin: left center;
+  transform: scaleX(0) rotate(-28deg);
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
+    rgba(255, 240, 200, 0.85) 40%,
+    rgba(255, 180, 110, 0.45) 70%,
+    transparent 100%
+  );
+}
+
+/* RIGHT eye, LOWER-LEFT beam — extends LEFT from the right
+   eye, then tilts DOWN (+28°). Parallel to the left eye's
+   lower-left beam. */
+.hv-laser-r-down {
+  right: 51.5%;
+  width: 220px;
+  transform-origin: right center;
+  transform: scaleX(0) rotate(28deg);
+  background: linear-gradient(270deg,
+    rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
+    rgba(255, 240, 200, 0.85) 40%,
+    rgba(255, 180, 110, 0.45) 70%,
+    transparent 100%
+  );
+}
+
 .hv-figure.is-firing .hv-laser { opacity: 1; }
-.hv-figure.is-firing .hv-laser-l {
-  animation: laser-shoot-l 0.18s cubic-bezier(0.2, 0.9, 0.4, 1) forwards,
+.hv-figure.is-firing .hv-laser-l-up,
+.hv-figure.is-firing .hv-laser-r-up {
+  animation: laser-shoot-up 0.18s cubic-bezier(0.2, 0.9, 0.4, 1) forwards,
              laser-flicker 0.06s 0.18s steps(2, end) infinite;
 }
-.hv-figure.is-firing .hv-laser-r {
-  animation: laser-shoot-r 0.18s cubic-bezier(0.2, 0.9, 0.4, 1) forwards,
+.hv-figure.is-firing .hv-laser-l-down,
+.hv-figure.is-firing .hv-laser-r-down {
+  animation: laser-shoot-down 0.18s cubic-bezier(0.2, 0.9, 0.4, 1) forwards,
              laser-flicker 0.06s 0.18s steps(2, end) infinite;
 }
-@keyframes laser-shoot-l {
-  0%   { transform: scaleX(0) rotate(-2deg); }
-  70%  { transform: scaleX(1.06) rotate(-2deg); }
-  100% { transform: scaleX(1) rotate(-2deg); }
+@keyframes laser-shoot-up {
+  0%   { transform: scaleX(0) rotate(-28deg); }
+  70%  { transform: scaleX(1.06) rotate(-28deg); }
+  100% { transform: scaleX(1) rotate(-28deg); }
 }
-@keyframes laser-shoot-r {
-  0%   { transform: scaleX(0) rotate(2deg); }
-  70%  { transform: scaleX(1.06) rotate(2deg); }
-  100% { transform: scaleX(1) rotate(2deg); }
+@keyframes laser-shoot-down {
+  0%   { transform: scaleX(0) rotate(28deg); }
+  70%  { transform: scaleX(1.06) rotate(28deg); }
+  100% { transform: scaleX(1) rotate(28deg); }
 }
 @keyframes laser-flicker {
   /* Two state variations: baseline + brightened. The flicker
@@ -899,6 +943,42 @@ h1, h2, h3, h4, p { margin: 0; }
     drop-shadow(0 0 26px rgba(255, 80, 40, 0.85))
     drop-shadow(0 0 50px rgba(255, 50, 20, 0.6))
     drop-shadow(0 0 100px rgba(255, 100, 50, 0.35)); }
+}
+
+/* WISP — horizontal "strand of light" passing through each
+   eye. The wisp extends slightly on both sides of the eye,
+   brightest at the eye, fading to transparent. This is the
+   "光丝穿过眼睛" effect from Homelander — a wispy thread
+   of light that appears to pierce the eye area, not just
+   emit from it. */
+.hv-eye-wisp {
+  position: absolute;
+  top: 32%;
+  height: 1.5px;
+  margin-top: -0.75px;
+  width: 32%;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 220, 160, 0.3) 25%,
+    rgba(255, 250, 230, 0.85) 50%,     /* bright center at the eye */
+    rgba(255, 220, 160, 0.3) 75%,
+    transparent 100%
+  );
+  filter: blur(0.4px);
+}
+.hv-eye-wisp-l { left: 35%; }
+.hv-eye-wisp-r { left: 48.5%; }
+.hv-figure.is-firing .hv-eye-wisp {
+  opacity: 1;
+  animation: wisp-flicker 0.06s steps(2) infinite;
+}
+@keyframes wisp-flicker {
+  0%, 100% { filter: blur(0.4px) brightness(1); }
+  50%      { filter: blur(0.8px) brightness(1.4); }
 }
 
 /* ===========================================================
@@ -1051,6 +1131,7 @@ h1, h2, h3, h4, p { margin: 0; }
   .hv-eye-glow { animation: none; }
   .hv-eye-cover,
   .hv-eye-iris,
+  .hv-eye-wisp,
   .hv-laser-source,
   .hv-red-ambient { animation: none; }
   .hv-figure.is-detected .hv-eye-cover,
