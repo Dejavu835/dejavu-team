@@ -246,23 +246,42 @@
     heroSection.addEventListener('mousemove', onMove);
     heroSection.addEventListener('mouseleave', onLeave);
 
-    /* ---------- 3b. Curious gaze drift (idle only, calm only) ---------- */
-    setInterval(() => {
+    /* ---------- 3b. Auto-loop gaze drift (always on in calm) ----------
+       The user wants the eyes to automatically "look around"
+       in the calm state, with light effects corresponding to
+       the gaze. So the gaze drift runs CONTINUOUSLY in calm
+       state, not just on mouse idle.
+
+       The cycle every 1.5s:
+         1. Iris darts to a random position in the eye
+         2. Holds for 0.8-1.4s
+         3. Drifts to a smaller position (resting, not center)
+         4. Repeats
+
+       When the user moves the mouse, the iris snaps to the
+       cursor direction (overrides auto drift). When the
+       cursor leaves, auto drift resumes. */
+    let gazeReturnTimer = null;
+    const triggerGazeDrift = () => {
       if (currentState !== 'calm') return;
-      if (active) return;
-      const since = Date.now() - lastMoveTime;
-      if (since < 3000) return;
-      const nx = (Math.random() - 0.5) * 1.6;
-      const ny = (Math.random() - 0.5) * 1.2;
+      const nx = (Math.random() - 0.5) * 1.8;
+      const ny = (Math.random() - 0.5) * 1.4;
       targetIrisX = nx * IRIS_RANGE_X;
       targetIrisY = ny * IRIS_RANGE_Y;
-      setTimeout(() => {
+      const holdMs = 800 + Math.random() * 600;
+      if (gazeReturnTimer) clearTimeout(gazeReturnTimer);
+      gazeReturnTimer = setTimeout(() => {
         if (currentState === 'calm' && !active) {
-          targetIrisX = (Math.random() - 0.5) * 0.6 * IRIS_RANGE_X;
-          targetIrisY = (Math.random() - 0.5) * 0.4 * IRIS_RANGE_Y;
+          targetIrisX = (Math.random() - 0.5) * 0.8 * IRIS_RANGE_X;
+          targetIrisY = (Math.random() - 0.5) * 0.5 * IRIS_RANGE_Y;
         }
-      }, 800 + Math.random() * 800);
-    }, 2200);
+      }, holdMs);
+    };
+    setInterval(() => {
+      if (currentState === 'calm' && !active) {
+        triggerGazeDrift();
+      }
+    }, 1500);
 
     /* ===========================================================
        CLICK STATE PROGRESSION

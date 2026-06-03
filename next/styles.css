@@ -589,6 +589,30 @@ h1, h2, h3, h4, p { margin: 0; }
   transition: opacity 0.5s var(--ease);
   animation: hv-eye-cover-breathe 4s ease-in-out infinite;
   mix-blend-mode: screen;
+  /* GAZE LIGHT — a small bright "spark" inside the cover that
+     follows the iris position. The spark uses the same
+     --iris-x/y vars as the iris (and 0.6× scale so the
+     sparkle stays within the cover even when the iris
+     drifts near the edge). This gives a "looking around
+     with light" effect — when the iris darts to a new
+     position, the cover has a corresponding bright spot,
+     as if light is reflecting off the eye in that direction. */
+  --gaze-light-x: calc(50% + var(--iris-x, 0px) * 0.6);
+  --gaze-light-y: calc(50% + var(--iris-y, 0px) * 0.6);
+  background:
+    radial-gradient(
+      circle 12% at var(--gaze-light-x) var(--gaze-light-y),
+      rgba(255, 255, 240, 0.7) 0%,
+      rgba(255, 240, 200, 0.4) 40%,
+      transparent 80%
+    ),
+    radial-gradient(
+      ellipse 50% 50% at 50% 50%,
+      #fff4d6 0%,
+      #ffe6b8 25%,
+      #f0c890 55%,
+      transparent 85%
+    );
   /* The cover's INNER red glow (the 'leak' that builds
      as the cover thins) is a box-shadow inset whose
      intensity is tied to the cover's opacity. As cover
@@ -791,12 +815,17 @@ h1, h2, h3, h4, p { margin: 0; }
      3. Combined across both eyes, this creates a
         fan-shaped X pattern radiating outward from the face.
 
-   ANGLE: 42° from horizontal. Steeper than before — the
-   user feedback said the previous 28° was too shallow and
-   the 4 beams read as 2 parallel-ish "up arrows" forming
-   a V. 42° gives a much clearer X pattern (one beam from
-   each eye goes up-right, the other goes down-left at a
-   steeper angle, both visible within the figure).
+   ANGLE: 50° from horizontal. Steep enough that the 4
+   beams are unmistakable as an X pattern (one beam from
+   each eye goes up-right, the other goes down-left). 50°
+   is more dramatic than 28°/42° and avoids the "parallel
+   up-arrows" misread.
+
+   LENGTH: 50% of figure width (scales with figure, was
+   fixed 220px before). On mobile (figure ~360px), each
+   beam is ~180px — large enough to be clearly visible
+   without being clipped by the viewport. On desktop
+   (figure ~520px), each beam is ~260px for full drama.
 
    Each beam is:
      - 3px tall white core
@@ -837,13 +866,16 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 /* LEFT eye, UPPER-RIGHT beam — extends RIGHT from the left
-   eye, then tilts UP (-28°). The beam starts at the eye
-   (left edge) and extends to the upper-right. */
+   eye, then tilts UP (-50°). The beam starts at the eye
+   (left edge) and extends to the upper-right. The width
+   is 50% of the figure (scales with figure size — on mobile
+   the lasers stay visible without being clipped by the
+   viewport). */
 .hv-laser-l-up {
   left: 35%;
-  width: 220px;
+  width: 50%;                          /* scales with figure width */
   transform-origin: left center;
-  transform: scaleX(0) rotate(-42deg);
+  transform: scaleX(0) rotate(-50deg);
   background: linear-gradient(90deg,
     rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
     rgba(255, 240, 200, 0.85) 40%,
@@ -853,13 +885,13 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 /* LEFT eye, LOWER-LEFT beam — extends LEFT from the left
-   eye, then tilts DOWN (+28°). The beam starts at the eye
+   eye, then tilts DOWN (+50°). The beam starts at the eye
    (right edge) and extends to the lower-left. */
 .hv-laser-l-down {
   right: 65%;
-  width: 220px;
+  width: 50%;
   transform-origin: right center;
-  transform: scaleX(0) rotate(42deg);
+  transform: scaleX(0) rotate(50deg);
   background: linear-gradient(270deg,
     rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
     rgba(255, 240, 200, 0.85) 40%,
@@ -869,13 +901,13 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 /* RIGHT eye, UPPER-RIGHT beam — extends RIGHT from the right
-   eye, then tilts UP (-28°). Parallel to the left eye's
+   eye, then tilts UP (-50°). Parallel to the left eye's
    upper-right beam (offset by the eye spacing). */
 .hv-laser-r-up {
   left: 48.5%;
-  width: 220px;
+  width: 50%;
   transform-origin: left center;
-  transform: scaleX(0) rotate(-42deg);
+  transform: scaleX(0) rotate(-50deg);
   background: linear-gradient(90deg,
     rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
     rgba(255, 240, 200, 0.85) 40%,
@@ -885,13 +917,13 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 /* RIGHT eye, LOWER-LEFT beam — extends LEFT from the right
-   eye, then tilts DOWN (+28°). Parallel to the left eye's
+   eye, then tilts DOWN (+50°). Parallel to the left eye's
    lower-left beam. */
 .hv-laser-r-down {
   right: 51.5%;
-  width: 220px;
+  width: 50%;
   transform-origin: right center;
-  transform: scaleX(0) rotate(42deg);
+  transform: scaleX(0) rotate(50deg);
   background: linear-gradient(270deg,
     rgba(255, 255, 255, 1) 0%,           /* PEAK at the eye */
     rgba(255, 240, 200, 0.85) 40%,
@@ -912,14 +944,14 @@ h1, h2, h3, h4, p { margin: 0; }
              laser-flicker 0.06s 0.18s steps(2, end) infinite;
 }
 @keyframes laser-shoot-up {
-  0%   { transform: scaleX(0) rotate(-42deg); }
-  70%  { transform: scaleX(1.06) rotate(-42deg); }
-  100% { transform: scaleX(1) rotate(-42deg); }
+  0%   { transform: scaleX(0) rotate(-50deg); }
+  70%  { transform: scaleX(1.06) rotate(-50deg); }
+  100% { transform: scaleX(1) rotate(-50deg); }
 }
 @keyframes laser-shoot-down {
-  0%   { transform: scaleX(0) rotate(42deg); }
-  70%  { transform: scaleX(1.06) rotate(42deg); }
-  100% { transform: scaleX(1) rotate(42deg); }
+  0%   { transform: scaleX(0) rotate(50deg); }
+  70%  { transform: scaleX(1.06) rotate(50deg); }
+  100% { transform: scaleX(1) rotate(50deg); }
 }
 @keyframes laser-flicker {
   /* Two state variations: baseline + brightened. The flicker
