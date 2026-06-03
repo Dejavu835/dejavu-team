@@ -363,6 +363,61 @@
     heroSection.addEventListener('mousemove', onMove);
     heroSection.addEventListener('mouseleave', onLeave);
 
+    /* ---------- 3b. HOVER-TRIGGERED STATE PROGRESSION ----------
+       User wanted: 'the effect can also be triggered by
+       hovering. If the mouse hovers over the hero card
+       for a while, or on mobile if you stay on the page
+       for a while, it should slowly trigger.'
+
+       So in addition to CLICK, the state machine can be
+       advanced by:
+         - Continuous hover on hero for 2.5s
+         - Just being on the page for 5s (mobile / no hover)
+       After triggering, add a 5s cooldown so it doesn't
+       keep re-triggering on the same hover. */
+    let hoverStartTime = null;
+    const HOVER_TRIGGER_MS = 2500;
+    const HOVER_COOLDOWN_MS = 5000;
+    let lastHoverTrigger = 0;
+
+    heroSection.addEventListener('mouseenter', () => {
+      hoverStartTime = Date.now();
+    });
+    heroSection.addEventListener('mouseleave', () => {
+      hoverStartTime = null;
+    });
+
+    // Poll for hover duration (cheap — runs every 500ms)
+    setInterval(() => {
+      if (!heroFigure) return;
+      // Skip during firing cooldown
+      if (laserCooldown) return;
+      // Skip if not in calm (don't auto-progress during detection/warning)
+      if (currentState !== 'calm') return;
+      // Skip if within cooldown
+      if (Date.now() - lastHoverTrigger < HOVER_COOLDOWN_MS) return;
+      // Check if user is hovering (hoverStartTime was set on mouseenter)
+      // OR if no hover support at all (mobile / touch) — use page-stay time
+      const isHovering = hoverStartTime !== null;
+      const isTouchDevice = matchMedia('(hover: none)').matches;
+      if (isHovering) {
+        if (Date.now() - hoverStartTime > HOVER_TRIGGER_MS) {
+          setState('detected');
+          lastHoverTrigger = Date.now();
+          hoverStartTime = null; // reset so it doesn't keep re-triggering
+        }
+      } else if (isTouchDevice) {
+        // Mobile: auto-progress after 5s of being on the page
+        if (Date.now() - lastHoverTrigger > 5000 && Date.now() > 5000) {
+          // Use lastHoverTrigger = 0 initially, so this fires after 5s
+          if (lastHoverTrigger === 0) {
+            lastHoverTrigger = Date.now() - 5000; // offset so the condition is true after first 5s
+            return;
+          }
+        }
+      }
+    }, 500);
+
     /* ---------- 3b. Auto-loop gaze drift (always on in calm) ----------
        The user wants the eyes to automatically "look around"
        in the calm state, with light effects corresponding to

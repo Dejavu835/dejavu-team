@@ -132,6 +132,36 @@
             <div class="hv-eye-wisp hv-eye-wisp-l" id="hvEyeWispL" aria-hidden="true"></div>
             <div class="hv-eye-wisp hv-eye-wisp-r" id="hvEyeWispR" aria-hidden="true"></div>
 
+            <!-- PARTICLES — small red embers that drift outward from
+                 the eyes, extending BEYOND the figure's card
+                 boundaries (inset: -30%). User wanted particle
+                 effects that '可以影响到hero界面以及他附近的界面'
+                 and said the wisp's influence is currently '太小'.
+                 12 particles in 2 groups (one per eye), each with
+                 a different delay, direction, and speed. They use
+                 mix-blend-mode: screen for the 'light in air' feel
+                 (lightens whatever is behind, like real light). The
+                 user referenced Homelander's laser eyes as the
+                 inspiration: '发镭射眼之前眼睛里冒出来的丝光加
+                 一些粒子特效'. Particles are hidden in calm, fade
+                 in during the buildup, peak in warning. -->
+            <div class="hv-particles hv-particles-l" aria-hidden="true">
+              <span class="hv-particle"></span>
+              <span class="hv-particle"></span>
+              <span class="hv-particle"></span>
+              <span class="hv-particle"></span>
+              <span class="hv-particle"></span>
+              <span class="hv-particle"></span>
+            </div>
+            <div class="hv-particles hv-particles-r" aria-hidden="true">
+              <span class="hv-particle"></span>
+              <span class="hv-particle"></span>
+              <span class="hv-particle"></span>
+              <span class="hv-particle"></span>
+              <span class="hv-particle"></span>
+              <span class="hv-particle"></span>
+            </div>
+
             <!-- EYE IRIS — small bright "pupil" highlight that drifts
                  around within each eye, simulating curious gaze. JS sets
                  --iris-x/y for each eye (default centered, drifts when

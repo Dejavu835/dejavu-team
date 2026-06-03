@@ -935,6 +935,92 @@ h1, h2, h3, h4, p { margin: 0; }
    screen shakes, status text cycles. The eye cover now
    just transitions fully to reveal the red eyes
    underneath on the 3rd click, no lasers.) */
+
+/* ===========================================================
+   PARTICLES — small red embers that drift OUTWARD from each
+   eye, extending BEYOND the figure's card boundaries
+   (inset: -30%). The user wanted particle effects to
+   '可以影响到hero界面以及他附近的界面' and said the
+   wisp's influence was '太小'. These particles are the
+   answer — they extend the red glow effect well past the
+   card edges, simulating 'embers escaping from the eyes'.
+
+   Each particle is a 2-3px red dot that animates from the
+   eye position outward in a random direction. The
+   animation runs continuously with different delays per
+   particle so they appear to emit one at a time.
+
+   State-driven visibility:
+     - calm: 0 (hidden — no buildup yet)
+     - detected: 0.4 (subtle embers)
+     - warning: 1.0 (full embers, climax) */
+.hv-particles {
+  position: absolute;
+  inset: -30%;            /* extends 30% beyond figure — well past card */
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+}
+.hv-particles-l { top: 28%; left: 30%; }
+.hv-particles-r { top: 28%; right: 30%; }
+
+.hv-figure.is-detected .hv-particles { opacity: 0.4; }
+.hv-figure.is-warning .hv-particles { opacity: 1.0; }
+
+.hv-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 200, 130, 1) 0%,
+    rgba(255, 100, 50, 0.95) 40%,
+    rgba(255, 50, 10, 0.4) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 6px rgba(255, 100, 50, 0.8),
+              0 0 12px rgba(255, 60, 20, 0.5);
+  animation: hv-particle-drift 3s ease-out infinite;
+  mix-blend-mode: screen;
+}
+
+/* Each particle has a different position offset and animation
+   delay so they emit in different directions and at different
+   times. The animation moves the particle outward in a specific
+   direction. */
+.hv-particles-l .hv-particle:nth-child(1) { left: 0;  top: 0;  animation-delay: 0s;    }
+.hv-particles-l .hv-particle:nth-child(2) { left: 10%; top: -10%; animation-delay: 0.5s;  }
+.hv-particles-l .hv-particle:nth-child(3) { left: -10%; top: 5%;  animation-delay: 1.0s;  }
+.hv-particles-l .hv-particle:nth-child(4) { left: 5%;  top: 15%; animation-delay: 1.5s;  }
+.hv-particles-l .hv-particle:nth-child(5) { left: 20%; top: -5%; animation-delay: 2.0s;  }
+.hv-particles-l .hv-particle:nth-child(6) { left: -5%; top: -15%; animation-delay: 2.5s; }
+
+.hv-particles-r .hv-particle:nth-child(1) { right: 0;  top: 0;  animation-delay: 0.25s; }
+.hv-particles-r .hv-particle:nth-child(2) { right: 10%; top: -10%; animation-delay: 0.75s; }
+.hv-particles-r .hv-particle:nth-child(3) { right: -10%; top: 5%;  animation-delay: 1.25s; }
+.hv-particles-r .hv-particle:nth-child(4) { right: 5%;  top: 15%; animation-delay: 1.75s; }
+.hv-particles-r .hv-particle:nth-child(5) { right: 20%; top: -5%; animation-delay: 2.25s; }
+.hv-particles-r .hv-particle:nth-child(6) { right: -5%; top: -15%; animation-delay: 2.75s; }
+
+@keyframes hv-particle-drift {
+  0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
+  15%  { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--pdx, 60px), var(--pdy, -40px)) scale(0); opacity: 0; }
+}
+.hv-particles-l .hv-particle:nth-child(1) { --pdx: 70px;  --pdy: -50px; }
+.hv-particles-l .hv-particle:nth-child(2) { --pdx: 90px;  --pdy: -80px; }
+.hv-particles-l .hv-particle:nth-child(3) { --pdx: -50px; --pdy: 30px;  }
+.hv-particles-l .hv-particle:nth-child(4) { --pdx: 40px;  --pdy: 70px;  }
+.hv-particles-l .hv-particle:nth-child(5) { --pdx: 110px; --pdy: -30px; }
+.hv-particles-l .hv-particle:nth-child(6) { --pdx: -70px; --pdy: -90px; }
+.hv-particles-r .hv-particle:nth-child(1) { --pdx: -70px; --pdy: -50px; }
+.hv-particles-r .hv-particle:nth-child(2) { --pdx: -90px; --pdy: -80px; }
+.hv-particles-r .hv-particle:nth-child(3) { --pdx:  50px; --pdy: 30px;  }
+.hv-particles-r .hv-particle:nth-child(4) { --pdx: -40px; --pdy: 70px;  }
+.hv-particles-r .hv-particle:nth-child(5) { --pdx: -110px; --pdy: -30px; }
+.hv-particles-r .hv-particle:nth-child(6) { --pdx:  70px; --pdy: -90px; }
 /* (wisp + laser styles removed — user requested deletion of
    the 3rd-click firing effect. The eye-state buildup
    remains: cover fades, red ambient builds, screen
