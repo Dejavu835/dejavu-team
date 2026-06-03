@@ -309,6 +309,37 @@
       heroSection.addEventListener('touchmove',  touchToMouse, { passive: true });
       heroSection.addEventListener('touchend',   touchEndToMouseLeave, { passive: true });
       heroSection.addEventListener('touchcancel',touchEndToMouseLeave, { passive: true });
+
+    /* ===========================================================
+       EASTER EGG: LASER EYES (Homelander-style)
+       Each click on the figure has a ~12% chance of triggering red
+       laser eyes for 4.5s, then auto-revert. Cooldown of 1.5s after
+       firing ends before another fire is possible.
+       =========================================================== */
+    let laserCooldown = false;
+    let laserEndTimer = null;
+    const triggerLaserEyes = () => {
+      if (laserCooldown) return;
+      heroFigure.classList.add('is-firing');
+      laserCooldown = true;
+      if (laserEndTimer) clearTimeout(laserEndTimer);
+      laserEndTimer = setTimeout(() => {
+        heroFigure.classList.remove('is-firing');
+        // Brief cooldown to prevent rapid retriggering
+        setTimeout(() => { laserCooldown = false; }, 1500);
+      }, 4500);  // fire for 4.5s then auto-revert
+    };
+    // Listen on the figure (covers both head and body area)
+    heroFigure.style.cursor = 'pointer';
+    heroFigure.addEventListener('click', (e) => {
+      // Don't fire if user is selecting text in a label or something
+      if (e.target.closest('.hv-status')) return;  // ignore clicks on ONLINE pill
+      // ~12% chance per click; after 12+ clicks without fire, force fire
+      if (Math.random() < 0.12) {
+        triggerLaserEyes();
+      }
+    });
+    // Also allow double-tap on mobile to fire (touchend emits click on most browsers)
     }
 
     // Blink: schedule random blinks every 3.5–6.5s

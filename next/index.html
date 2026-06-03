@@ -117,6 +117,14 @@
                       <div class="hv-floppy" aria-hidden="true"></div>
                       <span class="hv-label hv-label-vesta" aria-hidden="true">▸ Vesta</span>
                     </div>
+                    <!-- === LASER EYES (Homelander-style easter egg) ===
+                         Hidden by default. JS adds .is-firing to .hv-figure
+                         when the user clicks the head. The 2 laser beams
+                         shoot horizontally outward from the eyes, eyes
+                         turn red, beams flicker for 4.5s, then auto-
+                         revert via the JS setTimeout in triggerLaserEyes(). -->
+                    <div class="hv-laser hv-laser-l" aria-hidden="true"></div>
+                    <div class="hv-laser hv-laser-r" aria-hidden="true"></div>
                   </div>
                 </div>
                 <!-- Back: rear of the CRT (vents + ports) -->
