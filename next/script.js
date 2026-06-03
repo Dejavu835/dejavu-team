@@ -59,6 +59,7 @@
     const MAX_TILT_X = 14;    // deg  (up/down nod)
     const MAX_TILT_Y = 26;    // deg  (left/right head turn)
     let mx = 0.5, my = 0.5;
+    let lastMoveTime = Date.now();  // tracks last mouse activity for idle drift
     let targetX = 0.5, targetY = 0.5;
     let rafId = null;
     let active = false;
@@ -89,8 +90,8 @@
     // The eyes are 2 CSS ovals at fixed left:22% / 60% baseline; we
     // apply a translate3d offset based on mouse X/Y so they appear
     // to "look around" the CRT screen.
-    const EYE_BASE_L = 22;       // baseline left% of left eye
-    const EYE_BASE_R = 60;       // baseline left% of right eye
+    const EYE_BASE_L = 22;       // baseline left% of left eye (symmetric pair with right)
+    const EYE_BASE_R = 62;       // baseline left% of right eye (22 + 16 + 8 = 46/2; with width 16% = symmetric center)
     const EYE_RANGE_X = 12;       // px each eye can move horizontally
     const EYE_RANGE_Y = 6;        // px each eye can move vertically
     const onMove = (e) => {
@@ -99,6 +100,7 @@
       const hy = Math.max(0, Math.min(1, (e.clientY - hr.top)  / hr.height));
       targetX = hx; targetY = hy;
       active = true;
+      lastMoveTime = Date.now();   // mark this as the latest mouse-move
       heroSection.classList.add('is-hover');
       if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
 
@@ -115,6 +117,20 @@
       // Re-set base 'left' (just to be safe — CSS left was set in stylesheet)
       eyeL.style.left = EYE_BASE_L + '%';
       eyeR.style.left = EYE_BASE_R + '%';
+
+      // Ambient GLOW on .hv-monitor — follows the cursor. Drives the
+      // --glow-x/y CSS variables that position the radial gradient, and
+      // --glow-i for intensity (brighter when mouse is active on hero,
+      // dimmer when idle). The glow extends BEYOND the CRT screen so
+      // it visibly illuminates the head shell and figure surroundings.
+      const monitorGlow = document.querySelector('#hvMonitorGlow');
+      if (monitorGlow) {
+        // Map hx/hy (0-1) to the monitor's local coordinate system.
+        // The monitor is the full front face; we just use hx/hy directly.
+        monitorGlow.style.setProperty('--glow-x', (hx * 100).toFixed(1) + '%');
+        monitorGlow.style.setProperty('--glow-y', (hy * 100).toFixed(1) + '%');
+        monitorGlow.style.setProperty('--glow-i', '0.85');
+      }
 
       // Body parallax — body follows the cursor too, but with much less
       // amplitude than the head/eyes (it's the body, not the face).
@@ -143,6 +159,13 @@
       // Reset body parallax to center
       const heroBody = document.querySelector('.hv-body');
       if (heroBody) heroBody.style.transform = 'translate3d(0, 0, 0) scale(1)';
+      // Dim the ambient glow (still has a soft idle glow at 0.3)
+      const monitorGlow = document.querySelector('#hvMonitorGlow');
+      if (monitorGlow) {
+        monitorGlow.style.setProperty('--glow-i', '0.3');
+        monitorGlow.style.setProperty('--glow-x', '50%');
+        monitorGlow.style.setProperty('--glow-y', '50%');
+      }
       // Trigger one quick blink when cursor leaves
       triggerBlink();
       // Then start random gaze drift (eyes look around while idle)
@@ -221,6 +244,43 @@
       if (gazeTimeout) clearTimeout(gazeTimeout);
     };
     heroSection.addEventListener('mouseenter', onEnter);
+
+    // === IDLE MODE — when mouse is on hero but stationary for 3s+,
+    // trigger a quick random gaze drift + maybe a blink. The user
+    // asked for the dynamic animations to keep playing even when
+    // they're not interacting.
+    let idleCheckInterval = null;
+    const triggerIdleActivity = () => {
+      if (!active) return;             // mouse has left hero, onLeave handles it
+      const since = Date.now() - lastMoveTime;
+      if (since < 3000) return;        // mouse still moving recently, skip
+      // Random brief gaze drift
+      const dX = (Math.random() - 0.5) * 2 * EYE_RANGE_X;
+      const dY = (Math.random() - 0.5) * 2 * EYE_RANGE_Y;
+      eyeL.style.transform = `translate3d(${dX.toFixed(1)}px, ${dY.toFixed(1)}px, 4px)`;
+      eyeR.style.transform = `translate3d(${dX.toFixed(1)}px, ${dY.toFixed(1)}px, 4px)`;
+      // Also update ambient glow to follow the random gaze
+      const monitorGlow2 = document.querySelector('#hvMonitorGlow');
+      if (monitorGlow2) {
+        monitorGlow2.style.setProperty('--glow-x', (50 + dX * 1.5).toFixed(0) + '%');
+        monitorGlow2.style.setProperty('--glow-y', (50 + dY * 2).toFixed(0) + '%');
+        monitorGlow2.style.setProperty('--glow-i', '0.7');
+      }
+      // Maybe blink too
+      if (Math.random() < 0.5) {
+        triggerBlink();
+      }
+      // After 1-1.5s return eyes to "last seen" position (use a tiny
+      // 0 transform — the next onMove will reset to mouse if user moves)
+      setTimeout(() => {
+        if (active) {
+          eyeL.style.transform = 'translate3d(0, 0, 4px)';
+          eyeR.style.transform = 'translate3d(0, 0, 4px)';
+        }
+      }, 1200);
+    };
+    idleCheckInterval = setInterval(triggerIdleActivity, 1500);
+
 
 
     /* ---------- 3b. Touch-based eye-tracking for mobile ----------

@@ -97,6 +97,11 @@
                 <!-- Front: beige plastic + green CRT screen + base details -->
                 <div class="hv-face hv-face-front">
                   <div class="hv-monitor">
+                    <!-- Ambient GLOW — radial gradient that extends beyond
+                         the screen edges, illuminating the head's plastic
+                         shell and the surrounding figure area. JS sets
+                         --glow-x/y/i based on mouse position + activity. -->
+                    <div class="hv-monitor-glow" id="hvMonitorGlow" aria-hidden="true"></div>
                     <!-- CRT screen: dark green glass with curved corners -->
                     <div class="hv-screen" id="hvScreen">
                       <div class="hv-screen-glass" aria-hidden="true"></div>

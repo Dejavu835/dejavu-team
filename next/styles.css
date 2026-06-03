@@ -564,6 +564,31 @@ h1, h2, h3, h4, p { margin: 0; }
   padding: 6% 7% 6% 7%;
 }
 
+/* Ambient GLOW — a soft radial gradient that radiates beyond the CRT
+   screen edges, "lighting" the head's plastic shell and the area
+   around the figure. JS sets --glow-x/y (mouse position) and
+   --glow-i (intensity — higher when mouse is active, lower when idle). */
+.hv-monitor-glow {
+  position: absolute;
+  /* Extend well beyond the screen rect, with the top half being the
+     strongest because the eyes are in the upper portion of the CRT. */
+  top: -8%;
+  left: -15%;
+  right: -15%;
+  bottom: 5%;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse 50% 60% at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgba(180, 240, 200, calc(var(--glow-i, 0.4) * 0.55)) 0%,
+    rgba(140, 220, 180, calc(var(--glow-i, 0.4) * 0.30)) 30%,
+    rgba(80, 160, 120, calc(var(--glow-i, 0.4) * 0.10)) 60%,
+    transparent 80%);
+  filter: blur(30px);
+  mix-blend-mode: screen;
+  transition: background 0.4s var(--ease);
+  will-change: background;
+}
+
 /* CRT screen — the big dark green glass with curved corners.
    No black bezel between shell and screen (per the reference). */
 .hv-screen {
@@ -679,15 +704,16 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-eye {
   position: absolute;
   top: 50%;
-  /* Slightly taller than wide: vertical oval like the reference */
-  width: 18%;
-  height: 38%;
-  margin-top: -19%;
+  /* Vertically centered in the CRT screen, symmetric left-right.
+     Slightly more square than a vertical oval — matches the reference
+     image's tall-glowing-tube feel. */
+  width: 16%;
+  height: 42%;
+  margin-top: -21%;
   border-radius: 50%;
   transform: translate3d(0, 0, 4px);
   /* Multi-stop radial: bright white core → light cyan-green halo →
-     deeper green → fully transparent edge.
-     Sampled from the reference image. */
+     deeper green → fully transparent edge. Sampled from the reference. */
   background: radial-gradient(ellipse 50% 50% at 50% 50%,
     #ffffff 0%,
     #f0fcf8 8%,
@@ -695,13 +721,14 @@ h1, h2, h3, h4, p { margin: 0; }
     #8ac5a0 45%,
     rgba(102, 145, 95, 0.4) 70%,
     rgba(60, 100, 60, 0) 95%);
-  /* 3-layer glow: tight bright + medium green halo + soft outer.
-     These layers blur OUTSIDE the eye and make the CRT feel alive.
-     Slow brightness pulse animates the filter (4s cycle). */
+  /* 4-layer glow: tight bright + medium green halo + wide soft outer +
+     extra-wide ambient spill (60px blur) so the glow visibly extends
+     beyond the screen and "lights" the surrounding head shell. */
   filter:
     drop-shadow(0 0 3px rgba(255, 255, 255, 0.95))
-    drop-shadow(0 0 14px rgba(180, 240, 200, 0.65))
-    drop-shadow(0 0 30px rgba(106, 180, 130, 0.35));
+    drop-shadow(0 0 16px rgba(180, 240, 200, 0.70))
+    drop-shadow(0 0 36px rgba(106, 200, 140, 0.50))
+    drop-shadow(0 0 60px rgba(106, 200, 140, 0.30));
   animation: eye-glow-pulse 4.2s ease-in-out infinite;
   left: 0;
   z-index: 2;
