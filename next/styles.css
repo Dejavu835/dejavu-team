@@ -484,16 +484,31 @@ h1, h2, h3, h4, p { margin: 0; }
   /* The image's top ~50% is the same warm cream as the page background
      (genuinely headless, no body parts up there), so it dissolves into
      the hero and the CSS 3D head can sit on top with no visible seam. */
+  /* Subtle parallax so the body and head feel like one coordinated
+     character, not two disconnected pieces. JS sets transform directly
+     via .style.transform. No CSS transition (was preventing the
+     transform from applying on this element). */
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: center 60%;
+  will-change: transform;
+}
+/* Subtle "breathing" — a 0.5% scale pulse on the body, 5s cycle. This
+   is independent of mouse tracking; the body always feels alive. */
+@keyframes body-breathe {
+  0%, 100% { --body-s: 1; }
+  50%      { --body-s: 1.005; }
 }
 
 /* ---------- HEAD: pure-CSS 3D CRT cube, more realistic ---------- */
 .hv-head {
   position: absolute;
-  top: 2%;
+  top: 12%;                       /* pushed up to give more room for body */
   left: 50%;
-  width: 64%;                     /* 64% of figure width, like a real head */
-  height: 54%;                    /* bottom lands ~4% above the body shoulder line */
-  /* Push forward in 3D so the head sits in front of the body. */
+  width: 78%;                     /* 78% of figure width — wide like a real CRT */
+  height: 30%;                    /* SQUAT: actual pixel aspect ~1.56 (was 1.11) */
+  /* Width%/height% = 78/30 = 2.6, figure aspect = 0.6, so actual
+     pixel aspect = 2.6 × 0.6 = 1.56. Bottom of head lands at 42%
+     figure-height — just above the body's neckline. */
   transform: translateX(-50%) translateZ(36px);
   transform-style: preserve-3d;
   z-index: 2;

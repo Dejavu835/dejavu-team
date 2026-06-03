@@ -116,6 +116,21 @@
       eyeL.style.left = EYE_BASE_L + '%';
       eyeR.style.left = EYE_BASE_R + '%';
 
+      // Body parallax — body follows the cursor too, but with much less
+      // amplitude than the head/eyes (it's the body, not the face).
+      // Set transform DIRECTLY on the body element (CSS var() didn't
+      // re-evaluate in transform during the transition). Range: ±4px X,
+      // ±2px Y. The body shifts slightly in the same direction as the
+      // cursor so head+body feel like one connected character.
+      const heroBody = document.querySelector('.hv-body');
+      if (heroBody) {
+        const BODY_RANGE_X = 4;
+        const BODY_RANGE_Y = 2;
+        const bX = (nx * BODY_RANGE_X).toFixed(2);
+        const bY = (ny * BODY_RANGE_Y).toFixed(2);
+        heroBody.style.transform = `translate3d(${bX}px, ${bY}px, 0) scale(1)`;
+      }
+
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
     const onLeave = () => {
@@ -125,6 +140,9 @@
       // Reset eyes to center
       eyeL.style.transform = 'translate3d(0, 0, 4px)';
       eyeR.style.transform = 'translate3d(0, 0, 4px)';
+      // Reset body parallax to center
+      const heroBody = document.querySelector('.hv-body');
+      if (heroBody) heroBody.style.transform = 'translate3d(0, 0, 0) scale(1)';
       // Trigger one quick blink when cursor leaves
       triggerBlink();
       // Then start random gaze drift (eyes look around while idle)
