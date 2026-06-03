@@ -231,6 +231,14 @@
       // Update status text
       if (statusEl) statusEl.textContent = STATE_LABELS[newState];
 
+      // Restart the curious gaze cycle whenever the state
+      // machine returns to calm. (Skipped during non-calm
+      // states — the gaze is "frozen" while the user is
+      // actively engaging with the figure.)
+      if (newState === 'calm' && prev !== 'calm') {
+        startCuriousGaze();
+      }
+
       // Schedule decay (warning → detected → calm)
       if (stateDecayTimer) { clearTimeout(stateDecayTimer); stateDecayTimer = null; }
       if (newState !== 'calm') {
@@ -356,6 +364,10 @@
       if (currentState === 'calm') {
         targetIrisX = 0;
         targetIrisY = 0;
+        // Restart the curious gaze cycle after the user
+        // leaves. The cycle is set up to skip when active,
+        // so this just kicks the scheduler back into gear.
+        startCuriousGaze();
       }
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
@@ -418,42 +430,140 @@
       }
     }, 500);
 
-    /* ---------- 3b. Auto-loop gaze drift (always on in calm) ----------
-       The user wants the eyes to automatically "look around"
-       in the calm state, with light effects corresponding to
-       the gaze. So the gaze drift runs CONTINUOUSLY in calm
-       state, not just on mouse idle.
+    /* ---------- 3b. Curious gaze drift + blink (idle behavior) ----------
+       The user wants the character to feel ALIVE in idle (no
+       input). Two effects:
 
-       The cycle every 1.5s:
-         1. Iris darts to a random position in the eye
-         2. Holds for 0.8-1.4s
-         3. Drifts to a smaller position (resting, not center)
-         4. Repeats
+       1. CURIOUS GAZE: instead of purely random micro-drifts,
+          the eyes cycle through a sequence of INTENTIONAL
+          "curious" positions — look full-left, hold, look
+          full-right, hold, glance up, return to center,
+          look mid-right, etc. Feels like the character is
+          actively scanning its environment, not just
+          twitching.
 
-       When the user moves the mouse, the iris snaps to the
-       cursor direction (overrides auto drift). When the
-       cursor leaves, auto drift resumes. */
-    let gazeReturnTimer = null;
-    const triggerGazeDrift = () => {
-      if (currentState !== 'calm') return;
-      const nx = (Math.random() - 0.5) * 1.8;
-      const ny = (Math.random() - 0.5) * 1.4;
-      targetIrisX = nx * IRIS_RANGE_X;
-      targetIrisY = ny * IRIS_RANGE_Y;
-      const holdMs = 800 + Math.random() * 600;
-      if (gazeReturnTimer) clearTimeout(gazeReturnTimer);
-      gazeReturnTimer = setTimeout(() => {
-        if (currentState === 'calm' && !active) {
-          targetIrisX = (Math.random() - 0.5) * 0.8 * IRIS_RANGE_X;
-          targetIrisY = (Math.random() - 0.5) * 0.5 * IRIS_RANGE_Y;
-        }
-      }, holdMs);
-    };
-    setInterval(() => {
-      if (currentState === 'calm' && !active) {
-        triggerGazeDrift();
+       2. BLINK: every 3-6 seconds (randomized), the eyes
+          briefly close + open via a CSS animation
+          (see .hv-figure.is-blinking in styles.css).
+
+       Both run ONLY in calm state AND only when there's no
+       active mouse tracking (active === false). Mouse/click
+       state transitions take priority. */
+
+    // 8 "curious" positions as fraction-of-IRIS_RANGE values.
+    // Each entry: {x, y, hold, name}. Coordinates are
+    // multiplied by IRIS_RANGE_X/Y in advanceCuriousGaze().
+    //
+    // x: -1 = full left, 0 = center, +1 = full right
+    // y: -1 = full up,   0 = center, +1 = full down
+    //
+    // The sequence below mimics natural curious-looking:
+    //   1. Look LEFT (full)   — "what's over there?"
+    //   2. Look RIGHT (full)  — "and over there?"
+    //   3. Glance UP          — "what's that?"
+    //   4. Center briefly     — "hmm"
+    //   5. Look LEFT (mid)    — "wait, what was that?"
+    //   6. Look RIGHT (mid)
+    //   7. Look up slightly
+    //   8. Look down-left
+    // ...then the sequence cycles (with 30% chance to skip
+    // 2-3 ahead) for variety.
+    //
+    // Note: y values stay <= 0.3 — we want curious-looking,
+    // not dejected (never look DOWN past y=-0.1 in the main
+    // positions, except position 8 which is a quick glance
+    // down-left, fine for "scanning").
+    const CURIOUS_GAZE_POSITIONS = [
+      { x: -1.0, y: -0.1, hold: 1300, name: 'look_left' },
+      { x:  1.0, y: -0.1, hold: 1300, name: 'look_right' },
+      { x:  0.2, y: -0.8, hold:  600, name: 'glance_up' },
+      { x:  0.0, y:  0.0, hold:  500, name: 'center' },
+      { x: -0.6, y:  0.0, hold:  900, name: 'look_left_mid' },
+      { x:  0.6, y:  0.0, hold:  900, name: 'look_right_mid' },
+      { x:  0.0, y: -0.4, hold:  700, name: 'look_up_slight' },
+      { x: -0.3, y:  0.3, hold:  800, name: 'look_down_left' }
+    ];
+
+    let curiousGazeIndex = 0;
+    let curiousGazeTimer = null;
+
+    const advanceCuriousGaze = () => {
+      // If user is hovering or state is non-calm, skip this
+      // tick. The next call to startCuriousGaze() (from
+      // onLeave or setState→calm) will resume the cycle.
+      if (currentState !== 'calm' || active) {
+        curiousGazeTimer = null;
+        return;
       }
-    }, 1500);
+
+      // Pick the next position in the sequence (with 30%
+      // chance to skip 2-3 ahead for variety).
+      const pos = CURIOUS_GAZE_POSITIONS[curiousGazeIndex];
+      targetIrisX = pos.x * IRIS_RANGE_X;
+      targetIrisY = pos.y * IRIS_RANGE_Y;
+
+      let skip = 1;
+      if (Math.random() < 0.3) skip = 2 + Math.floor(Math.random() * 2);
+      curiousGazeIndex = (curiousGazeIndex + skip) % CURIOUS_GAZE_POSITIONS.length;
+
+      // Schedule the next advance after the current hold.
+      curiousGazeTimer = setTimeout(advanceCuriousGaze, pos.hold);
+    };
+
+    // Start (or restart) the curious gaze cycle. Called on
+    // initial load AND when the user leaves the figure
+    // (and when the state machine returns to calm).
+    const startCuriousGaze = () => {
+      if (currentState !== 'calm' || active) return;
+      if (curiousGazeTimer) clearTimeout(curiousGazeTimer);
+      // Small random delay so the gaze doesn't sync with
+      // page-load animations or with the mouse-leave event.
+      const initialDelay = 600 + Math.random() * 800;
+      curiousGazeTimer = setTimeout(advanceCuriousGaze, initialDelay);
+    };
+
+    // Start once on load
+    startCuriousGaze();
+
+    // HOOK: restart the curious gaze whenever the user
+    // leaves the hero (so the cycle resumes after a hover).
+    // We piggy-back on the existing onLeave logic below —
+    // see onLeave() where startCuriousGaze() is called.
+
+    /* ---------- 3c. Blink scheduler ----------
+       Every 3-6 seconds, briefly add .is-blinking to
+       .hv-figure for 280ms. The CSS keyframe (hv-eye-blink
+       / hv-eye-blink-wisp) handles the actual visual. Only
+       blinks in calm state.
+
+       The blink is self-rescheduling — after each blink
+       (or skipped blink during active hover), the next
+       blink is scheduled with a fresh random delay. */
+
+    const triggerBlink = () => {
+      if (!heroFigure) return;
+      heroFigure.classList.add('is-blinking');
+      setTimeout(() => {
+        if (heroFigure) heroFigure.classList.remove('is-blinking');
+      }, 280);
+    };
+
+    const scheduleBlink = () => {
+      // Random 3-6 seconds between blinks
+      const delay = 3000 + Math.random() * 3000;
+      setTimeout(() => {
+        // Only actually blink in calm + idle. The schedule
+        // keeps running regardless so the cadence stays
+        // natural — we just skip the visual during hover.
+        if (currentState === 'calm' && !active) {
+          triggerBlink();
+        }
+        scheduleBlink();
+      }, delay);
+    };
+
+    // Start the blink loop on load
+    scheduleBlink();
 
     /* ===========================================================
        CLICK STATE PROGRESSION

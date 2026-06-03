@@ -921,6 +921,55 @@ h1, h2, h3, h4, p { margin: 0; }
   filter: blur(0.4px) brightness(1.25);
 }
 
+/* ---------- BLINK (idle & all states) ----------
+   The user wants the eyes to occasionally blink, making the
+   character feel alive. We add a brief scaleY(0.05) animation
+   to the cover, iris, and wisp (everything that "is" the eye).
+
+   How it works:
+   - JS adds .is-blinking to .hv-figure for 280ms every 3-6s
+   - The keyframe below briefly squashes each eye element
+     vertically (scaleY 1 → 0.06 → 1) to simulate a blink
+   - The existing `translate(-50%, -50%) translateZ(0)` base
+     transform is preserved via `transform: ... scaleY(...)`
+   - Wisp ALSO blinks (it's part of the eye) — but the wisp
+     has a DIFFERENT base transform (translateX(-50%) rotate(...)
+     translateZ(0)), so it needs its own keyframe that
+     preserves the per-eye tilt rotation.
+   - Click target (.hv-head-click) is NOT included — keeps
+     click area stable.
+
+   The keyframe is structured so that the eyes are OPEN for
+   70% of the duration, then quickly close (8%), stay closed
+   for 8% (~22ms), then reopen (14%). This gives a ~44ms
+   "closed" phase that reads as a natural blink. */
+
+@keyframes hv-eye-blink {
+  0%, 70%   { transform: translate(-50%, -50%) translateZ(0) scaleY(1); }
+  78%       { transform: translate(-50%, -50%) translateZ(0) scaleY(0.06); }
+  86%       { transform: translate(-50%, -50%) translateZ(0) scaleY(0.06); }
+  100%      { transform: translate(-50%, -50%) translateZ(0) scaleY(1); }
+}
+
+/* Wisp-specific blink keyframe — preserves the per-eye
+   rotation (--wisp-tilt) and the translateX(-50%) centering.
+   Without this, the wisp would briefly lose its tilt during
+   a blink and look like a glitch. */
+@keyframes hv-eye-blink-wisp {
+  0%, 70%   { transform: translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translateZ(0) scaleY(1); }
+  78%       { transform: translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translateZ(0) scaleY(0.06); }
+  86%       { transform: translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translateZ(0) scaleY(0.06); }
+  100%      { transform: translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translateZ(0) scaleY(1); }
+}
+
+.hv-figure.is-blinking .hv-eye-cover,
+.hv-figure.is-blinking .hv-eye-iris {
+  animation: hv-eye-blink 280ms ease-in-out;
+}
+.hv-figure.is-blinking .hv-eye-wisp {
+  animation: hv-eye-blink-wisp 280ms ease-in-out;
+}
+
 /* Invisible click TRIGGER — covers the head/CRT area of the
    image. Clicking advances the eye-state machine
    (calm → detected → warning). The 3rd-click firing/laser
@@ -1208,6 +1257,9 @@ h1, h2, h3, h4, p { margin: 0; }
   .hv-figure.is-detected .hv-eye-cover,
   .hv-figure.is-warning .hv-eye-cover,
   .hv-figure.is-warning .hv-eye-iris { animation: none; }
+  .hv-figure.is-blinking .hv-eye-cover,
+  .hv-figure.is-blinking .hv-eye-iris,
+  .hv-figure.is-blinking .hv-eye-wisp { animation: none; }
 }
 
 /* ===========================================================
