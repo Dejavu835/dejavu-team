@@ -564,6 +564,36 @@ h1, h2, h3, h4, p { margin: 0; }
   padding: 6% 7% 6% 7%;
 }
 
+/* ===========================================================
+   BODY LIGHT REFLECTION — the CRT screen's green light spills
+   onto the suit/chest area below. mix-blend-mode: screen so it
+   lightens without washing out. Position follows eye gaze via
+   JS-set --body-glow-x/y CSS variables.
+   =========================================================== */
+.hv-body-light {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(ellipse 55% 50% at var(--body-glow-x, 50%) var(--body-glow-y, 18%),
+    rgba(180, 240, 200, calc(var(--body-glow-i, 0.4) * 0.35)) 0%,
+    rgba(140, 220, 180, calc(var(--body-glow-i, 0.4) * 0.20)) 25%,
+    rgba(80, 160, 120, calc(var(--body-glow-i, 0.4) * 0.08)) 55%,
+    transparent 80%);
+  filter: blur(20px);
+  mix-blend-mode: screen;
+  border-radius: var(--radius-xl);
+  transition: background 0.3s var(--ease);
+  will-change: background;
+}
+/* Firing state: body light turns red/orange to match the laser */
+.hv-figure.is-firing .hv-body-light {
+  background: radial-gradient(ellipse 55% 50% at 50% 18%,
+    rgba(255, 130, 80, 0.35) 0%,
+    rgba(255, 80, 50, 0.18) 30%,
+    transparent 75%) !important;
+}
+
 /* Ambient GLOW — a soft radial gradient that radiates beyond the CRT
    screen edges, "lighting" the head's plastic shell and the area
    around the figure. JS sets --glow-x/y (mouse position) and

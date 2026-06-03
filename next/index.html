@@ -85,6 +85,13 @@
                  so the neckline dissolves into the page and the CSS
                  3D CRT head can sit on top with no hard edge. -->
             <img class="hv-body" id="hvBody" src="assets/hero-body.png" alt="" draggable="false" aria-hidden="true" />
+            <!-- Body LIGHT REFLECTION — soft green-tinted gradient over
+                 the body image that simulates the CRT screen's green
+                 light spilling onto the suit. mix-blend-mode: screen
+                 so it lightens the dark suit areas without washing out
+                 the photo. JS sets --body-glow-x/y (eye position)
+                 so the highlight follows the eye gaze. -->
+            <div class="hv-body-light" id="hvBodyLight" aria-hidden="true"></div>
 
             <!-- ============== HEAD: pure-CSS 3D CRT cube ==============
                  5 visible faces form a Mac Color Classic-style monitor

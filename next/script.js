@@ -131,6 +131,15 @@
         monitorGlow.style.setProperty('--glow-y', (hy * 100).toFixed(1) + '%');
         monitorGlow.style.setProperty('--glow-i', '0.85');
       }
+      // Body LIGHT REFLECTION — green-tinted light spilling from the
+      // CRT screen onto the suit. Position follows the eye gaze. The
+      // Y is biased toward the upper portion of the body (chest area).
+      const bodyLight = document.querySelector('#hvBodyLight');
+      if (bodyLight) {
+        bodyLight.style.setProperty('--body-glow-x', (hx * 100).toFixed(1) + '%');
+        bodyLight.style.setProperty('--body-glow-y', (15 + hy * 25).toFixed(1) + '%');
+        bodyLight.style.setProperty('--body-glow-i', '0.85');
+      }
 
       // Body parallax — body follows the cursor too, but with much less
       // amplitude than the head/eyes (it's the body, not the face).
@@ -163,6 +172,12 @@
       const monitorGlow = document.querySelector('#hvMonitorGlow');
       if (monitorGlow) {
         monitorGlow.style.setProperty('--glow-i', '0.3');
+        const bodyLight2 = document.querySelector('#hvBodyLight');
+        if (bodyLight2) {
+          bodyLight2.style.setProperty('--body-glow-i', '0.3');
+          bodyLight2.style.setProperty('--body-glow-x', '50%');
+          bodyLight2.style.setProperty('--body-glow-y', '25%');
+        }
         monitorGlow.style.setProperty('--glow-x', '50%');
         monitorGlow.style.setProperty('--glow-y', '50%');
       }
