@@ -424,13 +424,21 @@ h1, h2, h3, h4, p { margin: 0; }
 .hero-tags a:hover::after { transform: scaleX(1); }
 
 /* ===========================================================
-   HERO VISUAL — split: photo body (masked) + pure-CSS 3D head
+   HERO VISUAL — single AI image + overlay effects
 
-   The body is the original hero-robot.jpg, with the head
-   area masked out via gradient so it cleanly "ends" at the
-   neckline. The head is a real CSS cube sitting on top of
-   the neckline, and only the head tilts on mouse move
-   (the body image stays still, like a product 360° view).
+   The hero is now a single AI-generated image of the
+   dejavu team "Vesta CRT" character: tan suit, cream CRT
+   monitor as the head (green screen, 2 glowing red oval
+   eyes), vintage 1980s. The image carries the entire head +
+   body in one piece — no separate CSS 3D cube.
+
+   We layer on top of the image:
+     1. Film grain (hero-grain) — already in page-level
+     2. Mouse-tracking warm halo (.hv-halo)
+     3. Subtle red eye glow that breathes (.hv-eye-glow-l/r)
+     4. Click trigger over the head area (.hv-head-click)
+     5. Sparks, shockwave, laser beams at the eye positions
+        (left: 40% / 57%, top: 22% of the figure)
    =========================================================== */
 .hero-visual {
   position: relative;
@@ -443,202 +451,188 @@ h1, h2, h3, h4, p { margin: 0; }
   padding-right: 0;
   min-height: 580px;
 }
+
+/* Card frame around the AI figure. Same visual language as
+   .member-card and .work-card (rounded-rect + border + soft
+   drop shadow + warm inner highlight). 3D perspective so the
+   whole figure tilts on mouse move. */
 .hv-figure {
   position: relative;
-  width: clamp(360px, 48vw, 540px);
-  aspect-ratio: 3 / 5;
+  width: clamp(360px, 46vw, 520px);
+  aspect-ratio: 864 / 1152;     /* match the AI image's actual ratio */
   margin-right: -4%;
-  cursor: crosshair;
   perspective: 1200px;
-  /* ---- Rounded-rect card frame (matches .member-card, .work-card) ---- */
   border: 1px solid var(--line-soft);
-  border-radius: var(--radius-xl);   /* 32px — consistent with rest of site */
+  border-radius: var(--radius-xl);
   background:
-    /* warm top-left highlight + cream base */
     radial-gradient(ellipse 80% 60% at 30% 0%,
       rgba(255, 245, 220, 0.55) 0%, transparent 60%),
     var(--bg-card);
-  /* soft outer drop + crisp inner top highlight */
   box-shadow:
     0 50px 100px rgba(40, 30, 20, 0.18),
     0 16px 36px rgba(40, 30, 20, 0.10),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  /* keep overflow visible so the 3D cube sides can poke out of the
-     card; the card border still reads as a frame */
   overflow: visible;
+  cursor: crosshair;
+  will-change: transform;
 }
 
-/* ---------- BODY: headless photo (top is background-colored) ---------- */
-.hv-body {
+/* The AI image fills the figure. JS sets the figure's
+   transform directly with rotateX/rotateY on mouse move. */
+.hv-figure-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center bottom;   /* shoulders + chest fill the figure */
+  object-position: center top;
   display: block;
   user-select: none;
   -webkit-user-drag: none;
   border-radius: var(--radius-xl);
   z-index: 1;
-  /* The image's top ~50% is the same warm cream as the page background
-     (genuinely headless, no body parts up there), so it dissolves into
-     the hero and the CSS 3D head can sit on top with no visible seam. */
-  /* Subtle parallax so the body and head feel like one coordinated
-     character, not two disconnected pieces. JS sets transform directly
-     via .style.transform. No CSS transition (was preventing the
-     transform from applying on this element). */
-  transform: translate3d(0, 0, 0) scale(1);
-  transform-origin: center 60%;
-  will-change: transform;
+  /* Subtle continuous breathing — independent of mouse tracking,
+     so the figure always feels alive. */
+  animation: hv-figure-breathe 6s ease-in-out infinite;
 }
-/* Subtle "breathing" — a 0.5% scale pulse on the body, 5s cycle. This
-   is independent of mouse tracking; the body always feels alive. */
-@keyframes body-breathe {
-  0%, 100% { --body-s: 1; }
-  50%      { --body-s: 1.005; }
+@keyframes hv-figure-breathe {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(0, 0, 0) scale(1.006); }
 }
 
-/* ---------- HEAD: pure-CSS 3D CRT cube, more realistic ---------- */
-.hv-head {
-  position: absolute;
-  top: 12%;                       /* pushed up to give more room for body */
-  left: 50%;
-  width: 78%;                     /* 78% of figure width — wide like a real CRT */
-  height: 30%;                    /* SQUAT: actual pixel aspect ~1.56 (was 1.11) */
-  /* Width%/height% = 78/30 = 2.6, figure aspect = 0.6, so actual
-     pixel aspect = 2.6 × 0.6 = 1.56. Bottom of head lands at 42%
-     figure-height — just above the body's neckline. */
-  transform: translateX(-50%) translateZ(36px);
-  transform-style: preserve-3d;
-  z-index: 2;
-  /* JS will set transform: rotateX/rotateY based on cursor */
-  will-change: transform;
-}
-.hv-cube {
+/* Mouse-tracking HALO — a soft warm light that follows the
+   cursor across the figure. JS sets --halo-x/y as percentages
+   and --halo-i for intensity (bright on hover, dim idle). */
+.hv-halo {
   position: absolute;
   inset: 0;
-  --D: 60px;                     /* depth / thickness of the head */
-  transform-style: preserve-3d;
-}
-.hv-face {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  overflow: hidden;
-}
-
-/* FRONT face — full beige plastic body + green CRT + base details */
-.hv-face-front {
-  transform: translateZ(calc(var(--D) / 2));
-  background:
-    /* top-light → mid-tone → bottom-shadow on the plastic shell */
-    linear-gradient(180deg,
-      #ecdbab 0%,
-      #dac48a 14%,
-      #c4ad7e 45%,
-      #a8946c 80%,
-      #8a7a58 100%);
-  /* bevel + plastic edge highlights */
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 245, 220, 0.55),     /* top inner highlight */
-    inset 0 -1.5px 0 rgba(60, 45, 25, 0.45),      /* bottom inner edge */
-    inset 2px 0 0 rgba(255, 245, 220, 0.15),      /* left bevel */
-    inset -2px 0 0 rgba(60, 45, 25, 0.15);        /* right bevel */
-  border-radius: 18px 18px 22px 22px;
-}
-
-/* Plastic seam lines removed (no black bezel per user feedback) */
-/* ===========================================================
-   HEAD — Mac Color Classic style monitor, CSS-rendered
-   Replaces the earlier pixel-art approach. 5-frame pixel eyes
-   were too "plastic 8-bit"; the reference image is photo-realistic
-   with 2 bright glowing oval eyes on a curved CRT screen.
-   =========================================================== */
-.hv-monitor {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 6% 7% 6% 7%;
-}
-
-/* ===========================================================
-   BODY LIGHT REFLECTION — the CRT screen's green light spills
-   onto the suit/chest area below. mix-blend-mode: screen so it
-   lightens without washing out. Position follows eye gaze via
-   JS-set --body-glow-x/y CSS variables.
-   =========================================================== */
-.hv-body-light {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  background: radial-gradient(ellipse 55% 50% at var(--body-glow-x, 50%) var(--body-glow-y, 18%),
-    rgba(180, 240, 200, calc(var(--body-glow-i, 0.4) * 0.35)) 0%,
-    rgba(140, 220, 180, calc(var(--body-glow-i, 0.4) * 0.20)) 25%,
-    rgba(80, 160, 120, calc(var(--body-glow-i, 0.4) * 0.08)) 55%,
-    transparent 80%);
-  filter: blur(20px);
-  mix-blend-mode: screen;
   border-radius: var(--radius-xl);
-  transition: background 0.3s var(--ease);
-  will-change: background;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(
+    circle 220px at var(--halo-x, 50%) var(--halo-y, 30%),
+    rgba(255, 220, 160, 0.30) 0%,
+    rgba(255, 200, 130, 0.18) 18%,
+    rgba(255, 180, 100, 0.08) 35%,
+    transparent 60%
+  );
+  opacity: var(--halo-i, 0.6);
+  mix-blend-mode: screen;
+  transition: opacity 0.4s var(--ease);
+  animation: hv-halo-pulse 3.4s ease-in-out infinite;
 }
-/* Firing state: body light turns red/orange to match the laser */
-.hv-figure.is-firing .hv-body-light {
-  background: radial-gradient(ellipse 55% 50% at 50% 18%,
-    rgba(255, 130, 80, 0.35) 0%,
-    rgba(255, 80, 50, 0.18) 30%,
-    transparent 75%) !important;
+@keyframes hv-halo-pulse {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.12); }
 }
 
-/* Ambient GLOW — a soft radial gradient that radiates beyond the CRT
-   screen edges, "lighting" the head's plastic shell and the area
-   around the figure. JS sets --glow-x/y (mouse position) and
-   --glow-i (intensity — higher when mouse is active, lower when idle). */
-.hv-monitor-glow {
+/* Subtle red EYE GLOW under each baked-in red eye. The
+   glow is a radial red gradient that breathes in idle,
+   intensifies when the figure is hovered, and EXPLODES
+   to bright white-hot core when firing. Positioned at
+   the eye coordinates in the new AI image. */
+.hv-eye-glow {
   position: absolute;
-  /* Extend well beyond the screen rect, with the top half being the
-     strongest because the eyes are in the upper portion of the CRT. */
-  top: -8%;
-  left: -15%;
-  right: -15%;
-  bottom: 5%;
+  width: 8%;
+  aspect-ratio: 1;
+  border-radius: 50%;
   pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(ellipse 50% 60% at var(--glow-x, 50%) var(--glow-y, 50%),
-    rgba(180, 240, 200, calc(var(--glow-i, 0.4) * 0.55)) 0%,
-    rgba(140, 220, 180, calc(var(--glow-i, 0.4) * 0.30)) 30%,
-    rgba(80, 160, 120, calc(var(--glow-i, 0.4) * 0.10)) 60%,
-    transparent 80%);
-  filter: blur(30px);
-  mix-blend-mode: screen;
-  transition: background 0.4s var(--ease);
-  will-change: background;
+  z-index: 3;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 80, 60, 0.55) 0%,
+    rgba(255, 60, 30, 0.32) 30%,
+    rgba(255, 30, 0, 0.10) 60%,
+    transparent 80%
+  );
+  filter: blur(6px);
+  transform: translate(-50%, -50%);
+  animation: hv-eye-glow-breathe 2.4s ease-in-out infinite;
+}
+.hv-eye-glow-l { left: 35%; top: 32%; }
+.hv-eye-glow-r { left: 49%; top: 32%; animation-delay: 0.3s; }
+@keyframes hv-eye-glow-breathe {
+  0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1.0; transform: translate(-50%, -50%) scale(1.18); }
+}
+
+/* The eye glow intensifies dramatically during firing. */
+.hv-figure.is-firing .hv-eye-glow {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 255, 240, 1) 0%,
+    rgba(255, 200, 130, 0.95) 12%,
+    rgba(255, 100, 60, 0.7) 35%,
+    rgba(255, 30, 0, 0.3) 65%,
+    transparent 90%
+  );
+  width: 14%;
+  filter: blur(8px);
+  opacity: 1;
+  animation: hv-eye-glow-fire 0.08s steps(2) infinite;
+}
+@keyframes hv-eye-glow-fire {
+  0%   { transform: translate(-50%, -50%) scale(1); }
+  100% { transform: translate(-50%, -50%) scale(1.25); }
+}
+
+/* Invisible click TRIGGER — covers the head/CRT area of the
+   image. Clicking anywhere in this area (and only this area,
+   not the suit) fires the laser eyes. Sized to roughly the
+   upper 38% of the figure (where the CRT lives). */
+.hv-head-click {
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  width: 70%;
+  height: 45%;
+  transform: translateX(-50%);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 4;
+  border-radius: 18px;
+  /* Subtle hover hint — barely-visible outline on hover to
+     signal "you can click here". */
+  outline: 0 solid transparent;
+  transition: outline 0.3s var(--ease);
+}
+.hv-head-click:hover,
+.hv-head-click:focus-visible {
+  outline: 0 solid transparent;     /* keep invisible */
+}
+.hv-head-click:focus-visible {
+  /* Accessibility: visible focus ring for keyboard users only. */
+  outline: 3px solid rgba(233, 78, 91, 0.55);
+  outline-offset: 2px;
 }
 
 /* ===========================================================
    LASER EYES (easter egg) — Homelander-style red laser beams
-   Hidden by default. When JS adds .is-firing to .hv-figure, the
-   beams grow outward from the eyes (transform scaleX 0 → 1) and
-   flicker. Eyes simultaneously turn red via the override below.
+   Hidden by default. When JS adds .is-firing to .hv-figure,
+   the beams grow outward from the eyes (transform scaleX 0→1)
+   and flicker continuously. Each beam has 5-layer painterly
+   glow + box-shadow frayed edges for that 'thick paint stroke'
+   Homelander look.
+
+   Eye position in the AI image: left 40%/57% horizontal,
+   top 22% vertical. The lasers shoot OUTWARD from each eye
+   (left laser shoots left, right laser shoots right) with
+   a slight upward tilt (-2° / +2°).
    =========================================================== */
 .hv-laser {
   position: absolute;
-  top: 44%;
-  /* THICK brush-stroke beam (was 9px thin line). The beam now has
-     painterly mass, not a thin line. */
+  top: 32%;
   height: 22px;
   margin-top: -11px;
   pointer-events: none;
   opacity: 0;
-  z-index: 6;
+  z-index: 5;
   transform: scaleX(0);
-  /* 5-layer painterly glow: tight white-hot core + warm halo + red
-     inner + red outer + wide red ambient. The combined drop-shadows
-     give the beam a 'thick paint stroke' look. */
+  /* 5-layer painterly glow: tight white-hot core + warm halo +
+     red inner + red outer + wide red ambient. */
   filter:
     drop-shadow(0 0 3px rgba(255, 255, 220, 0.98))
     drop-shadow(0 0 8px rgba(255, 200, 100, 0.95))
@@ -647,24 +641,18 @@ h1, h2, h3, h4, p { margin: 0; }
     drop-shadow(0 0 50px rgba(255, 50, 30, 0.3));
 }
 .hv-laser-l {
-  right: 38%;
-  width: 280px;
+  right: 65%;                       /* right edge = left eye, beams shoot left */
+  width: 320px;
   transform-origin: right center;
-  /* Slight upward tilt (-4deg) — beam goes up-and-to-the-left
-     like the user-drawn reference. The tilt is applied AFTER
-     scaleX in transform syntax, so the beam still grows from the
-     eye (right edge) outward. */
-  transform: scaleX(0) rotate(-4deg);
+  transform: scaleX(0) rotate(-2deg);
   background: linear-gradient(90deg,
     transparent 0%,
     rgba(255, 60, 30, 0.25) 6%,
     rgba(255, 100, 50, 0.5) 18%,
     rgba(255, 180, 80, 0.85) 38%,
     rgba(255, 255, 220, 1) 70%,
-    rgba(255, 255, 255, 1) 100%  /* PEAK at the eye */
+    rgba(255, 255, 255, 1) 100%   /* PEAK at the eye */
   );
-  /* Painterly frayed edges: box-shadows at 0±Xpx give the beam
-     a thicker, irregular edge like a wet paint stroke. */
   box-shadow:
     0 -8px 0 -3px rgba(255, 80, 30, 0.65),
     0 8px 0 -3px rgba(255, 80, 30, 0.65),
@@ -672,11 +660,10 @@ h1, h2, h3, h4, p { margin: 0; }
     0 14px 0 -5px rgba(255, 60, 30, 0.4);
 }
 .hv-laser-r {
-  left: 68%;
-  width: 280px;
+  left: 49%;                        /* left edge = right eye, beams shoot right */
+  width: 320px;
   transform-origin: left center;
-  /* Mirror tilt: +4deg (up-and-to-the-right) */
-  transform: scaleX(0) rotate(4deg);
+  transform: scaleX(0) rotate(2deg);
   background: linear-gradient(270deg,
     transparent 0%,
     rgba(255, 60, 30, 0.2) 5%,
@@ -684,22 +671,15 @@ h1, h2, h3, h4, p { margin: 0; }
     rgba(255, 160, 70, 0.7) 30%,
     rgba(255, 220, 130, 0.92) 55%,
     rgba(255, 255, 240, 1) 85%,
-    rgba(255, 255, 255, 1) 100%  /* PEAK at the eye (100% = left edge) */
+    rgba(255, 255, 255, 1) 100%
   );
-  /* Painterly frayed edges (mirror of L) */
   box-shadow:
     0 -8px 0 -3px rgba(255, 80, 30, 0.65),
     0 8px 0 -3px rgba(255, 80, 30, 0.65),
     0 -14px 0 -5px rgba(255, 60, 30, 0.4),
     0 14px 0 -5px rgba(255, 60, 30, 0.4);
 }
-
-/* When the figure has .is-firing, the beams become visible, scale
-   outward, and flicker continuously. */
-.hv-figure.is-firing .hv-laser {
-  opacity: 1;
-  animation: laser-flicker 0.06s steps(2, end) infinite;
-}
+.hv-figure.is-firing .hv-laser { opacity: 1; }
 .hv-figure.is-firing .hv-laser-l {
   animation: laser-shoot-l 0.18s cubic-bezier(0.2, 0.9, 0.4, 1) forwards,
              laser-flicker 0.06s 0.18s steps(2, end) infinite;
@@ -708,81 +688,42 @@ h1, h2, h3, h4, p { margin: 0; }
   animation: laser-shoot-r 0.18s cubic-bezier(0.2, 0.9, 0.4, 1) forwards,
              laser-flicker 0.06s 0.18s steps(2, end) infinite;
 }
-/* Beam shoot-out — beam grows from 0 to full length with slight overshoot.
-   Keyframes include the rotation so the static -4deg/+4deg tilt
-   is preserved during the animation. */
 @keyframes laser-shoot-l {
-  0%   { transform: scaleX(0) rotate(-4deg); }
-  70%  { transform: scaleX(1.05) rotate(-4deg); }
-  100% { transform: scaleX(1) rotate(-4deg); }
+  0%   { transform: scaleX(0) rotate(-2deg); }
+  70%  { transform: scaleX(1.06) rotate(-2deg); }
+  100% { transform: scaleX(1) rotate(-2deg); }
 }
 @keyframes laser-shoot-r {
-  0%   { transform: scaleX(0) rotate(4deg); }
-  70%  { transform: scaleX(1.05) rotate(4deg); }
-  100% { transform: scaleX(1) rotate(4deg); }
+  0%   { transform: scaleX(0) rotate(2deg); }
+  70%  { transform: scaleX(1.06) rotate(2deg); }
+  100% { transform: scaleX(1) rotate(2deg); }
 }
-/* Beam flicker — multi-layer brightness / width wobble. 5 layers
-   give a much richer glow that pulses in intensity. */
 @keyframes laser-flicker {
-  0%   { filter:
-            drop-shadow(0 0 2px rgba(255, 255, 220, 0.98))
-            drop-shadow(0 0 5px rgba(255, 180, 80, 0.9))
-            drop-shadow(0 0 14px rgba(255, 80, 50, 0.75))
-            drop-shadow(0 0 32px rgba(255, 30, 0, 0.5)); }
-  50%  { filter:
-            drop-shadow(0 0 3px rgba(255, 255, 240, 1))
-            drop-shadow(0 0 7px rgba(255, 200, 100, 1))
-            drop-shadow(0 0 18px rgba(255, 90, 50, 0.9))
-            drop-shadow(0 0 40px rgba(255, 50, 10, 0.65)); }
-  100% { filter:
-            drop-shadow(0 0 2px rgba(255, 255, 220, 0.98))
-            drop-shadow(0 0 5px rgba(255, 180, 80, 0.9))
-            drop-shadow(0 0 14px rgba(255, 80, 50, 0.75))
-            drop-shadow(0 0 32px rgba(255, 30, 0, 0.5)); }
-}
-
-/* Eyes turn red when firing — override the green radial + green glows.
-   Also: the eyes GROW (24% wide × 60% tall) and the white-hot core
-   becomes more prominent, so the eyes are clearly the SOURCE of
-   the laser rather than small dim dots being overwhelmed by the
-   beam. 6-layer red drop-shadow makes them 'molten'. */
-.hv-figure.is-firing .hv-eye {
-  width: 24% !important;
-  height: 60% !important;
-  margin-top: -30% !important;
-  background: radial-gradient(ellipse 50% 50% at 50% 50%,
-    #ffffff 0%,
-    #ffffff 5%,
-    #fff4d0 12%,
-    #ffaa50 22%,
-    #ff4400 42%,
-    rgba(255, 80, 30, 0.5) 65%,
-    rgba(255, 30, 0, 0.3) 85%,
-    rgba(255, 30, 0, 0) 100%) !important;
-  filter:
-    drop-shadow(0 0 3px rgba(255, 255, 255, 1))
-    drop-shadow(0 0 8px rgba(255, 255, 200, 0.98))
-    drop-shadow(0 0 20px rgba(255, 200, 100, 0.95))
-    drop-shadow(0 0 42px rgba(255, 80, 50, 0.85))
-    drop-shadow(0 0 80px rgba(255, 30, 0, 0.55))
-    drop-shadow(0 0 120px rgba(255, 50, 30, 0.30)) !important;
-}
-/* Override the eye-glow-pulse animation during firing so the eye
-   stays at the bright red state (no continuous green-pulse) */
-.hv-figure.is-firing .hv-eye {
-  animation: none !important;
+  0%, 100% { filter:
+    drop-shadow(0 0 3px rgba(255, 255, 220, 0.98))
+    drop-shadow(0 0 8px rgba(255, 200, 100, 0.95))
+    drop-shadow(0 0 16px rgba(255, 80, 50, 0.85))
+    drop-shadow(0 0 30px rgba(255, 30, 0, 0.55))
+    drop-shadow(0 0 50px rgba(255, 50, 30, 0.3)); }
+  50% { filter:
+    drop-shadow(0 0 4px rgba(255, 255, 240, 1))
+    drop-shadow(0 0 10px rgba(255, 220, 130, 1))
+    drop-shadow(0 0 22px rgba(255, 100, 60, 0.95))
+    drop-shadow(0 0 42px rgba(255, 50, 10, 0.7))
+    drop-shadow(0 0 70px rgba(255, 80, 30, 0.4)); }
 }
 
 /* ===========================================================
-   SPARK BURST — small particle dots scattered around each eye
-   during laser firing. Each box-shadow is a 1-2px bright dot
-   positioned in a radial pattern. The dots flicker to give a
-   'energy radiating outward' feel. Two outer 'shockwave' rings
-   expand outward continuously while firing (subtle radial pulse).
+   SPARK BURST — small particle dots scattered around each
+   eye during laser firing. Each box-shadow is a 1-2px bright
+   dot in a radial pattern around the eye. The dots flicker
+   to give an 'energy radiating outward' feel.
+
+   Positioned at the eye centers: left 40% / 57%, top 22%.
    =========================================================== */
 .hv-spark-burst {
   position: absolute;
-  top: 50%;
+  top: 32%;
   width: 3px;
   height: 3px;
   margin: -1.5px 0 0 -1.5px;
@@ -791,42 +732,10 @@ h1, h2, h3, h4, p { margin: 0; }
   pointer-events: none;
   z-index: 4;
   opacity: 0;
-  /* 12 radial sparks at varying radii. The 0 0 0 0 inset creates
-     no shadow at center (the 3px bg dot is the center). */
 }
-/* L spark — positioned at L eye center 38% */
-.hv-spark-l {
-  left: 38%;
-  box-shadow:
-    /* bright center cluster (3-5px from center) */
-    0 0 0 0.5px rgba(255, 255, 240, 1),
-    0 0 4px 1px rgba(255, 220, 130, 0.95),
-    3px -3px 0 0.5px rgba(255, 200, 100, 0.9),
-    -3px -3px 0 0.5px rgba(255, 180, 90, 0.85),
-    3px 3px 0 0.5px rgba(255, 220, 110, 0.85),
-    -3px 3px 0 0.5px rgba(255, 200, 100, 0.9),
-    /* mid ring sparks (6-10px) */
-    6px -8px 0 0 rgba(255, 200, 100, 0.8),
-    -6px -8px 0 0 rgba(255, 150, 80, 0.75),
-    10px 0 0 0 rgba(255, 220, 110, 0.7),
-    -10px 0 0 0 rgba(255, 200, 100, 0.7),
-    8px 8px 0 0 rgba(255, 180, 90, 0.65),
-    -8px 8px 0 0 rgba(255, 200, 100, 0.65),
-    /* outer ring sparks (12-20px) */
-    14px -14px 0 -0.5px rgba(255, 200, 100, 0.55),
-    -14px -14px 0 -0.5px rgba(255, 150, 80, 0.5),
-    20px -6px 0 -1px rgba(255, 220, 110, 0.45),
-    -20px -6px 0 -1px rgba(255, 200, 100, 0.45),
-    16px 14px 0 -1px rgba(255, 200, 100, 0.4),
-    -16px 14px 0 -1px rgba(255, 150, 80, 0.4),
-    /* outermost spark embers (24-32px, very subtle) */
-    26px 20px 0 -1.5px rgba(255, 180, 90, 0.3),
-    -26px 20px 0 -1.5px rgba(255, 200, 100, 0.3);
-  animation: spark-flicker 0.08s steps(2) infinite;
-}
-/* R spark — positioned at R eye center 68% */
-.hv-spark-r {
-  left: 68%;
+.hv-spark-l { left: 35%; }
+.hv-spark-r { left: 49%; }
+.hv-spark-burst {
   box-shadow:
     0 0 0 0.5px rgba(255, 255, 240, 1),
     0 0 4px 1px rgba(255, 220, 130, 0.95),
@@ -849,15 +758,13 @@ h1, h2, h3, h4, p { margin: 0; }
     26px 20px 0 -1.5px rgba(255, 180, 90, 0.3),
     -26px 20px 0 -1.5px rgba(255, 200, 100, 0.3);
   animation: spark-flicker 0.08s steps(2) infinite;
-  animation-delay: 0.04s;  /* R spark slightly out of phase with L */
 }
+.hv-spark-r { animation-delay: 0.04s; }
 .hv-figure.is-firing .hv-spark-burst {
   opacity: 1;
-  /* Brighter glow + slight position jitter via filter */
   filter: drop-shadow(0 0 6px rgba(255, 200, 100, 0.9))
           drop-shadow(0 0 16px rgba(255, 80, 50, 0.6));
 }
-/* Spark flicker — subtle brightness pulse (raw energy feel) */
 @keyframes spark-flicker {
   0%   { filter: drop-shadow(0 0 6px rgba(255, 200, 100, 0.9)); }
   50%  { filter: drop-shadow(0 0 9px rgba(255, 220, 130, 1))
@@ -865,12 +772,11 @@ h1, h2, h3, h4, p { margin: 0; }
   100% { filter: drop-shadow(0 0 6px rgba(255, 200, 100, 0.9)); }
 }
 
-/* Shockwave ring — an expanding radial pulse that ripples outward
-   from each eye when firing. Done via box-shadow on a separate
-   "halo" element with a 0-size center. */
+/* SHOCKWAVE ring — expanding radial pulse from each eye during
+   firing. Done via box-shadow on a 0-size center element. */
 .hv-shockwave {
   position: absolute;
-  top: 50%;
+  top: 32%;
   width: 0;
   height: 0;
   border-radius: 50%;
@@ -878,8 +784,8 @@ h1, h2, h3, h4, p { margin: 0; }
   z-index: 3;
   opacity: 0;
 }
-.hv-shockwave-l { left: 38%; }
-.hv-shockwave-r { left: 68%; }
+.hv-shockwave-l { left: 35%; }
+.hv-shockwave-r { left: 49%; }
 .hv-figure.is-firing .hv-shockwave {
   opacity: 1;
   box-shadow:
@@ -888,461 +794,32 @@ h1, h2, h3, h4, p { margin: 0; }
     0 0 28px 4px rgba(255, 80, 50, 0.3);
   animation: shockwave-pulse 0.6s cubic-bezier(0, 0.7, 0.3, 1) infinite;
 }
+.hv-shockwave-r { animation-delay: 0.15s; }
 @keyframes shockwave-pulse {
   0% {
     transform: scale(0.6);
     box-shadow:
       0 0 0 0.5px rgba(255, 200, 100, 1),
-      0 0 12px 2px rgba(255, 150, 80, 0.7),
-      0 0 28px 4px rgba(255, 80, 50, 0.35);
+      0 0 14px 2px rgba(255, 150, 80, 0.7),
+      0 0 32px 4px rgba(255, 80, 50, 0.4);
   }
   100% {
-    transform: scale(1.6);
+    transform: scale(1.8);
     box-shadow:
-      0 0 0 1px rgba(255, 200, 100, 0),
-      0 0 18px 3px rgba(255, 150, 80, 0),
-      0 0 36px 6px rgba(255, 80, 50, 0);
-  }
-}
-
-/* Also dim the ambient green monitor-glow during firing (so the
-   red light dominates the area) */
-.hv-figure.is-firing .hv-monitor-glow {
-  background: radial-gradient(ellipse 50% 60% at 50% 50%,
-    rgba(255, 100, 50, 0.4) 0%,
-    rgba(255, 60, 30, 0.2) 40%,
-    transparent 80%) !important;
-}
-
-/* CRT screen — the big dark green glass with curved corners.
-   No black bezel between shell and screen (per the reference). */
-.hv-screen {
-  position: relative;
-  flex: 1 1 auto;
-  border-radius: 18px 18px 18px 18px;
-  /* Dark olive-green glass with a slight inner depth illusion.
-     Sampled from the reference: edge #3A3515 → center #5C6C3D. */
-  background:
-    radial-gradient(ellipse 95% 80% at 50% 50%,
-      #5e6f3c 0%,
-      #475432 30%,
-      #2f3818 65%,
-      #1a1f0c 95%);
-  overflow: hidden;
-  box-shadow:
-    inset 0 0 28px rgba(0, 0, 0, 0.65),       /* glass depth */
-    inset 0 1px 0 rgba(255, 255, 255, 0.10);   /* top sheen */
-}
-
-/* Subtle curved-glass reflection — a single soft highlight that
-   doesn't move (real reflection stays in place regardless of
-   cursor position) */
-.hv-screen-glass {
-  position: absolute; inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(115deg,
-      transparent 32%,
-      rgba(255, 255, 255, 0.04) 40%,
-      rgba(255, 255, 255, 0.10) 50%,
-      rgba(255, 255, 255, 0.04) 60%,
-      transparent 68%);
-  mix-blend-mode: screen;
-  z-index: 3;
-}
-
-/* Soft horizontal scanlines — the signature CRT look, very subtle */
-.hv-screen-vignette {
-  position: absolute; inset: 0;
-  pointer-events: none;
-  background:
-    repeating-linear-gradient(0deg,
-      rgba(0, 0, 0, 0.12) 0px, rgba(0, 0, 0, 0.12) 1px,
-      transparent 1px, transparent 3px),
-    /* slight outer darkening to feel like a real curved glass */
-    radial-gradient(ellipse 92% 80% at 50% 50%,
-      transparent 55%,
-      rgba(0, 0, 0, 0.35) 100%);
-  z-index: 2;
-}
-
-/* Scanline SWEEP — a soft bright line that travels top to bottom
-   of the screen every ~7s. The classic CRT "rolling refresh"
-   you see on real CRTs. */
-.hv-screen-sweep {
-  position: absolute;
-  left: 0; right: 0;
-  height: 6px;
-  pointer-events: none;
-  z-index: 4;
-  opacity: 0;
-  background: linear-gradient(180deg,
-    transparent 0%,
-    rgba(180, 240, 200, 0) 30%,
-    rgba(200, 250, 220, 0.55) 50%,
-    rgba(180, 240, 200, 0) 70%,
-    transparent 100%);
-  filter: blur(2px);
-  animation: hv-sweep 7s linear infinite;
-}
-@keyframes hv-sweep {
-  0%   { top: -10px; opacity: 0; }
-  5%   { opacity: 0.65; }
-  92%  { top: 100%; opacity: 0; }
-  100% { top: 100%; opacity: 0; }
-}
-
-/* BOOTUP — eyes fade in with a brighter initial glow when the
-   page first loads. Toggled by JS via .is-booting class. */
-.hv-eye.is-booting {
-  animation: eye-bootup 1.2s ease-out;
-}
-@keyframes eye-bootup {
-  0%   {
-    transform: translate3d(0, 0, 4px) scaleY(0.05);
-    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))
-            drop-shadow(0 0 8px rgba(180, 240, 200, 0.3))
-            drop-shadow(0 0 16px rgba(106, 180, 130, 0.15));
-  }
-  20%  {
-    transform: translate3d(0, 0, 4px) scaleY(1);
-    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 1))
-            drop-shadow(0 0 30px rgba(180, 240, 200, 1))
-            drop-shadow(0 0 60px rgba(106, 180, 130, 0.85));
-  }
-  100% {
-    transform: translate3d(0, 0, 4px) scaleY(1);
-    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.95))
-            drop-shadow(0 0 14px rgba(180, 240, 200, 0.65))
-            drop-shadow(0 0 30px rgba(106, 180, 130, 0.35));
+      0 0 0 0.5px rgba(255, 200, 100, 0),
+      0 0 8px 1px rgba(255, 150, 80, 0),
+      0 0 18px 2px rgba(255, 80, 50, 0);
   }
 }
 
 /* ===========================================================
-   THE 2 EYES — the focal point of the whole head
-   Each eye is a vertical oval (slightly taller than wide)
-   with a soft radial gradient (white core → cyan halo → deep
-   green → transparent) plus 3 stacked drop-shadows for the
-   "bright point light" glow. JS swaps left position based on
-   mouse X (continuous, no frame skip).
+   Hero status chip — small, monospace, live dot.
    =========================================================== */
-.hv-eye {
-  position: absolute;
-  top: 50%;
-  /* Vertically centered in the CRT screen, symmetric left-right.
-     Slightly more square than a vertical oval — matches the reference
-     image's tall-glowing-tube feel. */
-  width: 16%;
-  height: 42%;
-  margin-top: -21%;
-  border-radius: 50%;
-  transform: translate3d(0, 0, 4px);
-  /* Multi-stop radial: bright white core → light cyan-green halo →
-     deeper green → fully transparent edge. Sampled from the reference. */
-  background: radial-gradient(ellipse 50% 50% at 50% 50%,
-    #ffffff 0%,
-    #f0fcf8 8%,
-    #c8efd8 22%,
-    #8ac5a0 45%,
-    rgba(102, 145, 95, 0.4) 70%,
-    rgba(60, 100, 60, 0) 95%);
-  /* 4-layer glow: tight bright + medium green halo + wide soft outer +
-     extra-wide ambient spill (60px blur) so the glow visibly extends
-     beyond the screen and "lights" the surrounding head shell. */
-  filter:
-    drop-shadow(0 0 3px rgba(255, 255, 255, 0.95))
-    drop-shadow(0 0 16px rgba(180, 240, 200, 0.70))
-    drop-shadow(0 0 36px rgba(106, 200, 140, 0.50))
-    drop-shadow(0 0 60px rgba(106, 200, 140, 0.30));
-  animation: eye-glow-pulse 4.2s ease-in-out infinite;
-  left: 0;
-  z-index: 2;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  transform-origin: center center;
-  will-change: transform, filter;
-}
-
-/* Glow pulse — slow brightness/halo expansion cycle. The filter
-   values interpolate between the keyframes (0%/100% = base,
-   50% = brighter, larger halo). */
-@keyframes eye-glow-pulse {
-  0%, 100% {
-    filter:
-      drop-shadow(0 0 3px rgba(255, 255, 255, 0.95))
-      drop-shadow(0 0 14px rgba(180, 240, 200, 0.65))
-      drop-shadow(0 0 30px rgba(106, 180, 130, 0.35));
-  }
-  50% {
-    filter:
-      drop-shadow(0 0 5px rgba(255, 255, 255, 1))
-      drop-shadow(0 0 22px rgba(180, 240, 200, 0.85))
-      drop-shadow(0 0 48px rgba(106, 180, 130, 0.55));
-  }
-}
-
-/* BLINK — vertical squash. Toggled by JS via .is-blinking class.
-   The animation runs once and then the class is removed. */
-.hv-eye.is-blinking {
-  animation: eye-blink 180ms ease-in-out;
-}
-@keyframes eye-blink {
-  0%   { transform: translate3d(var(--eye-dx, 0px), var(--eye-dy, 0px), 4px) scaleY(1); }
-  45%  { transform: translate3d(var(--eye-dx, 0px), var(--eye-dy, 0px), 4px) scaleY(0.05); }
-  55%  { transform: translate3d(var(--eye-dx, 0px), var(--eye-dy, 0px), 4px) scaleY(0.05); }
-  100% { transform: translate3d(var(--eye-dx, 0px), var(--eye-dy, 0px), 4px) scaleY(1); }
-}
-
-/* Eye positions updated by JS (translate3d via --eye-x). */
-/* Eye baseline horizontal positions (always applied, not firing-only) */
-.hv-eye-l { left: 30%; }
-.hv-eye-r { left: 60%; }
-
-/* Eyes turn red when firing — override the green radial + green glows.
-   Now also: a ROOT FLARE via ::after that extends in the laser's
-   direction (left for L, right for R). This is the super-bright
-   "fire from the eye" core that the user asked for — the laser
-   appears to ORIGINATE from a hot plasma point in the eye, not
-   from somewhere in the middle of the beam. */
-.hv-figure.is-firing .hv-eye {
-  background: radial-gradient(ellipse 50% 50% at 50% 50%,
-    #ffffff 0%,
-    #fff4d0 8%,
-    #ffaa50 18%,
-    #ff4400 42%,
-    rgba(255, 80, 30, 0.45) 70%,
-    rgba(255, 30, 0, 0) 95%) !important;
-  filter:
-    drop-shadow(0 0 4px rgba(255, 255, 200, 0.95))
-    drop-shadow(0 0 18px rgba(255, 80, 50, 0.9))
-    drop-shadow(0 0 42px rgba(255, 30, 0, 0.7))
-    drop-shadow(0 0 80px rgba(255, 50, 30, 0.45)) !important;
-  /* No continuous eye-glow-pulse during firing — stays bright red */
-  animation: none !important;
-}
-/* Root FLARE ::after on the L eye — a short hot plume that extends
-   LEFT from the L eye (toward the laser's leftward direction).
-   Bright white-yellow core fading to red. Has 3-layer drop-shadow
-   for the "fire from the eye" feel. */
-.hv-figure.is-firing .hv-eye-l::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: 100%;
-  width: 60px;
-  height: 14px;
-  margin-top: -7px;
-  pointer-events: none;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 100, 50, 0.6) 10%,
-    rgba(255, 200, 100, 0.95) 30%,
-    rgba(255, 255, 240, 1) 50%,
-    rgba(255, 220, 130, 0.9) 75%,
-    rgba(255, 80, 30, 0.5) 95%,
-    transparent 100%);
-  filter:
-    drop-shadow(0 0 4px rgba(255, 255, 220, 0.95))
-    drop-shadow(0 0 12px rgba(255, 180, 80, 0.8))
-    drop-shadow(0 0 24px rgba(255, 80, 50, 0.6));
-  animation: root-flare-flicker 0.05s steps(2) infinite;
-}
-/* Same for the R eye — extends RIGHT */
-.hv-figure.is-firing .hv-eye-r::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  width: 60px;
-  height: 14px;
-  margin-top: -7px;
-  pointer-events: none;
-  background: linear-gradient(270deg,
-    transparent 0%,
-    rgba(255, 100, 50, 0.6) 10%,
-    rgba(255, 200, 100, 0.95) 30%,
-    rgba(255, 255, 240, 1) 50%,
-    rgba(255, 220, 130, 0.9) 75%,
-    rgba(255, 80, 30, 0.5) 95%,
-    transparent 100%);
-  filter:
-    drop-shadow(0 0 4px rgba(255, 255, 220, 0.95))
-    drop-shadow(0 0 12px rgba(255, 180, 80, 0.8))
-    drop-shadow(0 0 24px rgba(255, 80, 50, 0.6));
-  animation: root-flare-flicker 0.05s steps(2) infinite;
-  animation-delay: 0.02s;
-}
-@keyframes root-flare-flicker {
-  0%   { opacity: 1; transform: scaleX(1.08); }
-  50%  { opacity: 0.88; transform: scaleX(0.95); }
-  100% { opacity: 1; transform: scaleX(1.08); }
-}
-
-/* Flying EMBERS — tiny bright dots that animate FROM the eye
-   outward in the laser's direction. Two rings of embers (one
-   outgoing, one slightly behind it) for a continuous stream feel. */
-.hv-figure.is-firing .hv-eye::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 2px;
-  height: 2px;
-  margin: -1px 0 0 -1px;
-  background: #ffffff;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 5;
-  /* 8 embers in a horizontal fan, animated outward. The eye type
-     (L or R) determines direction via the per-side .is-firing rules
-     below. */
-  box-shadow:
-    0 -1px 0 -0.5px rgba(255, 220, 130, 0.9),
-    0 1px 0 -0.5px rgba(255, 180, 80, 0.8),
-    -4px -2px 0 -0.5px rgba(255, 200, 100, 0.85),
-    4px 2px 0 -0.5px rgba(255, 200, 100, 0.85),
-    -8px -3px 0 -0.5px rgba(255, 180, 80, 0.7),
-    8px 3px 0 -0.5px rgba(255, 180, 80, 0.7),
-    -12px -1px 0 -1px rgba(255, 150, 70, 0.55),
-    12px 1px 0 -1px rgba(255, 150, 70, 0.55);
-  animation: ember-pulse 0.18s steps(2) infinite;
-}
-@keyframes ember-pulse {
-  0%   { opacity: 1; transform: scale(1.4); }
-  50%  { opacity: 0.6; transform: scale(0.7); }
-  100% { opacity: 1; transform: scale(1.4); }
-}
-/* L eye embers fly LEFT */
-.hv-figure.is-firing .hv-eye-l::before {
-  animation: ember-fly-l 0.6s linear infinite, ember-pulse 0.18s steps(2) infinite;
-}
-/* R eye embers fly RIGHT */
-.hv-figure.is-firing .hv-eye-r::before {
-  animation: ember-fly-r 0.6s linear infinite, ember-pulse 0.18s steps(2) infinite;
-}
-@keyframes ember-fly-l {
-  0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-  20%  { opacity: 1; }
-  100% { transform: translate(-50px, 0) scale(0.4); opacity: 0; }
-}
-@keyframes ember-fly-r {
-  0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-  20%  { opacity: 1; }
-  100% { transform: translate(50px, 0) scale(0.4); opacity: 0; }
-}
-
-/* ===========================================================
-   BASE — DEJA VU label + thin floppy slot + Vesta brand
-   The reference image shows this row at the bottom of the monitor:
-   small text on the left, slim dark slot in the center, small
-   brand text on the right. All three at roughly the same height.
-   =========================================================== */
-.hv-base {
-  position: relative;
-  flex: 0 0 auto;
-  margin-top: 5%;
-  height: 12%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2%;
-  font-family: var(--font-mono);
-  user-select: none;
-}
-
-.hv-label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1.05;
-  color: rgba(50, 30, 12, 0.65);
-  text-transform: uppercase;
-  text-shadow: 0 1px 0 rgba(255, 245, 220, 0.4);
-}
-.hv-label-deja { text-align: left; }
-.hv-label-vesta { text-align: right; font-size: 8px; opacity: 0.7; }
-
-/* Thin floppy slot — narrow black bar with a small finger notch */
-.hv-floppy {
-  width: 28%;
-  height: 30%;
-  border-radius: 2px;
-  background: linear-gradient(180deg,
-    #1a1410 0%,
-    #0a0806 50%,
-    #1a1410 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(0, 0, 0, 0.6),
-    0 1px 0 rgba(255, 245, 220, 0.25);
-  position: relative;
-  align-self: center;
-}
-.hv-floppy::before {
-  content: '';
-  position: absolute;
-  top: 40%; left: 25%; right: 25%;
-  height: 20%;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 1px;
-}
-
-/* BACK face — clean solid beige (no vents/ports, minimalist) */
-.hv-face-back {
-  transform: rotateY(180deg) translateZ(calc(var(--D) / 2));
-  background: linear-gradient(180deg, #d6c39a 0%, #c4ad7e 50%, #9b8762 100%);
-  border-radius: 16px;
-  box-shadow: inset 0 0 0 1.5px rgba(60, 45, 25, 0.25);
-}
-
-/* SIDE faces — same beige, slightly darker for 3D depth */
-.hv-face-right, .hv-face-left, .hv-face-top, .hv-face-bottom {
-  background: linear-gradient(180deg, #d6c39a 0%, #c4ad7e 45%, #9b8762 100%);
-}
-.hv-face-right {
-  left: 100%; width: var(--D); height: 100%;
-  transform-origin: left center; transform: rotateY(90deg);
-  background: linear-gradient(180deg, #bfa477 0%, #a8946c 50%, #7a6a48 100%);
-  border-radius: 4px 14px 14px 4px;
-}
-.hv-face-left {
-  right: 100%; width: var(--D); height: 100%;
-  transform-origin: right center; transform: rotateY(-90deg);
-  background: linear-gradient(180deg, #bfa477 0%, #a8946c 50%, #7a6a48 100%);
-  border-radius: 14px 4px 4px 14px;
-}
-.hv-face-top {
-  top: auto; bottom: 100%; width: 100%; height: var(--D);
-  transform-origin: center bottom; transform: rotateX(90deg);
-  background: linear-gradient(90deg, #c4ad7e 0%, #d8c69e 50%, #c4ad7e 100%);
-  border-radius: 14px 14px 4px 4px;
-}
-.hv-face-bottom {
-  bottom: auto; top: 100%; width: 100%; height: var(--D);
-  transform-origin: center top; transform: rotateX(-90deg);
-  background: linear-gradient(90deg, #8a7a58 0%, #6e5e40 50%, #8a7a58 100%);
-  border-radius: 4px 4px 14px 14px;
-}
-
-/* ---------- BLINK animation: brief screen flash ---------- */
-.hv-blinking .hv-screen-vignette {
-  animation: hv-blink 180ms ease-out;
-}
-@keyframes hv-blink {
-  0%   { filter: brightness(0.6); }
-  30%  { filter: brightness(1.0); }
-  60%  { filter: brightness(1.0); }
-  100% { filter: brightness(0.6); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .hv-blinking .hv-screen-vignette { animation: none; }
-}
-
-/* Hero status chip — small, monospace, live dot. */
 .hv-status {
   position: absolute;
   top: 14px;
   right: 14px;
-  z-index: 2;
+  z-index: 6;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -1380,7 +857,10 @@ h1, h2, h3, h4, p { margin: 0; }
   50%      { opacity: 0.45; transform: scale(0.85); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hv-status::before { animation: none; }
+  .hv-status::before,
+  .hv-figure-img,
+  .hv-halo,
+  .hv-eye-glow { animation: none; }
 }
 
 /* ===========================================================

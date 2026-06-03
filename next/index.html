@@ -78,96 +78,46 @@
 
         <div class="hero-visual" id="heroVisual">
           <div class="hv-figure" id="hvFigure">
-            <!-- ============== BODY (headless photo) ==============
-                 Newly-generated half-body shot: warm-beige suit + cream
-                 shirt + gold tie, vintage 1980s. The top ~50% of the
-                 image is the same warm cream as the page background,
-                 so the neckline dissolves into the page and the CSS
-                 3D CRT head can sit on top with no hard edge. -->
-            <img class="hv-body" id="hvBody" src="assets/hero-body.png" alt="" draggable="false" aria-hidden="true" />
-            <!-- Body LIGHT REFLECTION — soft green-tinted gradient over
-                 the body image that simulates the CRT screen's green
-                 light spilling onto the suit. mix-blend-mode: screen
-                 so it lightens the dark suit areas without washing out
-                 the photo. JS sets --body-glow-x/y (eye position)
-                 so the highlight follows the eye gaze. -->
-            <div class="hv-body-light" id="hvBodyLight" aria-hidden="true"></div>
+            <!-- ============== HERO FIGURE (AI-generated single image) ==============
+                 Single AI-generated image of a surreal character: tan/brown
+                 suit, vintage cream CRT monitor as the head (green screen,
+                 DEJA VU label, Vesta brand), and 2 glowing red oval eyes
+                 (Homelander-style) in the upper 1/3 of the CRT screen.
 
-            <!-- ============== HEAD: pure-CSS 3D CRT cube ==============
-                 5 visible faces form a Mac Color Classic-style monitor
-                 with a green CRT on the front, beige plastic body,
-                 and real 3D thickness on every side. The JS tilts
-                 ONLY this element, so the head turns independently
-                 of the body image. -->
-            <div class="hv-head" id="hvHead" aria-hidden="true">
-              <div class="hv-cube">
-                <!-- Front: beige plastic + green CRT screen + base details -->
-                <div class="hv-face hv-face-front">
-                  <div class="hv-monitor">
-                    <!-- Ambient GLOW — radial gradient that extends beyond
-                         the screen edges, illuminating the head's plastic
-                         shell and the surrounding figure area. JS sets
-                         --glow-x/y/i based on mouse position + activity. -->
-                    <div class="hv-monitor-glow" id="hvMonitorGlow" aria-hidden="true"></div>
-                    <!-- CRT screen: dark green glass with curved corners -->
-                    <div class="hv-screen" id="hvScreen">
-                      <div class="hv-screen-glass" aria-hidden="true"></div>
-                      <!-- 2 glowing eyes (the focal point) -->
-                      <span class="hv-eye" id="hvEyeL"></span>
-                      <span class="hv-eye" id="hvEyeR"></span>
-                      <!-- Spark BURST — small particle dots scattered around
-                           each eye, only visible during laser firing.
-                           Each box-shadow is a 1-2px bright dot. -->
-                      <div class="hv-spark-burst hv-spark-l" aria-hidden="true"></div>
-                      <div class="hv-spark-burst hv-spark-r" aria-hidden="true"></div>
-                      <!-- Shockwave ring — expanding radial pulse from each
-                           eye during firing. Animates scale 0.6→1.6 with
-                           fading box-shadow, looks like a sonic wave. -->
-                      <div class="hv-shockwave hv-shockwave-l" aria-hidden="true"></div>
-                      <div class="hv-shockwave hv-shockwave-r" aria-hidden="true"></div>
-                      <div class="hv-screen-vignette" aria-hidden="true"></div>
-                      <div class="hv-screen-sweep" aria-hidden="true"></div>
-                    </div>
-                    <!-- Base details: "DEJA VU" + thin floppy slot + "Vesta" brand -->
-                    <div class="hv-base">
-                      <span class="hv-label hv-label-deja" aria-hidden="true">DEJA<br>VU</span>
-                      <div class="hv-floppy" aria-hidden="true"></div>
-                      <span class="hv-label hv-label-vesta" aria-hidden="true">▸ Vesta</span>
-                    </div>
-                    <!-- === LASER EYES (Homelander-style easter egg) ===
-                         Hidden by default. JS adds .is-firing to .hv-figure
-                         when the user clicks the head. The 2 laser beams
-                         shoot horizontally outward from the eyes, eyes
-                         turn red, beams flicker for 4.5s, then auto-
-                         revert via the JS setTimeout in triggerLaserEyes(). -->
-                    <div class="hv-laser hv-laser-l" aria-hidden="true"></div>
-                    <div class="hv-laser hv-laser-r" aria-hidden="true"></div>
-                  </div>
-                </div>
-                <!-- Back: rear of the CRT (vents + ports) -->
-                <div class="hv-face hv-face-back">
-                  <div class="hv-back-vents" aria-hidden="true"></div>
-                  <div class="hv-back-ports" aria-hidden="true">
-                    <span></span><span></span>
-                  </div>
-                </div>
-                <!-- Right side: beige plastic with vent slits + seam -->
-                <div class="hv-face hv-face-right">
-                  <div class="hv-side-vents" aria-hidden="true"></div>
-                </div>
-                <!-- Left side: mirror of right -->
-                <div class="hv-face hv-face-left">
-                  <div class="hv-side-vents" aria-hidden="true"></div>
-                </div>
-                <!-- Top: subtle seam line down the middle -->
-                <div class="hv-face hv-face-top"></div>
-                <!-- Bottom: rubber feet -->
-                <div class="hv-face hv-face-bottom">
-                  <div class="hv-foot hv-foot-1" aria-hidden="true"></div>
-                  <div class="hv-foot hv-foot-2" aria-hidden="true"></div>
-                </div>
-              </div>
-            </div>
+                 The image carries the entire head + body in one piece, so
+                 we no longer need a separate CSS 3D cube — the AI image IS
+                 the head. We only overlay: mouse-tracking halo, sparks,
+                 shockwave, and laser beams (positioned at the eye coords
+                 in the new image: 41% / 57% horizontal, 22% vertical). -->
+            <img class="hv-figure-img" id="hvFigureImg" src="assets/hero-homelander-ai.png" alt="Vesta CRT character with red laser eyes" draggable="false" aria-hidden="false" />
+
+            <!-- Mouse tracking HALO — follows the cursor on the figure
+                 with a soft warm glow. JS sets --halo-x/y. -->
+            <div class="hv-halo" id="hvHalo" aria-hidden="true"></div>
+
+            <!-- Eye GLOW PULSE — subtle red glow under each eye, breathes
+                 in idle state. CSS only, no JS. -->
+            <div class="hv-eye-glow hv-eye-glow-l" id="hvEyeGlowL" aria-hidden="true"></div>
+            <div class="hv-eye-glow hv-eye-glow-r" id="hvEyeGlowR" aria-hidden="true"></div>
+
+            <!-- Click TRIGGER — invisible button overlay covering the head
+                 (CRT area). Clicking triggers the laser eye easter egg. -->
+            <button class="hv-head-click" id="hvHeadClick" type="button" aria-label="Trigger laser eyes"></button>
+
+            <!-- Sparks and shockwave at the new eye positions -->
+            <div class="hv-spark-burst hv-spark-l" aria-hidden="true"></div>
+            <div class="hv-spark-burst hv-spark-r" aria-hidden="true"></div>
+            <div class="hv-shockwave hv-shockwave-l" aria-hidden="true"></div>
+            <div class="hv-shockwave hv-shockwave-r" aria-hidden="true"></div>
+
+            <!-- === LASER EYES (Homelander-style easter egg) ===
+                 Hidden by default. JS adds .is-firing to .hv-figure
+                 when the user clicks the head. The 2 laser beams
+                 shoot horizontally outward from the eyes, eyes
+                 glow brighter, beams flicker for 4.5s, then auto-
+                 revert via the JS setTimeout in triggerLaserEyes(). -->
+            <div class="hv-laser hv-laser-l" aria-hidden="true"></div>
+            <div class="hv-laser hv-laser-r" aria-hidden="true"></div>
 
             <span class="hv-status" id="hvStatus" aria-hidden="true">online</span>
           </div>
