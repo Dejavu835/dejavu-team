@@ -88,18 +88,20 @@
       }
     };
 
-    // Pixel-art eye tracking: swap between 3 hard frames (left/center/right)
-    // based on mouse X. This is the classic 8-bit-game look — eyes jump
-    // discretely, no smooth interpolation. The 3D head rotation (rotateX/Y)
-    // stays smooth though, so the body of the head still feels real.
+    // Pixel-art eye tracking: swap between 5 hard frames
+    // (left / lmid / center / rmid / right) based on mouse X.
+    // This is the classic 8-bit-game look — eyes jump discretely
+    // at higher frame rate than 3-frame so movement feels more
+    // responsive. 5 frames × 1 col shift each = 5 distinct eye
+    // positions across the green screen.
+    const FRAME_VARS = ['--pixel-left', '--pixel-lmid', '--pixel-center', '--pixel-rmid', '--pixel-right'];
     let lastFrame = -1;
     const setPixelFrame = (idx) => {
       if (idx === lastFrame) return;
       lastFrame = idx;
       if (!pixelFrame) return;
-      const f = ['--pixel-left', '--pixel-center', '--pixel-right'][idx];
-      pixelFrame.style.setProperty('--pixel-active', `var(${f})`);
-      pixelFrame.style.backgroundImage = `var(${f})`;
+      const v = FRAME_VARS[idx];
+      pixelFrame.style.backgroundImage = `var(${v})`;
     };
 
     const onMove = (e) => {
@@ -111,11 +113,9 @@
       heroSection.classList.add('is-hover');
       if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
 
-      // Swap pixel frame based on horizontal position:
-      // hx < 0.33  → left   (0)
-      // hx 0.33–0.67 → center (1)
-      // hx > 0.67  → right  (2)
-      const idx = hx < 0.33 ? 0 : (hx > 0.67 ? 2 : 1);
+      // 5 frame buckets: hx 0.0-0.2 / 0.2-0.4 / 0.4-0.6 / 0.6-0.8 / 0.8-1.0
+      // Using Math.floor(hx * 5) clamps to 0..4 cleanly.
+      const idx = Math.min(4, Math.max(0, Math.floor(hx * 5)));
       setPixelFrame(idx);
 
       if (rafId === null) rafId = requestAnimationFrame(apply);
@@ -124,7 +124,7 @@
       active = false;
       heroSection.classList.remove('is-hover');
       if (statusEl && statusEl.textContent !== 'online') statusEl.textContent = 'online';
-      setPixelFrame(1);  // reset to center
+      setPixelFrame(2);  // reset to center
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
 
