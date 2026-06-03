@@ -105,12 +105,15 @@
       heroFigure.classList.remove('is-detected', 'is-warning', 'is-firing');
       if (newState !== 'calm') heroFigure.classList.add('is-' + newState);
 
-      // State parameters
+      // State parameters. irisY is always 0 (user feedback: don't
+      // make the iris jump up — the build-up pressure comes from
+      // cover fade + red ambient + screen shake + status text, not
+      // from the iris moving).
       const params = {
-        calm:      { cover: 1.0,  ambient: 0.0,  irisY: 0,   shake: 0,   irisX: 0 },
-        detected:  { cover: 0.7,  ambient: 0.18, irisY: -1.2, shake: 0.5, irisX: 0 },
-        warning:   { cover: 0.32, ambient: 0.45, irisY: -1.5, shake: 1.0, irisX: 0 },
-        firing:    { cover: 0.0,  ambient: 0.9,  irisY: 0,   shake: 0,   irisX: 0 }
+        calm:      { cover: 1.0,  ambient: 0.0,  irisY: 0, shake: 0,   irisX: 0 },
+        detected:  { cover: 0.7,  ambient: 0.18, irisY: 0, shake: 0.5, irisX: 0 },
+        warning:   { cover: 0.32, ambient: 0.45, irisY: 0, shake: 1.0, irisX: 0 },
+        firing:    { cover: 0.0,  ambient: 0.9,  irisY: 0, shake: 0,   irisX: 0 }
       };
       const p = params[newState];
       setCoverOpacity(p.cover);
