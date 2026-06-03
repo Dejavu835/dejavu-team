@@ -3,10 +3,14 @@
    - nav scroll state
    - reveal on scroll (IntersectionObserver)
    - hero figure: 3D tilt + halo + iris + ambient red + shake
-   - STATE MACHINE: calm → detected → warning → firing
+   - STATE MACHINE: calm → detected → warning (3 clicks)
      (eye state, cover opacity, ambient, iris position, shake
      intensity, and status text all co-vary with state)
-   - laser easter egg (3 clicks → charge → fire)
+   - The 3rd-click laser firing effect was REMOVED (user
+     request — the X-pattern kept reading as V). The
+     'warning' state is now the climax: cover fully
+     transparent (red eyes fully revealed), red ambient
+     at 0.9, max shake, status "firing".
    - mobile drawer
    - Shanghai clock
    =========================================================== */
@@ -65,7 +69,8 @@
     let lastMoveTime = Date.now();
 
     // STATE MACHINE
-    // States: 'calm' | 'detected' | 'warning' | 'firing'
+    // States: 'calm' | 'detected' | 'warning'
+    // (firing was removed; 'warning' is now the climax state)
     // Each state controls: cover opacity, red ambient opacity,
     // iris position, shake intensity, status text, and
     // (via CSS class) the cover/iris/laser-source animations.
@@ -73,16 +78,12 @@
     // for DETECT_DECAY_MS (1.5s), state decays one level back.
     let currentState = 'calm';
     let stateDecayTimer = null;
-    let laserCooldown = false;
     const DETECT_DECAY_MS = 1500;
-    const FIRING_DURATION = 4500;
-    const COOLDOWN_MS = 1500;
-
+    // (FIRING_DURATION + COOLDOWN_MS removed — no more firing state)
     const STATE_LABELS = {
       calm: 'online',
       detected: 'detected',
-      warning: 'warning',
-      firing: 'firing'
+      warning: 'firing'    // 'warning' state now reads as "firing" (the climax) but with no lasers
     };
 
     const setCoverOpacity = (v) => {
@@ -101,19 +102,25 @@
       const prev = currentState;
       currentState = newState;
 
-      // Update figure classes (drives CSS for cover/iris/laser-source)
-      heroFigure.classList.remove('is-detected', 'is-warning', 'is-firing');
+      // Update figure classes (drives CSS for cover/iris/animations)
+      heroFigure.classList.remove('is-detected', 'is-warning');
       if (newState !== 'calm') heroFigure.classList.add('is-' + newState);
 
       // State parameters. irisY is always 0 (user feedback: don't
       // make the iris jump up — the build-up pressure comes from
       // cover fade + red ambient + screen shake + status text, not
       // from the iris moving).
+      //
+      // The 3rd-click 'firing' state was removed (user request)
+      // because the laser X-pattern kept reading as a V. The
+      // state machine now stops at 'warning' (3rd click). On
+      // the 3rd click, the cover is fully transparent (red eyes
+      // fully revealed), red ambient at 0.9, and after the
+      // decay window the state cycles back to detected/calm.
       const params = {
         calm:      { cover: 1.0,  ambient: 0.0,  irisY: 0, shake: 0,   irisX: 0 },
         detected:  { cover: 0.7,  ambient: 0.18, irisY: 0, shake: 0.5, irisX: 0 },
-        warning:   { cover: 0.32, ambient: 0.45, irisY: 0, shake: 1.0, irisX: 0 },
-        firing:    { cover: 0.0,  ambient: 0.9,  irisY: 0, shake: 0,   irisX: 0 }
+        warning:   { cover: 0.0,  ambient: 0.9,  irisY: 0, shake: 1.0, irisX: 0 }
       };
       const p = params[newState];
       setCoverOpacity(p.cover);
@@ -124,20 +131,12 @@
       // Update status text
       if (statusEl) statusEl.textContent = STATE_LABELS[newState];
 
-      // Schedule decay / firing end
+      // Schedule decay (warning → detected → calm)
       if (stateDecayTimer) { clearTimeout(stateDecayTimer); stateDecayTimer = null; }
-      if (newState === 'firing') {
-        laserCooldown = true;
-        stateDecayTimer = setTimeout(() => {
-          setState('calm');
-          setTimeout(() => { laserCooldown = false; }, COOLDOWN_MS);
-        }, FIRING_DURATION);
-      } else if (newState !== 'calm') {
-        // Decay one level after DETECT_DECAY_MS of inactivity
+      if (newState !== 'calm') {
         stateDecayTimer = setTimeout(() => {
           if (currentState === 'warning')   setState('detected');
           else if (currentState === 'detected') setState('calm');
-          else if (currentState === 'firing')  setState('calm');
         }, DETECT_DECAY_MS);
       }
     };
@@ -285,17 +284,23 @@
 
     /* ===========================================================
        CLICK STATE PROGRESSION
-       Each click advances: calm → detected → warning → firing
-       (3 clicks total). Once 'firing' triggers, the lasers run
-       for 4.5s and the state auto-reverts to 'calm' with a
-       1.5s cooldown. If the user stops clicking, the state
-       decays one level every 1.5s (warning → detected → calm).
+       Each click advances: calm → detected → warning
+       (3 clicks total). The 'firing' state was removed
+       (user request — the 3rd click no longer triggers
+       lasers, just the climax state with full red eyes
+       revealed). The warning state itself is now the
+       "climax" — cover fully transparent, red ambient at
+       0.9, max shake, status "firing".
+       After 1.5s of no clicks, state decays warning →
+       detected → calm.
        =========================================================== */
     const advanceState = () => {
-      if (laserCooldown) return;
       if (currentState === 'calm')     setState('detected');
       else if (currentState === 'detected') setState('warning');
-      else if (currentState === 'warning')  setState('firing');
+      // No more transition from warning — it just sits there
+      // and decays back. The 3rd click is essentially a no-op
+      // (user can keep clicking and the state stays at warning
+      // until they stop).
     };
 
     if (headClick) {
@@ -309,9 +314,9 @@
     heroFigure.addEventListener('click', (e) => {
       if (e.target.closest('#hvHeadClick')) return;
       if (e.target.closest('.hv-status')) return;
-      if (Math.random() < 0.08 && !laserCooldown) {
+      if (Math.random() < 0.08) {
         // Bump state by 1, but never more than 'warning' from
-        // a random figure click (head click is the only path to fire).
+        // a random figure click (the head button is the main path).
         if (currentState === 'calm') setState('detected');
         else if (currentState === 'detected') setState('warning');
       }

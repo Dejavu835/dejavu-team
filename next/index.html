@@ -117,46 +117,16 @@
             <div class="hv-eye-iris hv-eye-iris-l" id="hvEyeIrisL" aria-hidden="true"></div>
             <div class="hv-eye-iris hv-eye-iris-r" id="hvEyeIrisR" aria-hidden="true"></div>
 
-            <!-- LASER SOURCE — bright explosion point at each eye that
-                 appears only during firing. Gives the laser a clear
-                 "plasma origin" instead of a flat strip. -->
-            <div class="hv-laser-source hv-laser-source-l" aria-hidden="true"></div>
-            <div class="hv-laser-source hv-laser-source-r" aria-hidden="true"></div>
-
             <!-- Click TRIGGER — invisible button overlay covering the head
-                 (CRT area). Clicking repeatedly (3+ times in 2s) fires
-                 the laser eye easter egg. -->
-            <button class="hv-head-click" id="hvHeadClick" type="button" aria-label="Trigger laser eyes"></button>
+                 (CRT area). Used to advance the eye-state machine
+                 (calm → detected → warning) on each click. -->
+            <button class="hv-head-click" id="hvHeadClick" type="button" aria-label="Cycle eye state"></button>
 
             <!-- Sparks and shockwave at the new eye positions -->
             <div class="hv-spark-burst hv-spark-l" aria-hidden="true"></div>
             <div class="hv-spark-burst hv-spark-r" aria-hidden="true"></div>
             <div class="hv-shockwave hv-shockwave-l" aria-hidden="true"></div>
             <div class="hv-shockwave hv-shockwave-r" aria-hidden="true"></div>
-
-            <!-- === LASER EYES (Homelander-style easter egg) ===
-                 4 laser beams forming an X-pattern (user requested):
-                 each eye shoots 2 beams — one to upper-right, one to
-                 lower-left. The X-shape comes from BOTH eyes contributing
-                 to the same 2 diagonal directions. -->
-
-            <!-- LEFT eye, upper-right beam (extends right, tilts up -28°) -->
-            <div class="hv-laser hv-laser-l-up" aria-hidden="true"></div>
-            <!-- LEFT eye, lower-left beam (extends left, tilts down +28°) -->
-            <div class="hv-laser hv-laser-l-down" aria-hidden="true"></div>
-            <!-- RIGHT eye, upper-right beam (extends right, tilts up -28°) -->
-            <div class="hv-laser hv-laser-r-up" aria-hidden="true"></div>
-            <!-- RIGHT eye, lower-left beam (extends left, tilts down +28°) -->
-            <div class="hv-laser hv-laser-r-down" aria-hidden="true"></div>
-
-            <!-- WISP — thin horizontal "strand of light" passing through
-                 each eye. This is the "光丝穿过眼睛" effect the user
-                 referenced from Homelander's laser eyes — a wispy
-                 thread of light that appears to pierce the eye area
-                 (not just emit from it). 30% figure width, brightest
-                 at the eye, fading to transparent on both sides. -->
-            <div class="hv-eye-wisp hv-eye-wisp-l" aria-hidden="true"></div>
-            <div class="hv-eye-wisp hv-eye-wisp-r" aria-hidden="true"></div>
 
             <span class="hv-status" id="hvStatus" aria-hidden="true">online</span>
           </div>
