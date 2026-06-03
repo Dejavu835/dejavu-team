@@ -108,6 +108,16 @@
                       <!-- 2 glowing eyes (the focal point) -->
                       <span class="hv-eye" id="hvEyeL"></span>
                       <span class="hv-eye" id="hvEyeR"></span>
+                      <!-- Spark BURST — small particle dots scattered around
+                           each eye, only visible during laser firing.
+                           Each box-shadow is a 1-2px bright dot. -->
+                      <div class="hv-spark-burst hv-spark-l" aria-hidden="true"></div>
+                      <div class="hv-spark-burst hv-spark-r" aria-hidden="true"></div>
+                      <!-- Shockwave ring — expanding radial pulse from each
+                           eye during firing. Animates scale 0.6→1.6 with
+                           fading box-shadow, looks like a sonic wave. -->
+                      <div class="hv-shockwave hv-shockwave-l" aria-hidden="true"></div>
+                      <div class="hv-shockwave hv-shockwave-r" aria-hidden="true"></div>
                       <div class="hv-screen-vignette" aria-hidden="true"></div>
                       <div class="hv-screen-sweep" aria-hidden="true"></div>
                     </div>

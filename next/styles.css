@@ -607,9 +607,14 @@ h1, h2, h3, h4, p { margin: 0; }
   pointer-events: none;
   opacity: 0;
   z-index: 6;
-  /* Hot core (white-yellow) + outer red glow layers */
+  /* 4-layer glow: tight inner white + warm halo + red outer + wide
+     ambient. Each layer blurs at a different radius so the beam
+     feels "alive" with a multi-color bloom. */
   filter:
-    drop-shadow(0 0 4px rgba(255, 100, 50, 0.95))
+    drop-shadow(0 0 2px rgba(255, 255, 220, 0.98))
+    drop-shadow(0 0 5px rgba(255, 180, 80, 0.9))
+    drop-shadow(0 0 14px rgba(255, 80, 50, 0.75))
+    drop-shadow(0 0 32px rgba(255, 30, 0, 0.5));
     drop-shadow(0 0 14px rgba(255, 80, 50, 0.75))
     drop-shadow(0 0 32px rgba(255, 30, 0, 0.5));
 }
@@ -677,18 +682,22 @@ h1, h2, h3, h4, p { margin: 0; }
   70%  { transform: scaleX(1.05); }
   100% { transform: scaleX(1); }
 }
-/* Beam flicker — subtle brightness / width wobble for a "raw energy" feel */
+/* Beam flicker — multi-layer brightness / width wobble. 5 layers
+   give a much richer glow that pulses in intensity. */
 @keyframes laser-flicker {
   0%   { filter:
-            drop-shadow(0 0 4px rgba(255, 100, 50, 0.95))
+            drop-shadow(0 0 2px rgba(255, 255, 220, 0.98))
+            drop-shadow(0 0 5px rgba(255, 180, 80, 0.9))
             drop-shadow(0 0 14px rgba(255, 80, 50, 0.75))
             drop-shadow(0 0 32px rgba(255, 30, 0, 0.5)); }
   50%  { filter:
-            drop-shadow(0 0 5px rgba(255, 130, 60, 1))
-            drop-shadow(0 0 18px rgba(255, 90, 50, 0.85))
-            drop-shadow(0 0 36px rgba(255, 50, 10, 0.6)); }
+            drop-shadow(0 0 3px rgba(255, 255, 240, 1))
+            drop-shadow(0 0 7px rgba(255, 200, 100, 1))
+            drop-shadow(0 0 18px rgba(255, 90, 50, 0.9))
+            drop-shadow(0 0 40px rgba(255, 50, 10, 0.65)); }
   100% { filter:
-            drop-shadow(0 0 4px rgba(255, 100, 50, 0.95))
+            drop-shadow(0 0 2px rgba(255, 255, 220, 0.98))
+            drop-shadow(0 0 5px rgba(255, 180, 80, 0.9))
             drop-shadow(0 0 14px rgba(255, 80, 50, 0.75))
             drop-shadow(0 0 32px rgba(255, 30, 0, 0.5)); }
 }
@@ -712,6 +721,138 @@ h1, h2, h3, h4, p { margin: 0; }
    stays at the bright red state (no continuous green-pulse) */
 .hv-figure.is-firing .hv-eye {
   animation: none !important;
+}
+
+/* ===========================================================
+   SPARK BURST — small particle dots scattered around each eye
+   during laser firing. Each box-shadow is a 1-2px bright dot
+   positioned in a radial pattern. The dots flicker to give a
+   'energy radiating outward' feel. Two outer 'shockwave' rings
+   expand outward continuously while firing (subtle radial pulse).
+   =========================================================== */
+.hv-spark-burst {
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px 0 0 -1.5px;
+  border-radius: 50%;
+  background: #ffffff;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  /* 12 radial sparks at varying radii. The 0 0 0 0 inset creates
+     no shadow at center (the 3px bg dot is the center). */
+}
+/* L spark — positioned at L eye center 38% */
+.hv-spark-l {
+  left: 38%;
+  box-shadow:
+    /* bright center cluster (3-5px from center) */
+    0 0 0 0.5px rgba(255, 255, 240, 1),
+    0 0 4px 1px rgba(255, 220, 130, 0.95),
+    3px -3px 0 0.5px rgba(255, 200, 100, 0.9),
+    -3px -3px 0 0.5px rgba(255, 180, 90, 0.85),
+    3px 3px 0 0.5px rgba(255, 220, 110, 0.85),
+    -3px 3px 0 0.5px rgba(255, 200, 100, 0.9),
+    /* mid ring sparks (6-10px) */
+    6px -8px 0 0 rgba(255, 200, 100, 0.8),
+    -6px -8px 0 0 rgba(255, 150, 80, 0.75),
+    10px 0 0 0 rgba(255, 220, 110, 0.7),
+    -10px 0 0 0 rgba(255, 200, 100, 0.7),
+    8px 8px 0 0 rgba(255, 180, 90, 0.65),
+    -8px 8px 0 0 rgba(255, 200, 100, 0.65),
+    /* outer ring sparks (12-20px) */
+    14px -14px 0 -0.5px rgba(255, 200, 100, 0.55),
+    -14px -14px 0 -0.5px rgba(255, 150, 80, 0.5),
+    20px -6px 0 -1px rgba(255, 220, 110, 0.45),
+    -20px -6px 0 -1px rgba(255, 200, 100, 0.45),
+    16px 14px 0 -1px rgba(255, 200, 100, 0.4),
+    -16px 14px 0 -1px rgba(255, 150, 80, 0.4),
+    /* outermost spark embers (24-32px, very subtle) */
+    26px 20px 0 -1.5px rgba(255, 180, 90, 0.3),
+    -26px 20px 0 -1.5px rgba(255, 200, 100, 0.3);
+  animation: spark-flicker 0.08s steps(2) infinite;
+}
+/* R spark — positioned at R eye center 68% */
+.hv-spark-r {
+  left: 68%;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 240, 1),
+    0 0 4px 1px rgba(255, 220, 130, 0.95),
+    3px -3px 0 0.5px rgba(255, 200, 100, 0.9),
+    -3px -3px 0 0.5px rgba(255, 180, 90, 0.85),
+    3px 3px 0 0.5px rgba(255, 220, 110, 0.85),
+    -3px 3px 0 0.5px rgba(255, 200, 100, 0.9),
+    6px -8px 0 0 rgba(255, 200, 100, 0.8),
+    -6px -8px 0 0 rgba(255, 150, 80, 0.75),
+    10px 0 0 0 rgba(255, 220, 110, 0.7),
+    -10px 0 0 0 rgba(255, 200, 100, 0.7),
+    8px 8px 0 0 rgba(255, 180, 90, 0.65),
+    -8px 8px 0 0 rgba(255, 200, 100, 0.65),
+    14px -14px 0 -0.5px rgba(255, 200, 100, 0.55),
+    -14px -14px 0 -0.5px rgba(255, 150, 80, 0.5),
+    20px -6px 0 -1px rgba(255, 220, 110, 0.45),
+    -20px -6px 0 -1px rgba(255, 200, 100, 0.45),
+    16px 14px 0 -1px rgba(255, 200, 100, 0.4),
+    -16px 14px 0 -1px rgba(255, 150, 80, 0.4),
+    26px 20px 0 -1.5px rgba(255, 180, 90, 0.3),
+    -26px 20px 0 -1.5px rgba(255, 200, 100, 0.3);
+  animation: spark-flicker 0.08s steps(2) infinite;
+  animation-delay: 0.04s;  /* R spark slightly out of phase with L */
+}
+.hv-figure.is-firing .hv-spark-burst {
+  opacity: 1;
+  /* Brighter glow + slight position jitter via filter */
+  filter: drop-shadow(0 0 6px rgba(255, 200, 100, 0.9))
+          drop-shadow(0 0 16px rgba(255, 80, 50, 0.6));
+}
+/* Spark flicker — subtle brightness pulse (raw energy feel) */
+@keyframes spark-flicker {
+  0%   { filter: drop-shadow(0 0 6px rgba(255, 200, 100, 0.9)); }
+  50%  { filter: drop-shadow(0 0 9px rgba(255, 220, 130, 1))
+                 drop-shadow(0 0 20px rgba(255, 100, 50, 0.7)); }
+  100% { filter: drop-shadow(0 0 6px rgba(255, 200, 100, 0.9)); }
+}
+
+/* Shockwave ring — an expanding radial pulse that ripples outward
+   from each eye when firing. Done via box-shadow on a separate
+   "halo" element with a 0-size center. */
+.hv-shockwave {
+  position: absolute;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+}
+.hv-shockwave-l { left: 38%; }
+.hv-shockwave-r { left: 68%; }
+.hv-figure.is-firing .hv-shockwave {
+  opacity: 1;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 200, 100, 0.95),
+    0 0 12px 2px rgba(255, 150, 80, 0.6),
+    0 0 28px 4px rgba(255, 80, 50, 0.3);
+  animation: shockwave-pulse 0.6s cubic-bezier(0, 0.7, 0.3, 1) infinite;
+}
+@keyframes shockwave-pulse {
+  0% {
+    transform: scale(0.6);
+    box-shadow:
+      0 0 0 0.5px rgba(255, 200, 100, 1),
+      0 0 12px 2px rgba(255, 150, 80, 0.7),
+      0 0 28px 4px rgba(255, 80, 50, 0.35);
+  }
+  100% {
+    transform: scale(1.6);
+    box-shadow:
+      0 0 0 1px rgba(255, 200, 100, 0),
+      0 0 18px 3px rgba(255, 150, 80, 0),
+      0 0 36px 6px rgba(255, 80, 50, 0);
+  }
 }
 
 /* Also dim the ambient green monitor-glow during firing (so the
