@@ -735,20 +735,31 @@ h1, h2, h3, h4, p { margin: 0; }
             drop-shadow(0 0 32px rgba(255, 30, 0, 0.5)); }
 }
 
-/* Eyes turn red when firing — override the green radial + green glows */
+/* Eyes turn red when firing — override the green radial + green glows.
+   Also: the eyes GROW (24% wide × 60% tall) and the white-hot core
+   becomes more prominent, so the eyes are clearly the SOURCE of
+   the laser rather than small dim dots being overwhelmed by the
+   beam. 6-layer red drop-shadow makes them 'molten'. */
 .hv-figure.is-firing .hv-eye {
+  width: 24% !important;
+  height: 60% !important;
+  margin-top: -30% !important;
   background: radial-gradient(ellipse 50% 50% at 50% 50%,
     #ffffff 0%,
-    #fff4d0 8%,
-    #ffaa50 18%,
+    #ffffff 5%,
+    #fff4d0 12%,
+    #ffaa50 22%,
     #ff4400 42%,
-    rgba(255, 80, 30, 0.45) 70%,
-    rgba(255, 30, 0, 0) 95%) !important;
+    rgba(255, 80, 30, 0.5) 65%,
+    rgba(255, 30, 0, 0.3) 85%,
+    rgba(255, 30, 0, 0) 100%) !important;
   filter:
-    drop-shadow(0 0 4px rgba(255, 255, 200, 0.95))
-    drop-shadow(0 0 18px rgba(255, 80, 50, 0.9))
-    drop-shadow(0 0 42px rgba(255, 30, 0, 0.7))
-    drop-shadow(0 0 80px rgba(255, 50, 30, 0.45)) !important;
+    drop-shadow(0 0 3px rgba(255, 255, 255, 1))
+    drop-shadow(0 0 8px rgba(255, 255, 200, 0.98))
+    drop-shadow(0 0 20px rgba(255, 200, 100, 0.95))
+    drop-shadow(0 0 42px rgba(255, 80, 50, 0.85))
+    drop-shadow(0 0 80px rgba(255, 30, 0, 0.55))
+    drop-shadow(0 0 120px rgba(255, 50, 30, 0.30)) !important;
 }
 /* Override the eye-glow-pulse animation during firing so the eye
    stays at the bright red state (no continuous green-pulse) */
