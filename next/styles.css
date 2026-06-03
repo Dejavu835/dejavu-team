@@ -555,6 +555,49 @@ h1, h2, h3, h4, p { margin: 0; }
   100% { opacity: var(--halo-i, 0.6); transform: scale(1); filter: brightness(1); }
 }
 
+/* CARD-EDGE GLOW — soft warm light that extends BEYOND the
+   figure's edges (inset: -18% on all sides). The user wanted
+   light effects to "overflow the hero card area" on
+   interaction. This is a NEW layer that sits BEHIND the
+   halo (z-index 1) and shines outward beyond the figure's
+   card boundaries. The light is positioned with a soft
+   radial gradient that brightens in the figure's center
+   and fades to transparent at the edges.
+
+   In calm state: opacity 0 (hidden).
+   On mouse move: opacity pulses to 0.5.
+   On click: opacity briefly 0.85 (then back to 0). */
+.hv-card-glow {
+  position: absolute;
+  inset: -18%;            /* extends 18% beyond the figure on all sides */
+  border-radius: var(--radius-xl);
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse 65% 50% at 50% 35%,
+    rgba(255, 180, 100, 0.55) 0%,
+    rgba(255, 120, 60, 0.30) 35%,
+    rgba(255, 80, 30, 0.12) 60%,
+    transparent 80%
+  );
+  opacity: var(--card-glow-i, 0);
+  mix-blend-mode: screen;
+  transition: opacity 0.4s var(--ease);
+  animation: hv-card-glow-breathe 4s ease-in-out infinite;
+}
+.hv-card-glow.is-pulse {
+  animation: hv-card-glow-click 0.9s ease-out;
+}
+@keyframes hv-card-glow-breathe {
+  0%, 100% { filter: brightness(0.95); }
+  50%      { filter: brightness(1.1); }
+}
+@keyframes hv-card-glow-click {
+  0%   { opacity: 0.85; filter: brightness(1.6); }
+  60%  { opacity: 0.55; filter: brightness(1.2); }
+  100% { opacity: var(--card-glow-i, 0.4); filter: brightness(1); }
+}
+
 /* RED AMBIENT — environmental red light cast over the
    figure area during the click buildup. Opacity driven
    by JS via --red-i (0 = calm, 0.15 = detected,
@@ -787,12 +830,15 @@ h1, h2, h3, h4, p { margin: 0; }
   height: 2px;
   margin-top: -1px;
   /* WISP GROWTH: the width scales with --wisp-extension
-     (set by JS based on state). Base = 45% figure width. On
-     click 1 (detected) it extends to 1.4x (63%), on click 2
-     (warning) it extends to 2.0x (90%) — at 2.0x the wisp
+     (set by JS based on state). The base width is set per
+     eye via --wisp-base-w (left=45%, right=32% — the LEFT
+     wisp is 1.4× longer than the RIGHT, matching the eye
+     size ratio). On click 1 (detected) it extends to 1.4x
+     (left→63%, right→45%), on click 2 (warning) it extends
+     to 2.4x (left→108%, right→77%) — at 2.4x the LEFT wisp
      extends BEYOND the hero card edges, giving the 'light
      growing out' effect the user wanted. */
-  width: calc(45% * var(--wisp-extension, 1));
+  width: calc(var(--wisp-base-w, 45%) * var(--wisp-extension, 1));
   pointer-events: none;
   z-index: 3;
   /* Per-eye transform: translateX(-50%) centers, rotate gives
@@ -827,21 +873,16 @@ h1, h2, h3, h4, p { margin: 0; }
   mix-blend-mode: screen;
   transition: opacity 0.5s var(--ease), width 0.6s var(--ease);
 }
-/* LEFT wisp: at y=31.8% (slightly higher than right), tilted -4deg
-   (slight downward angle — the right side of the wisp dips down,
-   pointing toward the eye in a 'menacing scowl'). */
 .hv-eye-wisp-l {
   left: 35%;
   top: 31.8%;
+  --wisp-base-w: 45%;
   --wisp-tilt: -4deg;
 }
-/* RIGHT wisp: at y=32.3% (slightly lower than left), tilted +4deg
-   (slight upward angle — the right side rises up, mirroring the
-   left). The DIFFERENT y + DIFFERENT tilt means the two wisps
-   never line up — they always read as two distinct lines. */
 .hv-eye-wisp-r {
   left: 48.5%;
   top: 32.3%;
+  --wisp-base-w: 32%;
   --wisp-tilt: 4deg;
 }
 /* The wisp STAYS VISIBLE through the state progression — it

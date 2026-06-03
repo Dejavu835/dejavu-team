@@ -86,9 +86,15 @@
   //   Left:  center (306, 366) → 35.42% × 31.77%
   //   Right: center (421, 368) → 48.73% × 31.94%
   // ===========================================================
+  // fR (figure rect) is computed at the top of the if-block so
+  // both positionChildren() and setState() can access it.
+  // It's re-computed on each call (cheap — just a getBoundingClientRect).
+  let fR = heroFigure.getBoundingClientRect();
+  const refreshFR = () => { fR = heroFigure.getBoundingClientRect(); };
+
   const positionChildren = () => {
     if (!heroFigure) return;
-    const fR = heroFigure.getBoundingClientRect();
+    refreshFR();
     if (fR.width === 0 || fR.height === 0) return; // skip if not rendered
 
     const setEyePosition = (el, xPct, yPct) => {
@@ -167,7 +173,10 @@
       shakeLevel = level;
     };
 
+    // Helper: re-compute fR before setState (in case the figure
+    // size changed due to a 3D layout shift, etc.)
     const setState = (newState, opts = {}) => {
+      refreshFR();
       const prev = currentState;
       currentState = newState;
 
@@ -186,16 +195,17 @@
       // the 3rd click, the cover is fully transparent (red eyes
       // fully revealed), red ambient at 0.9, and after the
       // decay window the state cycles back to detected/calm.
-      // WISP EXTENSION per state. Base is 1.0 (45% figure width).
-      // On click 1 (detected) it grows to 1.4 (63%). On click 2
-      // (warning) it grows to 2.0 (90%) — at 2.0x the wisp extends
-      // BEYOND the hero card edges, giving the 'light growing
-      // out' effect the user wanted. The wisp's 0.6s CSS transition
-      // on width makes the growth smooth.
+      // WISP EXTENSION per state. Base is 1.0 (left=45%, right=32%
+      // figure width). On click 1 (detected) it grows to 1.4.
+      // On click 2 (warning) it grows to 2.4 — at 2.4x the LEFT
+      // wisp is 108% of figure width (extends well BEYOND the
+      // hero card edges), giving the 'light growing out' effect
+      // the user wanted. The wisp's 0.6s CSS transition on width
+      // makes the growth smooth.
       const params = {
-        calm:      { cover: 1.0,  ambient: 0.0,  irisY: 0, shake: 0,   irisX: 0, wispExt: 1.0  },
-        detected:  { cover: 0.7,  ambient: 0.18, irisY: 0, shake: 0.5, irisX: 0, wispExt: 1.4  },
-        warning:   { cover: 0.0,  ambient: 0.9,  irisY: 0, shake: 1.0, irisX: 0, wispExt: 2.0  }
+        calm:      { cover: 1.0,  ambient: 0.0,  irisY: 0, shake: 0,   irisX: 0, wispExt: 1.0 },
+        detected:  { cover: 0.7,  ambient: 0.18, irisY: 0, shake: 0.5, irisX: 0, wispExt: 1.4 },
+        warning:   { cover: 0.0,  ambient: 0.9,  irisY: 0, shake: 1.0, irisX: 0, wispExt: 2.4 }
       };
       const p = params[newState];
       setCoverOpacity(p.cover);
@@ -203,9 +213,20 @@
       setIris(p.irisX, p.irisY);
       setShakeLevel(p.shake);
       // Wisp growth: set the --wisp-extension CSS var on the figure.
-      // The .hv-eye-wisp selectors use calc(45% * var(--wisp-extension))
+      // The .hv-eye-wisp selectors use calc(var(--wisp-base-w) * var(--wisp-extension))
       // to scale their width.
       heroFigure.style.setProperty('--wisp-extension', String(p.wispExt));
+      // ALSO set the wisp widths directly in pixels (CSS calc with
+      // custom property multiplication doesn't always recompute on
+      // iPad Safari when the var changes — belt-and-suspenders).
+      if (fR.width > 0) {
+        // Use !important via setProperty to override any
+        // computed CSS that might be caching the old width.
+        const wispLW = (0.45 * p.wispExt * fR.width) + 'px';
+        const wispRW = (0.32 * p.wispExt * fR.width) + 'px';
+        if (wispL) wispL.style.setProperty('width', wispLW, 'important');
+        if (wispR) wispR.style.setProperty('width', wispRW, 'important');
+      }
 
       // Update status text
       if (statusEl) statusEl.textContent = STATE_LABELS[newState];
@@ -220,7 +241,9 @@
       }
     };
 
-    /* ---------- 3a. Iris + halo follow cursor ---------- */
+    const cardGlow = $('#hvCardGlow');
+
+    /* ---------- 3a. Iris + halo + card-glow follow cursor ---------- */
     const IRIS_RANGE_X = 8;
     const IRIS_RANGE_Y = 4;
     let currentIrisX = 0, currentIrisY = 0;
@@ -300,6 +323,13 @@
         halo.style.setProperty('--halo-y', (hy * 100).toFixed(1) + '%');
         halo.style.setProperty('--halo-i', '0.95');
       }
+      // CARD-EDGE GLOW: pulses to 0.5 on mouse movement (the
+      // user wanted light to "overflow the hero card area").
+      // In calm state, this is the first light effect that
+      // extends BEYOND the figure's borders (inset: -18%).
+      if (cardGlow) {
+        cardGlow.style.setProperty('--card-glow-i', '0.5');
+      }
       // Iris follows cursor only in calm state (avoid fighting state)
       if (currentState === 'calm') {
         const nx = (hx - 0.5) * 2;
@@ -317,6 +347,10 @@
         halo.style.setProperty('--halo-i', '0.45');
         halo.style.setProperty('--halo-x', '50%');
         halo.style.setProperty('--halo-y', '30%');
+      }
+      // CARD-EDGE GLOW fades back when cursor leaves
+      if (cardGlow) {
+        cardGlow.style.setProperty('--card-glow-i', '0');
       }
       // Reset iris only in calm state
       if (currentState === 'calm') {
@@ -397,6 +431,18 @@
         setTimeout(() => {
           if (halo) halo.classList.remove('is-pulse');
         }, 700);
+      }
+      // CARD-EDGE GLOW click feedback — on each click, the
+      // card-edge glow briefly pulses brighter (matches the
+      // halo pulse, gives a synchronized "click registered"
+      // visual). Returns to its previous intensity after 0.9s.
+      if (cardGlow) {
+        cardGlow.classList.remove('is-pulse');
+        void cardGlow.offsetWidth;
+        cardGlow.classList.add('is-pulse');
+        setTimeout(() => {
+          if (cardGlow) cardGlow.classList.remove('is-pulse');
+        }, 900);
       }
     };
 

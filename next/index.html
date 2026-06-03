@@ -95,6 +95,16 @@
                  with a soft warm glow. JS sets --halo-x/y. -->
             <div class="hv-halo" id="hvHalo" aria-hidden="true"></div>
 
+            <!-- CARD-EDGE GLOW — soft warm light that extends BEYOND
+                 the figure's edges (inset: -15% on all sides). The
+                 user wanted light effects to "overflow the hero
+                 card area" on interaction. This glow is hidden in
+                 calm state (opacity 0), pulses to opacity 0.5 when
+                 the user moves the mouse over the figure, and
+                 briefly to 0.85 on each head click. It gives the
+                 "warm light spilling out of the card" effect. -->
+            <div class="hv-card-glow" id="hvCardGlow" aria-hidden="true"></div>
+
             <!-- RED AMBIENT — red light cast around the figure during
                  the click buildup (warning/danger states). The opacity
                  is driven by JS via --red-i, so it builds progressively
