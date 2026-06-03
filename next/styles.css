@@ -828,12 +828,19 @@ h1, h2, h3, h4, p { margin: 0; }
    (figure ~520px), each beam is ~260px for full drama.
 
    Each beam is:
-     - 3px tall white core
-     - 7-layer optical drop-shadow (white-hot, cream, warm
-       halo, orange, red, deep red, atmospheric scatter)
+     - 4px tall white core (was 3px, slightly thicker so
+       the lower-X beams stay visible against the tan
+       suit — at 3px the white was getting absorbed)
+     - 8-layer optical drop-shadow (white-hot, cream,
+       warm halo, orange, red, deep red, atmospheric
+       scatter, + a DARK inner shadow that gives the
+       white core a defined edge so it doesn't get
+       'eaten' by the cream/tan suit on the lower-X)
      - Bright white peak at the eye, fading to transparent
        at the far end
-     - 220px long (tighter than before to stay in figure)
+     - 50% of figure width (was fixed 220px) — scales
+       with viewport so on mobile the lasers stay
+       proportional and visible
 
    Combined with the .hv-laser-source (bright plasma point
    at the eye) and .hv-eye-wisp (horizontal strand of light
@@ -845,8 +852,8 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-laser {
   position: absolute;
   top: 32%;
-  height: 3px;
-  margin-top: -1.5px;
+  height: 4px;
+  margin-top: -2px;
   pointer-events: none;
   opacity: 0;
   z-index: 5;
@@ -854,7 +861,11 @@ h1, h2, h3, h4, p { margin: 0; }
   /* 7-layer optical glow — white-hot core + warm halo + orange
      + red + deep red + red ambient + wide atmospheric scatter.
      The drop-shadows give the beam its 'light in the air' feel
-     by stacking color halos of increasing blur radius. */
+     by stacking color halos of increasing blur radius. The 8th
+     layer is a DARK inner shadow (counter-intuitive for a 'light'
+     effect) — it gives the white core a defined edge that stays
+     visible against the tan suit background (without it, the
+     lower-X beams get 'eaten' by the cream/tan suit color). */
   filter:
     drop-shadow(0 0 1px rgba(255, 255, 255, 1))
     drop-shadow(0 0 2px rgba(255, 255, 240, 1))
@@ -862,7 +873,8 @@ h1, h2, h3, h4, p { margin: 0; }
     drop-shadow(0 0 10px rgba(255, 130, 70, 0.85))
     drop-shadow(0 0 18px rgba(255, 60, 30, 0.7))
     drop-shadow(0 0 36px rgba(255, 30, 10, 0.45))
-    drop-shadow(0 0 72px rgba(255, 80, 30, 0.25));
+    drop-shadow(0 0 72px rgba(255, 80, 30, 0.25))
+    drop-shadow(0 0 1px rgba(0, 0, 0, 0.4));   /* dark edge for tan-bg contrast */
 }
 
 /* LEFT eye, UPPER-RIGHT beam — extends RIGHT from the left
