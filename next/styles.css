@@ -531,7 +531,9 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-face-seam-top    { top: 67.5%; }
 .hv-face-seam-bottom { top: 68.5%; height: 1px; background: rgba(255, 245, 220, 0.35); }
 
-/* CRT screen sub-element — the green phosphor area */
+/* CRT screen sub-element — the green phosphor area.
+   The screen now has perspective + 4 parallax layers for the
+   "bare-eye 3D" / autostereoscopic effect (see html for layer order). */
 .hv-crt-screen {
   position: absolute;
   top: 7%;
@@ -539,74 +541,174 @@ h1, h2, h3, h4, p { margin: 0; }
   width: 82%;
   height: 58%;
   border-radius: 12px;
-  background: radial-gradient(ellipse 95% 75% at 50% 50%,
-    #2e5230 0%, #1a341e 35%, #0d1f10 70%, #040a05 100%);
+  /* The perspective that makes translateZ differences read as real
+     depth. Smaller value = stronger 3D (more parallax per px). */
+  perspective: 380px;
+  perspective-origin: 50% 50%;
   /* deep inset shadow = glass thickness + CRT curvature feel */
   box-shadow:
-    inset 0 0 0 3px rgba(40, 30, 20, 0.7),         /* outer dark bevel */
-    inset 0 0 0 4px rgba(180, 200, 175, 0.10),     /* thin glass ring */
-    inset 0 0 28px rgba(0, 0, 0, 0.7),             /* glass depth */
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),       /* top sheen */
-    inset 0 -2px 0 rgba(0, 0, 0, 0.4);             /* bottom glass shadow */
+    inset 0 0 0 3px rgba(40, 30, 20, 0.7),
+    inset 0 0 0 4px rgba(180, 200, 175, 0.10),
+    inset 0 0 28px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.4);
   overflow: hidden;
+  transform-style: preserve-3d;
+  /* Painted-on dark green so the .hv-screen-bg layer can be transparent */
+  background: transparent;
+}
+/* All screen layers share the same full-bleed positioning and 3D context */
+.hv-screen-bg,
+.hv-screen-overlay,
+.hv-screen-eyes,
+.hv-screen-reflect,
+.hv-screen-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
-/* soft white glow following the cursor */
+/* Layer 0 — deepest: dark green phosphor background, slight base color.
+   translateZ is negative so this layer is BEHIND the screen plane. */
+.hv-screen-bg {
+  transform: translate3d(var(--p-x, 0px), var(--p-y, 0px), -28px) scale(1.18);
+  background: radial-gradient(ellipse 95% 75% at 50% 50%,
+    #2e5230 0%, #1a341e 35%, #0d1f10 70%, #040a05 100%);
+  /* scale up so when this layer translates, the edges never show
+     empty (since z is far back, the layer is bigger on screen). */
+}
+
+/* Layer 1 — mid-back: scanlines + vignette (CRT surface texture) */
+.hv-screen-overlay {
+  transform: translate3d(var(--p-x, 0px), var(--p-y, 0px), -14px) scale(1.10);
+  background: repeating-linear-gradient(0deg,
+    rgba(0, 0, 0, 0.22) 0px, rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px, transparent 3px);
+  mix-blend-mode: multiply;
+  opacity: 0.7;
+}
+.hv-screen-vignette {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 80% 65% at 50% 50%,
+    transparent 50%, rgba(0, 0, 0, 0.6) 100%);
+}
+
+/* Layer 2 — front: 3D eyes. Each eye is a tiny 4-layer sphere
+   (sclera + iris + pupil + glint) sitting in front of the screen. */
+.hv-screen-eyes {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 12%;
+  transform: translate3d(var(--p-x, 0px), var(--p-y, 0px), 12px) scale(1.04);
+  z-index: 1;
+}
+.hv-eye-wrap {
+  position: relative;
+  width: 22%;
+  aspect-ratio: 1 / 1;
+  /* sphere wrapper holds the 4 sub-layers in their own 3D space */
+  transform-style: preserve-3d;
+}
+.hv-eye-sphere {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  /* the whole sphere can tilt slightly with the cursor */
+  transform: rotateY(var(--sphere-y, 0deg)) rotateX(var(--sphere-x, 0deg));
+  transition: transform 0.18s var(--ease);
+}
+
+/* The 4 sub-layers of the eye, each at a different Z depth.
+   Together they form a tiny "ball" that catches light from the front. */
+.hv-eye-sclera,
+.hv-eye-iris,
+.hv-eye-pupil,
+.hv-eye-glint {
+  position: absolute;
+  border-radius: 50%;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+/* 1. Outer white (sclera) — biggest, closest to viewer but the
+   "skin" of the ball, z=0 */
+.hv-eye-sclera {
+  background: radial-gradient(ellipse at 35% 30%,
+    #ffffff 0%, #e8f0f4 40%, #b8c4cc 80%, #7a8a92 100%);
+  box-shadow:
+    0 0 10px rgba(255, 255, 255, 0.5),
+    0 0 22px rgba(140, 220, 200, 0.35),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.18);
+  transform: translateZ(0);
+}
+/* 2. Iris — slightly smaller, slightly forward. Tracks the cursor
+   inside the eye (large amplitude on X, small on Y) */
+.hv-eye-iris {
+  top: 16%; left: 16%; right: 16%; bottom: 16%;
+  inset: 16%;
+  background: radial-gradient(circle at 50% 50%,
+    #6ad8c0 0%, #2a8a78 45%, #0a3a30 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    inset 0 0 4px rgba(0, 0, 0, 0.4),
+    0 0 8px rgba(106, 216, 192, 0.5);
+  transform: translate3d(var(--ir-x, 0px), var(--ir-y, 0px), 5px);
+  transition: transform 0.14s var(--ease);
+}
+/* 3. Pupil — even smaller, more forward. Tracks the cursor with
+   even larger amplitude (extra "stick-out" feel for 3D) */
+.hv-eye-pupil {
+  top: 32%; left: 32%; right: 32%; bottom: 32%;
+  inset: 32%;
+  background: radial-gradient(circle at 50% 50%,
+    #1a1a1a 0%, #0a0a0a 60%, #000 100%);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+  transform: translate3d(var(--pup-x, 0px), var(--pup-y, 0px), 9px);
+  transition: transform 0.14s var(--ease);
+}
+/* 4. Glint — fixed, doesn't track the cursor (a real highlight
+   stays in place relative to the viewer, not the iris) */
+.hv-eye-glint {
+  top: 24%; left: 28%; right: 50%; bottom: 50%;
+  inset: 24% 50% 50% 28%;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+  transform: translateZ(13px);
+  filter: blur(0.4px);
+}
+
+/* Layer 3 — closest: glass reflection. This is the fixed diagonal
+   sheen that doesn't move with the cursor (a real reflection
+   stays where the light source is, not where the eye looks) */
+.hv-screen-reflect {
+  transform: translate3d(calc(var(--p-x, 0px) * 0.4), calc(var(--p-y, 0px) * 0.4), 24px) scale(1.02);
+  background:
+    linear-gradient(125deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.06) 40%,
+      rgba(255, 255, 255, 0.16) 50%,
+      rgba(255, 255, 255, 0.06) 60%,
+      transparent 70%);
+  mix-blend-mode: screen;
+  z-index: 2;
+}
+
+/* Layer 4 — soft cursor-following glow, lives just in front of
+   the screen so the highlight reads as "light spilling on the glass" */
 .hv-screen-glow {
-  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  transform: translate3d(0, 0, 18px);
   background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.20) 0%,
     rgba(180, 230, 200, 0.10) 22%,
     transparent 50%);
   opacity: 0; mix-blend-mode: screen; filter: blur(2px);
   transition: opacity 0.4s var(--ease);
 }
-/* glass reflection — a fixed diagonal highlight that doesn't move
-   with the cursor, mimicking a piece of curved glass */
-.hv-screen-reflect {
-  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background:
-    linear-gradient(125deg,
-      transparent 30%,
-      rgba(255, 255, 255, 0.06) 40%,
-      rgba(255, 255, 255, 0.14) 50%,
-      rgba(255, 255, 255, 0.06) 60%,
-      transparent 70%);
-  mix-blend-mode: screen;
-}
-.hv-screen-scanline {
-  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: repeating-linear-gradient(0deg,
-    rgba(0, 0, 0, 0.22) 0px, rgba(0, 0, 0, 0.22) 1px,
-    transparent 1px, transparent 3px);
-  opacity: 0.55; mix-blend-mode: multiply;
-}
-.hv-screen-vignette {
-  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: radial-gradient(ellipse 80% 65% at 50% 50%,
-    transparent 50%, rgba(0, 0, 0, 0.6) 100%);
-}
-
-/* CRT eyes — sit on the screen, track the mouse */
-.hv-eye {
-  position: absolute; top: 50%;
-  width: 16%; height: 22%;
-  margin-top: -11%; margin-left: -8%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 45%,
-    #ffffff 0%, #e8f4f8 25%, #b8d0d8 60%, #6a7a82 100%);
-  transform: translate3d(var(--ex, 0px), var(--ey, 0px), 0);
-  transition: transform 0.16s var(--ease);
-  will-change: transform;
-  box-shadow:
-    0 0 10px rgba(255, 255, 255, 0.6),
-    0 0 24px rgba(160, 220, 200, 0.45),
-    inset 0 1px 2px rgba(255, 255, 255, 0.85);
-  filter: drop-shadow(0 0 5px rgba(160, 220, 200, 0.30));
-  z-index: 2;
-}
-.hv-eye-l { left: 28%; }
-.hv-eye-r { left: 72%; }
 
 /* Base details (Mac-Classic style) */
 .hv-base-sticker {

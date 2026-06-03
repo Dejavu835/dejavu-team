@@ -98,12 +98,36 @@
                 <div class="hv-face hv-face-front">
                   <div class="hv-face-seam hv-face-seam-top" aria-hidden="true"></div>
                   <div class="hv-crt-screen">
+                    <!-- 4 parallax layers create the autostereoscopic
+                         (bare-eye 3D) feel. Mouse position drives each
+                         layer's translateX/Y at different magnitudes:
+                         far layers move less, near layers move more.
+                         Perspective on .hv-crt-screen is what makes the
+                         translateZ differences read as real depth. -->
+                    <div class="hv-screen-bg"></div>
+                    <div class="hv-screen-overlay" id="hvScanline">
+                      <div class="hv-screen-vignette"></div>
+                    </div>
+                    <div class="hv-screen-eyes">
+                      <div class="hv-eye-wrap hv-eye-l" id="hvEyeL">
+                        <div class="hv-eye-sphere">
+                          <div class="hv-eye-sclera"></div>
+                          <div class="hv-eye-iris" id="hvEyeIrisL"></div>
+                          <div class="hv-eye-pupil"></div>
+                          <div class="hv-eye-glint"></div>
+                        </div>
+                      </div>
+                      <div class="hv-eye-wrap hv-eye-r" id="hvEyeR">
+                        <div class="hv-eye-sphere">
+                          <div class="hv-eye-sclera"></div>
+                          <div class="hv-eye-iris" id="hvEyeIrisR"></div>
+                          <div class="hv-eye-pupil"></div>
+                          <div class="hv-eye-glint"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="hv-screen-reflect"></div>
                     <div class="hv-screen-glow" id="hvGlow"></div>
-                    <div class="hv-screen-reflect" aria-hidden="true"></div>
-                    <div class="hv-screen-scanline" id="hvScanline"></div>
-                    <span class="hv-eye hv-eye-l" id="hvEyeL"></span>
-                    <span class="hv-eye hv-eye-r" id="hvEyeR"></span>
-                    <div class="hv-screen-vignette"></div>
                   </div>
                   <div class="hv-base-sticker" aria-hidden="true">Color<br>Classic</div>
                   <div class="hv-base-floppy" aria-hidden="true"></div>
