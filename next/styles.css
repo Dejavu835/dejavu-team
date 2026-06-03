@@ -480,19 +480,44 @@ h1, h2, h3, h4, p { margin: 0; }
      left' bug). Setting translateZ(0) prevents this. */
   transform: translateZ(0);
   will-change: transform;
-  border: 1px solid var(--line-soft);
+  border: 1.5px solid rgba(26, 26, 26, 0.18);
   border-radius: var(--radius-xl);
   background:
     radial-gradient(ellipse 80% 60% at 30% 0%,
       rgba(255, 245, 220, 0.55) 0%, transparent 60%),
     var(--bg-card);
   box-shadow:
-    0 50px 100px rgba(40, 30, 20, 0.18),
-    0 16px 36px rgba(40, 30, 20, 0.10),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    0 60px 120px rgba(40, 30, 20, 0.30),
+    0 20px 44px rgba(40, 30, 20, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   overflow: visible;
   cursor: crosshair;
   will-change: transform;
+}
+
+/* INNER POLAROID FRAME: a thin rounded outline drawn 6px
+   inside the figure's edge. Because the figure's own
+   background is cream (--bg-card) and the page background is
+   slightly darker cream (--bg-base), this 1px outline + the
+   cream gap between figure's outer border and the outline
+   creates a clear "card with image inside" frame so the
+   rounded shape is unmistakable.
+
+   pointer-events: none — doesn't block clicks.
+   z-index 4 — sits above image (1), halo (2), glow (1),
+   red-ambient (2), eye-cover (3), eye-wisp (3). The frame
+   is a 1px outline at the figure's outer edge, so it never
+   overlaps with eye contents (which are near top-center of
+   figure). Particles (z=4) and head-click (z=4) appear
+   later in HTML and therefore render on top of this frame. */
+.hv-figure::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(26, 26, 26, 0.22);
+  border-radius: calc(var(--radius-xl) - 6px);
+  pointer-events: none;
+  z-index: 4;
 }
 
 /* The AI image fills the figure. JS sets the figure's
