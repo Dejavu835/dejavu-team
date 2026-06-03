@@ -627,58 +627,56 @@ h1, h2, h3, h4, p { margin: 0; }
    =========================================================== */
 .hv-laser {
   position: absolute;
-  /* Y center: monitor is laid out as 6% padding-top, screen flex 1,
-     base 12% of monitor height, 6% padding-bottom. The screen starts
-     at 6% from top; eye Y center = 6% + 0.5 × (1-0.06-0.06-0.12) =
-     0.44 of monitor height. Use 44% so the beam aligns with the eye. */
   top: 44%;
-  height: 9px;
-  margin-top: -4.5px;
+  /* THICK brush-stroke beam (was 9px thin line). The beam now has
+     painterly mass, not a thin line. */
+  height: 22px;
+  margin-top: -11px;
   pointer-events: none;
   opacity: 0;
   z-index: 6;
-  /* 4-layer glow: tight inner white + warm halo + red outer + wide
-     ambient. Each layer blurs at a different radius so the beam
-     feels "alive" with a multi-color bloom. */
+  transform: scaleX(0);
+  /* 5-layer painterly glow: tight white-hot core + warm halo + red
+     inner + red outer + wide red ambient. The combined drop-shadows
+     give the beam a 'thick paint stroke' look. */
   filter:
-    drop-shadow(0 0 2px rgba(255, 255, 220, 0.98))
-    drop-shadow(0 0 5px rgba(255, 180, 80, 0.9))
-    drop-shadow(0 0 14px rgba(255, 80, 50, 0.75))
-    drop-shadow(0 0 32px rgba(255, 30, 0, 0.5));
-    drop-shadow(0 0 14px rgba(255, 80, 50, 0.75))
-    drop-shadow(0 0 32px rgba(255, 30, 0, 0.5));
+    drop-shadow(0 0 3px rgba(255, 255, 220, 0.98))
+    drop-shadow(0 0 8px rgba(255, 200, 100, 0.95))
+    drop-shadow(0 0 16px rgba(255, 80, 50, 0.85))
+    drop-shadow(0 0 30px rgba(255, 30, 0, 0.55))
+    drop-shadow(0 0 50px rgba(255, 50, 30, 0.3));
 }
 .hv-laser-l {
-  /* Beam shoots LEFT from the left eye (at 38% of screen — the L eye
-     is at left:30%, width:16%, so its center is at 38%). The beam's
-     right edge is anchored to that center, and the beam extends ~280px
-     leftward (past the figure boundary). */
   right: 38%;
   width: 280px;
   transform-origin: right center;
-  transform: scaleX(0);
-  /* Gradient: 100% (eye end, right edge) is the HOTTEST (white-hot
-     plasma core where the beam originates). It fades through orange
-     and red as it travels leftward to the beam tip. */
+  /* Slight upward tilt (-4deg) — beam goes up-and-to-the-left
+     like the user-drawn reference. The tilt is applied AFTER
+     scaleX in transform syntax, so the beam still grows from the
+     eye (right edge) outward. */
+  transform: scaleX(0) rotate(-4deg);
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(255, 60, 30, 0.2) 5%,
-    rgba(255, 100, 50, 0.45) 15%,
-    rgba(255, 160, 70, 0.7) 30%,
-    rgba(255, 220, 130, 0.92) 55%,
-    rgba(255, 255, 240, 1) 85%,
-    rgba(255, 255, 255, 1) 100%  /* PEAK at the eye (100% = right edge) */
+    rgba(255, 60, 30, 0.25) 6%,
+    rgba(255, 100, 50, 0.5) 18%,
+    rgba(255, 180, 80, 0.85) 38%,
+    rgba(255, 255, 220, 1) 70%,
+    rgba(255, 255, 255, 1) 100%  /* PEAK at the eye */
   );
+  /* Painterly frayed edges: box-shadows at 0±Xpx give the beam
+     a thicker, irregular edge like a wet paint stroke. */
+  box-shadow:
+    0 -8px 0 -3px rgba(255, 80, 30, 0.65),
+    0 8px 0 -3px rgba(255, 80, 30, 0.65),
+    0 -14px 0 -5px rgba(255, 60, 30, 0.4),
+    0 14px 0 -5px rgba(255, 60, 30, 0.4);
 }
 .hv-laser-r {
-  /* Beam shoots RIGHT from the right eye (at 68% of screen — R eye
-     is at left:60%, width:16%, center at 68%). */
   left: 68%;
   width: 280px;
   transform-origin: left center;
-  transform: scaleX(0);
-  /* Gradient: 100% (eye end, left edge) is the HOTTEST. Fades
-     rightward to the beam tip. */
+  /* Mirror tilt: +4deg (up-and-to-the-right) */
+  transform: scaleX(0) rotate(4deg);
   background: linear-gradient(270deg,
     transparent 0%,
     rgba(255, 60, 30, 0.2) 5%,
@@ -688,6 +686,12 @@ h1, h2, h3, h4, p { margin: 0; }
     rgba(255, 255, 240, 1) 85%,
     rgba(255, 255, 255, 1) 100%  /* PEAK at the eye (100% = left edge) */
   );
+  /* Painterly frayed edges (mirror of L) */
+  box-shadow:
+    0 -8px 0 -3px rgba(255, 80, 30, 0.65),
+    0 8px 0 -3px rgba(255, 80, 30, 0.65),
+    0 -14px 0 -5px rgba(255, 60, 30, 0.4),
+    0 14px 0 -5px rgba(255, 60, 30, 0.4);
 }
 
 /* When the figure has .is-firing, the beams become visible, scale
@@ -704,16 +708,18 @@ h1, h2, h3, h4, p { margin: 0; }
   animation: laser-shoot-r 0.18s cubic-bezier(0.2, 0.9, 0.4, 1) forwards,
              laser-flicker 0.06s 0.18s steps(2, end) infinite;
 }
-/* Beam shoot-out — beam grows from 0 to full length with slight overshoot */
+/* Beam shoot-out — beam grows from 0 to full length with slight overshoot.
+   Keyframes include the rotation so the static -4deg/+4deg tilt
+   is preserved during the animation. */
 @keyframes laser-shoot-l {
-  0%   { transform: scaleX(0); }
-  70%  { transform: scaleX(1.05); }
-  100% { transform: scaleX(1); }
+  0%   { transform: scaleX(0) rotate(-4deg); }
+  70%  { transform: scaleX(1.05) rotate(-4deg); }
+  100% { transform: scaleX(1) rotate(-4deg); }
 }
 @keyframes laser-shoot-r {
-  0%   { transform: scaleX(0); }
-  70%  { transform: scaleX(1.05); }
-  100% { transform: scaleX(1); }
+  0%   { transform: scaleX(0) rotate(4deg); }
+  70%  { transform: scaleX(1.05) rotate(4deg); }
+  100% { transform: scaleX(1) rotate(4deg); }
 }
 /* Beam flicker — multi-layer brightness / width wobble. 5 layers
    give a much richer glow that pulses in intensity. */
