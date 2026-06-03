@@ -462,6 +462,15 @@ h1, h2, h3, h4, p { margin: 0; }
   aspect-ratio: 864 / 1152;     /* match the AI image's actual ratio */
   margin-right: -4%;
   perspective: 1200px;
+  /* CRITICAL: preserve-3d keeps the AI image (z=0) and all
+     overlay children (cover, iris, halo, wisp, ambient) on
+     the SAME 3D plane. Without this, the children are
+     rendered flat in 2D and the parent's rotateX/Y creates
+     a perspective offset that visually SEPARATES the
+     white cover from the red eyes (user reported: "转头时
+     白色眼睛脱离红色眼睛"). With preserve-3d, the cover
+     and image rotate together and stay aligned. */
+  transform-style: preserve-3d;
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-xl);
   background:
@@ -520,10 +529,21 @@ h1, h2, h3, h4, p { margin: 0; }
   mix-blend-mode: screen;
   transition: opacity 0.4s var(--ease);
   animation: hv-halo-pulse 3.4s ease-in-out infinite;
+  /* The .is-pulse class is added by JS on each head click and
+     triggers a brief brightening/expanding of the halo (visible
+     click feedback). Returns to normal after 0.7s. */
+}
+.hv-halo.is-pulse {
+  animation: hv-halo-click-feedback 0.7s ease-out;
 }
 @keyframes hv-halo-pulse {
   0%, 100% { filter: brightness(1); }
   50%      { filter: brightness(1.12); }
+}
+@keyframes hv-halo-click-feedback {
+  0%   { opacity: 1.0; transform: scale(1.08); filter: brightness(1.8); }
+  60%  { opacity: 0.95; transform: scale(1.04); filter: brightness(1.4); }
+  100% { opacity: var(--halo-i, 0.6); transform: scale(1); filter: brightness(1); }
 }
 
 /* RED AMBIENT — environmental red light cast over the
@@ -584,7 +604,10 @@ h1, h2, h3, h4, p { margin: 0; }
     transparent 85%
   );
   filter: blur(2.5px);
-  transform: translate(-50%, -50%);
+  /* translate3d(0,0,0) = translateZ(0) — force the cover onto
+     the same 3D plane as the AI image so the 3D tilt doesn't
+     separate the white from the red eyes underneath. */
+  transform: translate(-50%, -50%) translateZ(0);
   opacity: var(--eye-cover-opacity, 1);
   transition: opacity 0.5s var(--ease);
   animation: hv-eye-cover-breathe 4s ease-in-out infinite;
@@ -673,6 +696,7 @@ h1, h2, h3, h4, p { margin: 0; }
     transparent 100%
   );
   filter: blur(0.4px);
+  transform: translate(-50%, -50%) translateZ(0);
   transform: translate(-50%, -50%);
   opacity: var(--iris-opacity, 0.9);
   top: calc(32% + var(--iris-y, 0px));
@@ -704,8 +728,57 @@ h1, h2, h3, h4, p { margin: 0; }
 /* Iris disappears during firing (the bright laser source takes over). */
 .hv-figure.is-firing .hv-eye-iris {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.3);
+  transform: translate(-50%, -50%) scale(0.3) translateZ(0);
   transition: opacity 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+/* WISP — thin horizontal "wispy strand of light" that passes
+   through each eye. The user wanted the wisp to be MORE
+   OBVIOUS and LONGER but NOT laser-like. This version:
+     - 2px tall (was 1.5px)
+     - 45% figure width (was 32%)
+     - Soft multi-layer gradient (no sharp laser edges)
+     - Visible in calm + warning states (fades to red)
+     - translateZ(0) so it stays on the same 3D plane as
+       the AI image (prevents separation during tilt) */
+.hv-eye-wisp {
+  position: absolute;
+  top: 32%;
+  height: 2px;
+  margin-top: -1px;
+  width: 45%;
+  pointer-events: none;
+  z-index: 3;
+  transform: translateX(-50%) translateZ(0);
+  background:
+    /* Inner brighter core (smaller, more intense) */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 245, 220, 0.2) 15%,
+      rgba(255, 250, 235, 0.55) 50%,
+      rgba(255, 245, 220, 0.2) 85%,
+      transparent 100%
+    ),
+    /* Outer soft halo (wider, softer) */
+    radial-gradient(
+      ellipse 60% 200% at 50% 50%,
+      rgba(255, 240, 200, 0.35) 0%,
+      rgba(255, 220, 160, 0.2) 40%,
+      transparent 80%
+    );
+  filter: blur(0.4px);
+  opacity: 0.85;
+  mix-blend-mode: screen;
+  transition: opacity 0.5s var(--ease);
+}
+.hv-eye-wisp-l { left: 35%; }
+.hv-eye-wisp-r { left: 48.5%; }
+/* The wisp fades as the cover fades to red (so it doesn't
+   compete with the red glow). In warning state (cover 0%),
+   the wisp is barely visible. */
+.hv-figure.is-detected .hv-eye-wisp,
+.hv-figure.is-warning .hv-eye-wisp {
+  opacity: 0.3;
 }
 
 /* Invisible click TRIGGER — covers the head/CRT area of the
@@ -718,7 +791,7 @@ h1, h2, h3, h4, p { margin: 0; }
   top: 8%;
   width: 70%;
   height: 45%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateZ(0);
   background: transparent;
   border: 0;
   padding: 0;
@@ -904,6 +977,7 @@ h1, h2, h3, h4, p { margin: 0; }
   .hv-eye-glow { animation: none; }
   .hv-eye-cover,
   .hv-eye-iris,
+  .hv-eye-wisp,
   .hv-red-ambient { animation: none; }
   .hv-figure.is-detected .hv-eye-cover,
   .hv-figure.is-warning .hv-eye-cover,

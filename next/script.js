@@ -301,6 +301,19 @@
       // and decays back. The 3rd click is essentially a no-op
       // (user can keep clicking and the state stays at warning
       // until they stop).
+      // Halo click feedback — every click triggers a brief
+      // brightening/expanding of the halo (visual confirmation
+      // that the click was registered). The .is-pulse class
+      // is added + removed after the 0.7s animation completes.
+      if (halo) {
+        halo.classList.remove('is-pulse');
+        // Force reflow so the animation restarts on rapid clicks
+        void halo.offsetWidth;
+        halo.classList.add('is-pulse');
+        setTimeout(() => {
+          if (halo) halo.classList.remove('is-pulse');
+        }, 700);
+      }
     };
 
     if (headClick) {
@@ -319,6 +332,15 @@
         // a random figure click (the head button is the main path).
         if (currentState === 'calm') setState('detected');
         else if (currentState === 'detected') setState('warning');
+        // Halo click feedback on random figure clicks too
+        if (halo) {
+          halo.classList.remove('is-pulse');
+          void halo.offsetWidth;
+          halo.classList.add('is-pulse');
+          setTimeout(() => {
+            if (halo) halo.classList.remove('is-pulse');
+          }, 700);
+        }
       }
     });
 
