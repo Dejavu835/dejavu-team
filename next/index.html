@@ -95,13 +95,29 @@
                  with a soft warm glow. JS sets --halo-x/y. -->
             <div class="hv-halo" id="hvHalo" aria-hidden="true"></div>
 
-            <!-- Eye GLOW PULSE — subtle red glow under each eye, breathes
-                 in idle state. CSS only, no JS. -->
-            <div class="hv-eye-glow hv-eye-glow-l" id="hvEyeGlowL" aria-hidden="true"></div>
-            <div class="hv-eye-glow hv-eye-glow-r" id="hvEyeGlowR" aria-hidden="true"></div>
+            <!-- EYE COVERS — warm white radial gradient that hides the
+                 baked-in red eyes in the calm state. Fades out as the
+                 user clicks the head repeatedly, revealing red underneath
+                 before the laser fires. -->
+            <div class="hv-eye-cover hv-eye-cover-l" id="hvEyeCoverL" aria-hidden="true"></div>
+            <div class="hv-eye-cover hv-eye-cover-r" id="hvEyeCoverR" aria-hidden="true"></div>
+
+            <!-- EYE IRIS — small bright "pupil" highlight that drifts
+                 around within each eye, simulating curious gaze. JS sets
+                 --iris-x/y for each eye (default centered, drifts when
+                 idle, snaps to mouse position on hover). -->
+            <div class="hv-eye-iris hv-eye-iris-l" id="hvEyeIrisL" aria-hidden="true"></div>
+            <div class="hv-eye-iris hv-eye-iris-r" id="hvEyeIrisR" aria-hidden="true"></div>
+
+            <!-- LASER SOURCE — bright explosion point at each eye that
+                 appears only during firing. Gives the laser a clear
+                 "plasma origin" instead of a flat strip. -->
+            <div class="hv-laser-source hv-laser-source-l" aria-hidden="true"></div>
+            <div class="hv-laser-source hv-laser-source-r" aria-hidden="true"></div>
 
             <!-- Click TRIGGER — invisible button overlay covering the head
-                 (CRT area). Clicking triggers the laser eye easter egg. -->
+                 (CRT area). Clicking repeatedly (3+ times in 2s) fires
+                 the laser eye easter egg. -->
             <button class="hv-head-click" id="hvHeadClick" type="button" aria-label="Trigger laser eyes"></button>
 
             <!-- Sparks and shockwave at the new eye positions -->
