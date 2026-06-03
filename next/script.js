@@ -41,9 +41,9 @@
     revealEls.forEach((el) => el.classList.add('is-in'));
   }
 
-  // ---------- 3. hero visual: 3D mouse-tilt + eye/glow tracking ----------
+  // ---------- 3. hero visual: 3D head tilt + eye/glow tracking ----------
   const heroFigure  = $('#hvFigure');
-  const heroChar    = $('#hvCharacter');     // preserve-3d container (the actual 3D scene)
+  const heroHead    = $('#hvHead');          // 3D cube (only the head turns)
   const heroSection = $('.hero');
   const eyeL = $('#hvEyeL');
   const eyeR = $('#hvEyeR');
@@ -54,13 +54,15 @@
   // synthetic mousemove so the same code path runs on mobile).
   const okViewport = matchMedia('(min-width: 880px)').matches ||
                      matchMedia('(hover: none)').matches;
-  if (heroFigure && heroChar && heroSection && okViewport &&
+  if (heroFigure && heroHead && heroSection && okViewport &&
       !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    /* Tilt the whole CSS-3D character (head + neck + torso) so the user
-       can see real 3D thickness on every part as it turns. Ranges are
-       generous — this is the whole point of the 3D rebuild. */
+    /* Tilt ONLY the CSS-3D head cube. The body image is a real photo
+       and stays still (product 360° convention). The cube is positioned
+       with translateX(-50%) translateZ(36px) so the mouse rotation
+       composes ON TOP of that — the final transform is rotation +
+       base translate. */
     const MAX_TILT_X = 14;    // deg  (up/down nod)
-    const MAX_TILT_Y = 24;    // deg  (left/right head turn)
+    const MAX_TILT_Y = 26;    // deg  (left/right head turn)
     let mx = 0.5, my = 0.5;
     let targetX = 0.5, targetY = 0.5;
     let rafId = null;
@@ -72,9 +74,10 @@
       my += (targetY - my) * 0.22;
       const dx = mx - 0.5;
       const dy = my - 0.5;
-      // Apply the rotation to the preserve-3d character container, so
-      // every 3D face inside it (cube head, suit body) tilts together.
-      heroChar.style.transform =
+      // IMPORTANT: this OVERWRITES the base translateX(-50%) translateZ(36px).
+      // We re-apply them on every frame so the head stays centered + forward.
+      heroHead.style.transform =
+        `translateX(-50%) translateZ(36px) ` +
         `rotateX(${(-dy * MAX_TILT_X).toFixed(2)}deg) ` +
         `rotateY(${(dx * MAX_TILT_Y).toFixed(2)}deg)`;
       if (Math.abs(targetX - mx) > 0.001 || Math.abs(targetY - my) > 0.001) {

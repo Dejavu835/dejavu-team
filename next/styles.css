@@ -423,14 +423,13 @@ h1, h2, h3, h4, p { margin: 0; }
 .hero-tags a:hover::after { transform: scaleX(1); }
 
 /* ===========================================================
-   HERO VISUAL — pure-CSS 3D character
+   HERO VISUAL — split: photo body (masked) + pure-CSS 3D head
 
-   No external image. The whole figure is built from CSS
-   primitives in 3D space: a CRT-head cube, a neck band, a
-   suit torso with collar and tie. Everything lives inside
-   .hv-character (transform-style: preserve-3d), and the JS
-   tilts that container with rotateX/rotateY, so the user
-   can see real 3D thickness on every part.
+   The body is the original hero-robot.jpg, with the head
+   area masked out via gradient so it cleanly "ends" at the
+   neckline. The head is a real CSS cube sitting on top of
+   the neckline, and only the head tilts on mouse move
+   (the body image stays still, like a product 360° view).
    =========================================================== */
 .hero-visual {
   position: relative;
@@ -438,7 +437,7 @@ h1, h2, h3, h4, p { margin: 0; }
   align-items: center;
   justify-content: flex-end;
   perspective: 1200px;
-  perspective-origin: 50% 50%;
+  perspective-origin: 50% 45%;
   overflow: visible;
   padding-right: 0;
   min-height: 580px;
@@ -450,30 +449,56 @@ h1, h2, h3, h4, p { margin: 0; }
   margin-right: -4%;
   cursor: crosshair;
   background: transparent;
-  /* soft drop shadow under the character (transformed by 3D too) */
+  /* soft drop shadow under the figure */
   filter: drop-shadow(0 40px 50px rgba(40, 30, 20, 0.22));
   perspective: 1200px;
 }
-.hv-character {
+
+/* ---------- BODY: photo with the head area masked out ---------- */
+.hv-body {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
-  /* JS will set transform: rotateX/rotateY based on cursor */
-  will-change: transform;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;   /* frame the chest/shoulder area */
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  border-radius: var(--radius-xl);
+  /* Mask the top 50% of the image out with a gradient so the
+     "neckline" fades into the page background and the CSS head
+     can sit on top with no hard edge. y=50% in the photo is the
+     seam between the CRT (top) and the body (bottom). */
+  -webkit-mask-image: linear-gradient(180deg,
+    transparent 0%,
+    transparent 45%,
+    rgba(0, 0, 0, 0.5) 49%,
+    #000 53%,
+    #000 100%);
+          mask-image: linear-gradient(180deg,
+    transparent 0%,
+    transparent 45%,
+    rgba(0, 0, 0, 0.5) 49%,
+    #000 53%,
+    #000 100%);
+  z-index: 1;
 }
 
-/* ---------- HEAD: Mac-Classic-style CRT cube ---------- */
+/* ---------- HEAD: pure-CSS 3D CRT cube, more realistic ---------- */
 .hv-head {
   position: absolute;
   top: 6%;
   left: 50%;
   width: 64%;
-  /* Center horizontally, then push slightly forward in 3D so the
-     face sits closer to the camera than the body — gives a tiny
-     "head sticking out" silhouette that reads as a portrait. */
+  /* Push forward in 3D so the head sits in front of the body
+     (the body photo is at z=0). */
   transform: translateX(-50%) translateZ(36px);
   aspect-ratio: 1.18 / 1;        /* slightly wider than tall, CRT-like */
   transform-style: preserve-3d;
+  z-index: 2;
+  /* JS will set transform: rotateX/rotateY based on cursor */
+  will-change: transform;
 }
 .hv-cube {
   position: absolute;
@@ -486,63 +511,101 @@ h1, h2, h3, h4, p { margin: 0; }
   inset: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  border-radius: 14px;
   overflow: hidden;
 }
 
-/* FRONT face — full beige plastic body + green CRT on top + base details */
+/* FRONT face — full beige plastic body + green CRT + base details */
 .hv-face-front {
   transform: translateZ(calc(var(--D) / 2));
-  background: linear-gradient(180deg,
-    #e6d3a0 0%, #d8c389 18%, #c4ad7e 55%, #a8946c 100%);
+  background:
+    /* top-light → mid-tone → bottom-shadow on the plastic shell */
+    linear-gradient(180deg,
+      #ecdbab 0%,
+      #dac48a 14%,
+      #c4ad7e 45%,
+      #a8946c 80%,
+      #8a7a58 100%);
+  /* bevel + plastic edge highlights */
   box-shadow:
-    inset 0 0 0 1.5px rgba(255, 245, 220, 0.45),
-    inset 0 -2px 6px rgba(80, 60, 30, 0.18);
-  border-radius: 16px 16px 20px 20px;
+    inset 0 1.5px 0 rgba(255, 245, 220, 0.55),     /* top inner highlight */
+    inset 0 -1.5px 0 rgba(60, 45, 25, 0.45),      /* bottom inner edge */
+    inset 2px 0 0 rgba(255, 245, 220, 0.15),      /* left bevel */
+    inset -2px 0 0 rgba(60, 45, 25, 0.15);        /* right bevel */
+  border-radius: 18px 18px 22px 22px;
 }
+
+/* Plastic seam lines (top and bottom of front face) */
+.hv-face-seam {
+  position: absolute;
+  left: 6%; right: 6%;
+  height: 1px;
+  background: rgba(60, 45, 25, 0.35);
+  pointer-events: none;
+}
+.hv-face-seam-top    { top: 67.5%; }
+.hv-face-seam-bottom { top: 68.5%; height: 1px; background: rgba(255, 245, 220, 0.35); }
 
 /* CRT screen sub-element — the green phosphor area */
 .hv-crt-screen {
   position: absolute;
-  top: 6%;
-  left: 8%;
-  width: 84%;
-  height: 60%;
-  border-radius: 10px;
-  background: radial-gradient(ellipse 90% 70% at 50% 50%,
-    #2c4c2c 0%, #17301a 40%, #0a1a0d 75%, #040a05 100%);
+  top: 7%;
+  left: 9%;
+  width: 82%;
+  height: 58%;
+  border-radius: 12px;
+  background: radial-gradient(ellipse 95% 75% at 50% 50%,
+    #2e5230 0%, #1a341e 35%, #0d1f10 70%, #040a05 100%);
+  /* deep inset shadow = glass thickness + CRT curvature feel */
   box-shadow:
-    inset 0 0 0 2px rgba(60, 70, 50, 0.55),
-    inset 0 0 22px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    inset 0 0 0 3px rgba(40, 30, 20, 0.7),         /* outer dark bevel */
+    inset 0 0 0 4px rgba(180, 200, 175, 0.10),     /* thin glass ring */
+    inset 0 0 28px rgba(0, 0, 0, 0.7),             /* glass depth */
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),       /* top sheen */
+    inset 0 -2px 0 rgba(0, 0, 0, 0.4);             /* bottom glass shadow */
   overflow: hidden;
 }
+
+/* soft white glow following the cursor */
 .hv-screen-glow {
   position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 255, 255, 0.20) 0%,
+    rgba(255, 255, 255, 0.22) 0%,
     rgba(180, 230, 200, 0.10) 22%,
-    transparent 48%);
+    transparent 50%);
   opacity: 0; mix-blend-mode: screen; filter: blur(2px);
   transition: opacity 0.4s var(--ease);
+}
+/* glass reflection — a fixed diagonal highlight that doesn't move
+   with the cursor, mimicking a piece of curved glass */
+.hv-screen-reflect {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background:
+    linear-gradient(125deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.06) 40%,
+      rgba(255, 255, 255, 0.14) 50%,
+      rgba(255, 255, 255, 0.06) 60%,
+      transparent 70%);
+  mix-blend-mode: screen;
 }
 .hv-screen-scanline {
   position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: repeating-linear-gradient(0deg,
-    rgba(0, 0, 0, 0.18) 0px, rgba(0, 0, 0, 0.18) 1px,
+    rgba(0, 0, 0, 0.22) 0px, rgba(0, 0, 0, 0.22) 1px,
     transparent 1px, transparent 3px);
-  opacity: 0.5; mix-blend-mode: multiply;
+  opacity: 0.55; mix-blend-mode: multiply;
 }
 .hv-screen-vignette {
   position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: radial-gradient(ellipse 80% 65% at 50% 50%,
-    transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+    transparent 50%, rgba(0, 0, 0, 0.6) 100%);
 }
+
 /* CRT eyes — sit on the screen, track the mouse */
 .hv-eye {
   position: absolute; top: 50%;
-  width: 13%; height: 18%;
-  margin-top: -9%; margin-left: -6.5%;
+  width: 12%; height: 17%;
+  margin-top: -8.5%; margin-left: -6%;
   border-radius: 50%;
   background: radial-gradient(ellipse at 50% 45%,
     #ffffff 0%, #e8f4f8 25%, #b8d0d8 60%, #6a7a82 100%);
@@ -550,27 +613,28 @@ h1, h2, h3, h4, p { margin: 0; }
   transition: transform 0.16s var(--ease);
   will-change: transform;
   box-shadow:
-    0 0 8px rgba(255, 255, 255, 0.55),
-    0 0 22px rgba(160, 220, 200, 0.40),
+    0 0 10px rgba(255, 255, 255, 0.6),
+    0 0 24px rgba(160, 220, 200, 0.45),
     inset 0 1px 2px rgba(255, 255, 255, 0.85);
-  filter: drop-shadow(0 0 4px rgba(160, 220, 200, 0.30));
+  filter: drop-shadow(0 0 5px rgba(160, 220, 200, 0.30));
   z-index: 2;
 }
-.hv-eye-l { left: 32%; }
-.hv-eye-r { left: 68%; }
+.hv-eye-l { left: 33%; }
+.hv-eye-r { left: 67%; }
 
-/* Mac-Classic base details */
-.hv-base-logo {
-  position: absolute; left: 8%; bottom: 12%;
-  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
-  letter-spacing: 0.04em; line-height: 1.0;
+/* Base details (Mac-Classic style) */
+.hv-base-sticker {
+  position: absolute; left: 8%; bottom: 8%;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.06em; line-height: 1.05;
   color: rgba(70, 55, 30, 0.78);
   text-shadow: 0 1px 0 rgba(255, 245, 220, 0.5);
   pointer-events: none; user-select: none;
+  text-transform: uppercase;
 }
 .hv-base-floppy {
   position: absolute; left: 38%; bottom: 12%;
-  width: 32%; height: 8%; border-radius: 2px;
+  width: 32%; height: 7.5%; border-radius: 2px;
   background: linear-gradient(180deg, #1a1410 0%, #0d0a08 50%, #1a1410 100%);
   box-shadow:
     inset 0 1px 0 rgba(0, 0, 0, 0.6),
@@ -591,195 +655,101 @@ h1, h2, h3, h4, p { margin: 0; }
   box-shadow: 0 1px 0 rgba(255, 245, 220, 0.35);
 }
 
-/* BACK face — the rear of the CRT (slightly darker, vent slits) */
+/* BACK face — rear of the CRT (vents + ports) */
 .hv-face-back {
   transform: rotateY(180deg) translateZ(calc(var(--D) / 2));
-  background: linear-gradient(180deg, #9b8762 0%, #7a6a48 100%);
-  border-radius: 16px;
+  background: linear-gradient(180deg, #9b8762 0%, #7a6a48 50%, #5a4830 100%);
+  border-radius: 18px;
   box-shadow: inset 0 0 0 1.5px rgba(60, 45, 25, 0.35);
 }
-.hv-face-back::before {
-  content: '';
+.hv-back-vents {
   position: absolute;
-  top: 18%; left: 18%; right: 18%;
-  height: 64%;
+  top: 14%; left: 18%; right: 18%;
+  height: 50%;
   background: repeating-linear-gradient(0deg,
-    rgba(40, 28, 15, 0.55) 0 3px,
-    transparent 3px 7px);
+    rgba(40, 28, 15, 0.65) 0 3px,
+    transparent 3px 8px);
   border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(40, 28, 15, 0.4);
+}
+.hv-back-ports {
+  position: absolute;
+  bottom: 14%; left: 22%; right: 22%;
+  height: 8%;
+  display: flex; gap: 8%;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.hv-back-ports span {
+  flex: 0 0 30%;
+  height: 60%;
+  background: rgba(40, 28, 15, 0.6);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.6);
 }
 
-/* 4 PLASTIC SIDE faces — share base beige material */
+/* SIDE faces — share base material but with subtle vent slits */
 .hv-face-right, .hv-face-left, .hv-face-top, .hv-face-bottom {
   background: linear-gradient(180deg, #d6c39a 0%, #c4ad7e 45%, #9b8762 100%);
 }
 .hv-face-right {
   left: 100%; width: var(--D); height: 100%;
   transform-origin: left center; transform: rotateY(90deg);
-  background: linear-gradient(180deg,
-    #c4ad7e 0%, #a8946c 50%, #7a6a48 100%);
+  background:
+    linear-gradient(180deg,
+      #bfa477 0%, #a8946c 50%, #7a6a48 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 30%);
+  background-blend-mode: multiply, normal;
   border-radius: 4px 14px 14px 4px;
+  box-shadow: inset 0 0 0 1px rgba(60, 45, 25, 0.18);
 }
 .hv-face-left {
   right: 100%; width: var(--D); height: 100%;
   transform-origin: right center; transform: rotateY(-90deg);
-  background: linear-gradient(180deg,
-    #c4ad7e 0%, #a8946c 50%, #7a6a48 100%);
+  background:
+    linear-gradient(180deg,
+      #bfa477 0%, #a8946c 50%, #7a6a48 100%),
+    linear-gradient(-90deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 30%);
+  background-blend-mode: multiply, normal;
   border-radius: 14px 4px 4px 14px;
+  box-shadow: inset 0 0 0 1px rgba(60, 45, 25, 0.18);
+}
+/* side vent slits (horizontal lines that suggest heat dissipation) */
+.hv-side-vents {
+  position: absolute;
+  top: 12%; left: 12%; right: 12%; bottom: 12%;
+  background: repeating-linear-gradient(0deg,
+    rgba(40, 28, 15, 0.4) 0 2px,
+    transparent 2px 6px);
+  border-radius: 3px;
+  opacity: 0.7;
 }
 .hv-face-top {
   top: auto; bottom: 100%; width: 100%; height: var(--D);
   transform-origin: center bottom; transform: rotateX(90deg);
   background: linear-gradient(90deg, #c4ad7e 0%, #d8c69e 50%, #c4ad7e 100%);
   border-radius: 14px 14px 4px 4px;
+  box-shadow: inset 0 0 0 1px rgba(60, 45, 25, 0.15);
 }
 .hv-face-bottom {
   bottom: auto; top: 100%; width: 100%; height: var(--D);
   transform-origin: center top; transform: rotateX(-90deg);
   background: linear-gradient(90deg, #8a7a58 0%, #6e5e40 50%, #8a7a58 100%);
   border-radius: 4px 4px 14px 14px;
+  box-shadow: inset 0 0 0 1px rgba(40, 28, 15, 0.3);
 }
-
-/* ---------- NECK: short cylinder band under the head ---------- */
-.hv-neck {
+/* rubber feet on the bottom face */
+.hv-foot {
   position: absolute;
-  top: 39%;                       /* right under the cube */
-  left: 50%;
-  width: 17%;
-  height: 4.5%;
-  transform: translateX(-50%) translateZ(28px);
-  background: linear-gradient(180deg, #c4ad7e 0%, #8a7a58 100%);
-  border-radius: 4px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 245, 220, 0.35),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.4);
-}
-
-/* ---------- TORSO: warm-grey suit with V-neck collar cutout ---------- */
-.hv-torso {
-  position: absolute;
-  top: 43%;
-  left: 50%;
-  width: 78%;
-  height: 48%;
-  transform: translateX(-50%) translateZ(22px);
-  background: linear-gradient(180deg,
-    #5a554e 0%, #4a4540 35%, #3a3530 75%, #2a2520 100%);
-  /* V-neck cutout — the top of the suit has a triangular notch
-     that reveals the white shirt + tie behind it. */
-  clip-path: polygon(
-    0 0,
-    38% 0,
-    50% 18%,
-    62% 0,
-    100% 0,
-    100% 100%,
-    0 100%
-  );
-  border-radius: 28px 28px 12px 12px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.35);
-}
-
-/* Suit side panels — small darker strips to give the torso a sense
-   of left/right "shoulder edge" when the head turns */
-.hv-torso::before, .hv-torso::after {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0;
+  bottom: 18%;
   width: 14%;
-  background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0));
-  pointer-events: none;
-}
-.hv-torso::before { left: 0;  border-radius: 28px 0 0 12px; }
-.hv-torso::after  { right: 0; border-radius: 0 28px 12px 0; }
-
-/* White shirt + collar V — sits behind the suit's V cutout */
-.hv-collar-l, .hv-collar-r {
-  position: absolute;
-  top: 43%;
-  width: 16%;
-  height: 14%;
-  background: linear-gradient(180deg, #f5f0e6 0%, #d8d2c4 100%);
-  pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
-}
-.hv-collar-l {
-  left: 50%;
-  transform: translateX(-100%) translateZ(20px) skewY(8deg);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 60%);
-  border-radius: 4px 0 0 4px;
-}
-.hv-collar-r {
-  left: 50%;
-  transform: translateX(0) translateZ(20px) skewY(-8deg);
-  clip-path: polygon(0 0, 100% 0, 100% 60%, 0 100%);
-  border-radius: 0 4px 4px 0;
-}
-
-/* Tie — sits inside the V, in front of the shirt */
-.hv-tie {
-  position: absolute;
-  top: 46%;
-  left: 50%;
-  width: 9%;
-  height: 30%;
-  transform: translateX(-50%) translateZ(24px);
-  pointer-events: none;
-}
-.hv-tie-knot {
-  width: 100%;
-  height: 14%;
-  background: linear-gradient(180deg, #6a1828 0%, #4a0c18 100%);
-  border-radius: 3px 3px 0 0;
-  box-shadow: inset 0 1px 0 rgba(255, 200, 200, 0.18);
-}
-.hv-tie-body {
-  width: 100%;
-  height: 86%;
-  background: linear-gradient(180deg, #a02838 0%, #6a1828 60%, #4a0c18 100%);
-  /* classic tie shape: narrow at top, widens then points at bottom */
-  clip-path: polygon(
-    20% 0, 80% 0,        /* knot bottom width */
-    90% 30%, 95% 80%,    /* widens, then comes to a point */
-    50% 100%,             /* point */
-    5% 80%, 10% 30%
-  );
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 200, 200, 0.22);
-}
-
-/* Suit breast pockets — small subtle rectangles */
-.hv-pocket-l, .hv-pocket-r {
-  position: absolute;
-  top: 65%;
-  width: 11%;
-  height: 1.5%;
-  background: rgba(0, 0, 0, 0.18);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  pointer-events: none;
-}
-.hv-pocket-l { left: 12%; }
-.hv-pocket-r { right: 12%; }
-
-/* ---------- GROUND SHADOW: soft ellipse under the character ---------- */
-.hv-shadow {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 70%;
-  height: 4%;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse 60% 50% at 50% 50%,
-    rgba(40, 30, 20, 0.35) 0%,
-    rgba(40, 30, 20, 0.10) 50%,
-    transparent 80%);
+  height: 32%;
+  background: radial-gradient(ellipse at 50% 50%, #2a2520 0%, #1a1410 70%);
   border-radius: 50%;
-  filter: blur(8px);
-  pointer-events: none;
+  box-shadow: inset 0 -1px 1px rgba(0, 0, 0, 0.4);
 }
+.hv-foot-1 { left: 14%; }
+.hv-foot-2 { right: 14%; }
 
 /* ---------- HOVER states for screen effects ---------- */
 .hv-figure.is-hover .hv-screen-glow,
@@ -792,10 +762,10 @@ h1, h2, h3, h4, p { margin: 0; }
   animation: hv-blink 180ms ease-out;
 }
 @keyframes hv-blink {
-  0%   { opacity: 0.5; }
+  0%   { opacity: 0.55; }
   30%  { opacity: 1.0; }
   60%  { opacity: 1.0; }
-  100% { opacity: 0.5; }
+  100% { opacity: 0.55; }
 }
 .hv-blinking .hv-screen-glow {
   animation: hv-blink-glow 180ms ease-out;
