@@ -2,8 +2,11 @@
    dejavu team · /next/ — interactions
    - nav scroll state
    - reveal on scroll (IntersectionObserver)
-   - hero figure: 3D tilt + mouse-tracking halo + curious gaze
-   - laser easter egg (3 clicks in 2s → eyes turn red + fire)
+   - hero figure: 3D tilt + halo + iris + ambient red + shake
+   - STATE MACHINE: calm → detected → warning → firing
+     (eye state, cover opacity, ambient, iris position, shake
+     intensity, and status text all co-vary with state)
+   - laser easter egg (3 clicks → charge → fire)
    - mobile drawer
    - Shanghai clock
    =========================================================== */
@@ -41,7 +44,7 @@
     revealEls.forEach((el) => el.classList.add('is-in'));
   }
 
-  // ---------- 3. hero figure: 3D tilt + halo + iris + laser easter egg ----------
+  // ---------- 3. hero figure: 3D tilt + halo + iris + ambient red + shake ----------
   const heroFigure  = $('#hvFigure');
   const heroSection = $('.hero');
   const halo        = $('#hvHalo');
@@ -49,53 +52,154 @@
   const statusEl    = $('#hvStatus');
   const irisL       = $('#hvEyeIrisL');
   const irisR       = $('#hvEyeIrisR');
+  const redAmbient  = $('#hvRedAmbient');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (heroFigure && heroSection && !reduceMotion) {
-    const MAX_TILT_X = 8;        // deg (subtle nod)
-    const MAX_TILT_Y = 14;       // deg (subtle turn)
+    const MAX_TILT_X = 8;
+    const MAX_TILT_Y = 14;
     let mx = 0.5, my = 0.5;
     let targetX = 0.5, targetY = 0.5;
     let rafId = null;
     let active = false;
     let lastMoveTime = Date.now();
 
+    // STATE MACHINE
+    // States: 'calm' | 'detected' | 'warning' | 'firing'
+    // Each state controls: cover opacity, red ambient opacity,
+    // iris position, shake intensity, status text, and
+    // (via CSS class) the cover/iris/laser-source animations.
+    // Clicking advances the state by one. If the user pauses
+    // for DETECT_DECAY_MS (1.5s), state decays one level back.
+    let currentState = 'calm';
+    let stateDecayTimer = null;
+    let laserCooldown = false;
+    const DETECT_DECAY_MS = 1500;
+    const FIRING_DURATION = 4500;
+    const COOLDOWN_MS = 1500;
+
+    const STATE_LABELS = {
+      calm: 'online',
+      detected: 'detected',
+      warning: 'warning',
+      firing: 'firing'
+    };
+
+    const setCoverOpacity = (v) => {
+      heroFigure.style.setProperty('--eye-cover-opacity', String(Math.max(0, Math.min(1, v))));
+    };
+    const setRedAmbient = (v) => {
+      heroFigure.style.setProperty('--red-i', String(Math.max(0, Math.min(1, v))));
+    };
+
+    const setShakeLevel = (level) => {
+      // 0 = no shake, 0.3 = light, 0.7 = noticeable, 1.0 = heavy
+      shakeLevel = level;
+    };
+
+    const setState = (newState, opts = {}) => {
+      const prev = currentState;
+      currentState = newState;
+
+      // Update figure classes (drives CSS for cover/iris/laser-source)
+      heroFigure.classList.remove('is-detected', 'is-warning', 'is-firing');
+      if (newState !== 'calm') heroFigure.classList.add('is-' + newState);
+
+      // State parameters
+      const params = {
+        calm:      { cover: 1.0,  ambient: 0.0,  irisY: 0,   shake: 0,   irisX: 0 },
+        detected:  { cover: 0.7,  ambient: 0.18, irisY: -1.2, shake: 0.5, irisX: 0 },
+        warning:   { cover: 0.32, ambient: 0.45, irisY: -1.5, shake: 1.0, irisX: 0 },
+        firing:    { cover: 0.0,  ambient: 0.9,  irisY: 0,   shake: 0,   irisX: 0 }
+      };
+      const p = params[newState];
+      setCoverOpacity(p.cover);
+      setRedAmbient(p.ambient);
+      setIris(p.irisX, p.irisY);
+      setShakeLevel(p.shake);
+
+      // Update status text
+      if (statusEl) statusEl.textContent = STATE_LABELS[newState];
+
+      // Schedule decay / firing end
+      if (stateDecayTimer) { clearTimeout(stateDecayTimer); stateDecayTimer = null; }
+      if (newState === 'firing') {
+        laserCooldown = true;
+        stateDecayTimer = setTimeout(() => {
+          setState('calm');
+          setTimeout(() => { laserCooldown = false; }, COOLDOWN_MS);
+        }, FIRING_DURATION);
+      } else if (newState !== 'calm') {
+        // Decay one level after DETECT_DECAY_MS of inactivity
+        stateDecayTimer = setTimeout(() => {
+          if (currentState === 'warning')   setState('detected');
+          else if (currentState === 'detected') setState('calm');
+          else if (currentState === 'firing')  setState('calm');
+        }, DETECT_DECAY_MS);
+      }
+    };
+
+    /* ---------- 3a. Iris + halo follow cursor ---------- */
+    const IRIS_RANGE_X = 8;
+    const IRIS_RANGE_Y = 4;
+    let currentIrisX = 0, currentIrisY = 0;
+    let targetIrisX = 0, targetIrisY = 0;
+
+    const setIris = (nx, ny) => {
+      targetIrisX = nx * IRIS_RANGE_X;
+      targetIrisY = ny * IRIS_RANGE_Y;
+      // Smooth interpolation handled in apply()
+    };
+
     const apply = () => {
       rafId = null;
+
+      // Smooth tilt
       mx += (targetX - mx) * 0.18;
       my += (targetY - my) * 0.18;
       const dx = mx - 0.5;
       const dy = my - 0.5;
+
+      // Smooth iris position
+      currentIrisX += (targetIrisX - currentIrisX) * 0.25;
+      currentIrisY += (targetIrisY - currentIrisY) * 0.25;
+      if (irisL) {
+        irisL.style.setProperty('--iris-x', currentIrisX.toFixed(1) + 'px');
+        irisL.style.setProperty('--iris-y', currentIrisY.toFixed(1) + 'px');
+      }
+      if (irisR) {
+        irisR.style.setProperty('--iris-x', currentIrisX.toFixed(1) + 'px');
+        irisR.style.setProperty('--iris-y', currentIrisY.toFixed(1) + 'px');
+      }
+
+      // Shake offset (random, intensity from state)
+      let shakeX = 0, shakeY = 0;
+      if (shakeLevel > 0) {
+        // Intensity multipliers: detected = ±1.4px, warning = ±3.2px
+        shakeX = (Math.random() - 0.5) * shakeLevel * 7;
+        shakeY = (Math.random() - 0.5) * shakeLevel * 7;
+      }
+
+      // Combined transform: shake (translate) + 3D tilt
       heroFigure.style.transform =
+        `translate(${shakeX.toFixed(2)}px, ${shakeY.toFixed(2)}px) ` +
         `rotateX(${(-dy * MAX_TILT_X).toFixed(2)}deg) ` +
         `rotateY(${(dx * MAX_TILT_Y).toFixed(2)}deg)`;
-      if (Math.abs(targetX - mx) > 0.001 || Math.abs(targetY - my) > 0.001 || active) {
+
+      // Keep animating
+      if (Math.abs(targetX - mx) > 0.001 ||
+          Math.abs(targetY - my) > 0.001 ||
+          Math.abs(targetIrisX - currentIrisX) > 0.1 ||
+          Math.abs(targetIrisY - currentIrisY) > 0.1 ||
+          active ||
+          shakeLevel > 0) {
         rafId = requestAnimationFrame(apply);
       } else {
-        targetX = 0.5; targetY = 0.5;
         if (mx !== 0.5 || my !== 0.5) rafId = requestAnimationFrame(apply);
       }
     };
 
-    /* ---------- 3a. Iris follows cursor ----------
-       Both irises use a normalized position relative to the figure
-       center. JS computes (nx, ny) from cursor and writes CSS vars
-       on each iris element. Default centered (0px, 0px). */
-    const IRIS_RANGE_X = 8;       // px max offset horizontally
-    const IRIS_RANGE_Y = 4;       // px max offset vertically
-    const setIris = (nx, ny) => {
-      // nx, ny ∈ [-1, +1]
-      const ix = (nx * IRIS_RANGE_X).toFixed(1) + 'px';
-      const iy = (ny * IRIS_RANGE_Y).toFixed(1) + 'px';
-      if (irisL) {
-        irisL.style.setProperty('--iris-x', ix);
-        irisL.style.setProperty('--iris-y', iy);
-      }
-      if (irisR) {
-        irisR.style.setProperty('--iris-x', ix);
-        irisR.style.setProperty('--iris-y', iy);
-      }
-    };
+    let shakeLevel = 0;
 
     const onMove = (e) => {
       const hr = heroSection.getBoundingClientRect();
@@ -105,165 +209,97 @@
       active = true;
       lastMoveTime = Date.now();
       heroSection.classList.add('is-hover');
-      if (statusEl && statusEl.textContent !== 'tracking') statusEl.textContent = 'tracking';
       if (halo) {
         halo.style.setProperty('--halo-x', (hx * 100).toFixed(1) + '%');
         halo.style.setProperty('--halo-y', (hy * 100).toFixed(1) + '%');
         halo.style.setProperty('--halo-i', '0.95');
       }
-      // Iris snaps to cursor direction (both eyes look same way)
-      const nx = (hx - 0.5) * 2;
-      const ny = (hy - 0.5) * 2;
-      setIris(nx, ny);
+      // Iris follows cursor only in calm state (avoid fighting state)
+      if (currentState === 'calm') {
+        const nx = (hx - 0.5) * 2;
+        const ny = (hy - 0.5) * 2;
+        targetIrisX = nx * IRIS_RANGE_X;
+        targetIrisY = ny * IRIS_RANGE_Y;
+      }
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
 
     const onLeave = () => {
       active = false;
       heroSection.classList.remove('is-hover');
-      if (statusEl && statusEl.textContent !== 'online') statusEl.textContent = 'online';
       if (halo) {
         halo.style.setProperty('--halo-i', '0.45');
         halo.style.setProperty('--halo-x', '50%');
         halo.style.setProperty('--halo-y', '30%');
       }
-      // Iris returns to center
-      setIris(0, 0);
+      // Reset iris only in calm state
+      if (currentState === 'calm') {
+        targetIrisX = 0;
+        targetIrisY = 0;
+      }
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
 
     heroSection.addEventListener('mousemove', onMove);
     heroSection.addEventListener('mouseleave', onLeave);
 
-    /* ---------- 3b. Curious gaze drift ----------
-       When the cursor hasn't moved for 3+ seconds, the irises
-       drift to random points within the eye (curious gaze).
-       Every 1.8s the drift may shift to a new point. After
-       each gaze shift, the iris returns to center after 1.5s
-       (or shifts again). Simulates "looking around". */
-    let gazeDriftTimer = null;
-    const triggerGazeDrift = () => {
-      if (active) return;          // skip if user is actively moving
-      if (heroFigure.classList.contains('is-firing')) return;
+    /* ---------- 3b. Curious gaze drift (idle only, calm only) ---------- */
+    setInterval(() => {
+      if (currentState !== 'calm') return;
+      if (active) return;
+      const since = Date.now() - lastMoveTime;
+      if (since < 3000) return;
       const nx = (Math.random() - 0.5) * 1.6;
       const ny = (Math.random() - 0.5) * 1.2;
-      setIris(nx, ny);
-      // Hold gaze for 0.8-1.6s, then drift back
-      const holdMs = 800 + Math.random() * 800;
+      targetIrisX = nx * IRIS_RANGE_X;
+      targetIrisY = ny * IRIS_RANGE_Y;
       setTimeout(() => {
-        if (!active && !heroFigure.classList.contains('is-firing')) {
-          setIris((Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.4);
+        if (currentState === 'calm' && !active) {
+          targetIrisX = (Math.random() - 0.5) * 0.6 * IRIS_RANGE_X;
+          targetIrisY = (Math.random() - 0.5) * 0.4 * IRIS_RANGE_Y;
         }
-      }, holdMs);
-    };
-    setInterval(() => {
-      if (!active) {
-        const since = Date.now() - lastMoveTime;
-        if (since > 3000) triggerGazeDrift();
-      }
+      }, 800 + Math.random() * 800);
     }, 2200);
 
     /* ===========================================================
-       EASTER EGG: LASER EYES (Homelander-style)
-       The user wants the laser to fire ONLY after persistent
-       clicking — not randomly on a single click. Track clicks
-       within a 2-second window; on click N (configurable),
-       decay the warm-white eye cover to reveal the red eyes
-       and fire the lasers for 4.5s.
-
-       Each click during buildup:
-         - Increments click count
-         - Reduces eye cover opacity (red shows through)
-         - Triggers a brief iris "look up" / warning flash
-       At threshold:
-         - Cover fully transparent, red eyes visible
-         - Both lasers fire (white-core + red optical glow)
-         - 4.5s firing, then auto-revert; 1.5s cooldown
+       CLICK STATE PROGRESSION
+       Each click advances: calm → detected → warning → firing
+       (3 clicks total). Once 'firing' triggers, the lasers run
+       for 4.5s and the state auto-reverts to 'calm' with a
+       1.5s cooldown. If the user stops clicking, the state
+       decays one level every 1.5s (warning → detected → calm).
        =========================================================== */
-    const CLICK_THRESHOLD = 3;        // clicks in window to fire
-    const CLICK_WINDOW_MS  = 2200;     // rolling window
-    const FIRING_DURATION  = 4500;     // ms
-    const COOLDOWN_MS      = 1500;     // ms after firing ends
-    let clickCount = 0;
-    let clickResetTimer = null;
-    let laserCooldown = false;
-    let laserEndTimer = null;
-    let coverDecayTimer = null;
-
-    const setCoverOpacity = (v) => {
-      const clamped = Math.max(0, Math.min(1, v));
-      heroFigure.style.setProperty('--eye-cover-opacity', clamped.toFixed(2));
-    };
-
-    const resetBuildup = () => {
-      clickCount = 0;
-      if (clickResetTimer) { clearTimeout(clickResetTimer); clickResetTimer = null; }
-      if (coverDecayTimer) { clearTimeout(coverDecayTimer); coverDecayTimer = null; }
-      setCoverOpacity(1);
-    };
-
-    const triggerLaserEyes = () => {
+    const advanceState = () => {
       if (laserCooldown) return;
-      heroFigure.classList.add('is-firing');
-      setCoverOpacity(0);            // red eyes fully revealed
-      laserCooldown = true;
-      if (laserEndTimer) clearTimeout(laserEndTimer);
-      laserEndTimer = setTimeout(() => {
-        heroFigure.classList.remove('is-firing');
-        resetBuildup();
-        setTimeout(() => { laserCooldown = false; }, COOLDOWN_MS);
-      }, FIRING_DURATION);
+      if (currentState === 'calm')     setState('detected');
+      else if (currentState === 'detected') setState('warning');
+      else if (currentState === 'warning')  setState('firing');
     };
 
-    const onHeadClick = (e) => {
-      if (laserCooldown) return;
-      e.stopPropagation();
-      clickCount++;
-      if (clickResetTimer) clearTimeout(clickResetTimer);
+    if (headClick) {
+      headClick.addEventListener('click', (e) => {
+        e.stopPropagation();
+        advanceState();
+      });
+    }
 
-      // Decay the eye cover based on count vs threshold.
-      // 1 click = still mostly white (0.8)
-      // 2 clicks = mid (0.4)
-      // 3 clicks = transparent (0)
-      const ratio = Math.min(clickCount / CLICK_THRESHOLD, 1);
-      setCoverOpacity(1 - ratio * 1.0);
-
-      // Brief warning flash — iris jumps to upper position
-      setIris((Math.random() - 0.5) * 0.4, -0.8);
-
-      if (clickCount >= CLICK_THRESHOLD) {
-        // Fire the lasers!
-        setTimeout(triggerLaserEyes, 180);   // small delay so decay is visible
-        clickCount = 0;
-        if (clickResetTimer) { clearTimeout(clickResetTimer); clickResetTimer = null; }
-      } else {
-        // Reset click count after the window expires
-        clickResetTimer = setTimeout(() => {
-          clickCount = 0;
-          // Smoothly restore cover if not firing
-          if (!heroFigure.classList.contains('is-firing')) {
-            setCoverOpacity(1);
-          }
-        }, CLICK_WINDOW_MS);
-      }
-    };
-
-    if (headClick) headClick.addEventListener('click', onHeadClick);
-
-    // Secondary: clicking anywhere on the figure (random bonus).
+    // Secondary: random figure click that bumps the state.
     heroFigure.addEventListener('click', (e) => {
-      if (e.target.closest('#hvHeadClick')) return;     // already handled
-      if (e.target.closest('.hv-status')) return;       // ignore status pill
-      if (Math.random() < 0.1) {
-        // Quick-buildup single-click trigger (sets count to threshold-1
-        // so a second click within the window fires the laser)
-        clickCount = Math.max(clickCount, CLICK_THRESHOLD - 1);
-        onHeadClick({ stopPropagation: () => {} });
+      if (e.target.closest('#hvHeadClick')) return;
+      if (e.target.closest('.hv-status')) return;
+      if (Math.random() < 0.08 && !laserCooldown) {
+        // Bump state by 1, but never more than 'warning' from
+        // a random figure click (head click is the only path to fire).
+        if (currentState === 'calm') setState('detected');
+        else if (currentState === 'detected') setState('warning');
       }
     });
+
+    // Initialize state
+    setState('calm');
   }
 
-  // ---------- 3c. Touch device support: convert touch events to mouse ----------
+  // ---------- 3c. Touch device support ----------
   const isTouchDevice = matchMedia('(hover: none)').matches;
   if (isTouchDevice && heroSection) {
     const touchToMouse = (e) => {

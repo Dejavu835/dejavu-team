@@ -95,6 +95,14 @@
                  with a soft warm glow. JS sets --halo-x/y. -->
             <div class="hv-halo" id="hvHalo" aria-hidden="true"></div>
 
+            <!-- RED AMBIENT — red light cast around the figure during
+                 the click buildup (warning/danger states). The opacity
+                 is driven by JS via --red-i, so it builds progressively
+                 from 0 (calm) → 0.15 (detected) → 0.4 (warning) →
+                 0.9 (firing). Gives the scene a 'screen casting red
+                 light' oppressive feeling. -->
+            <div class="hv-red-ambient" id="hvRedAmbient" aria-hidden="true"></div>
+
             <!-- EYE COVERS — warm white radial gradient that hides the
                  baked-in red eyes in the calm state. Fades out as the
                  user clicks the head repeatedly, revealing red underneath
