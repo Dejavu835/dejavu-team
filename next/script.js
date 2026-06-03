@@ -57,7 +57,76 @@
   const irisL       = $('#hvEyeIrisL');
   const irisR       = $('#hvEyeIrisR');
   const redAmbient  = $('#hvRedAmbient');
+  const coverL      = document.querySelector('.hv-eye-cover-l');
+  const coverR      = document.querySelector('.hv-eye-cover-r');
+  const wispL       = document.querySelector('.hv-eye-wisp-l');
+  const wispR       = document.querySelector('.hv-eye-wisp-r');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ===========================================================
+  // POSITION CHILDREN VIA JAVASCRIPT (iPad Safari FIX)
+  // The previous CSS used left: 35% / top: 32% on the
+  // children, which WORKED on Chrome/Firefox but BROKE on
+  // iPad Safari. iPad Safari has a known bug where:
+  //   aspect-ratio (figure) + transform-style: preserve-3d
+  //   (figure) + position: absolute (children)
+  // causes the children to be re-positioned to (0, 0) of
+  // the figure on the first interaction (e.g., the click
+  // that advances the state). translateZ(0) didn't fix it.
+  //
+  // The bulletproof fix: position the children in PIXELS
+  // via JavaScript, based on the figure's actual rendered
+  // dimensions. The children have transform: translate(-50%)
+  // or translateX(-50%) for centering, so we just need to
+  // set their top/left to (eye_center_x, eye_center_y) and
+  // the browser does the centering. We re-run this on
+  // resize and orientationchange.
+  //
+  // The AI image is 864x1152 with eyes at:
+  //   Left:  center (306, 366) → 35.42% × 31.77%
+  //   Right: center (421, 368) → 48.73% × 31.94%
+  // ===========================================================
+  const positionChildren = () => {
+    if (!heroFigure) return;
+    const fR = heroFigure.getBoundingClientRect();
+    if (fR.width === 0 || fR.height === 0) return; // skip if not rendered
+
+    const setEyePosition = (el, xPct, yPct) => {
+      if (!el) return;
+      // Convert percentage to pixels. The element's transform
+      // (translate(-50%) or translateX(-50%)) handles the
+      // centering offset.
+      el.style.left = (fR.width * xPct / 100) + 'px';
+      el.style.top  = (fR.height * yPct / 100) + 'px';
+      el.style.right = 'auto';
+      // Force a 3D layer so iPad renders correctly
+      if (!el.style.transform || !el.style.transform.includes('translateZ')) {
+        const baseTransform = el.classList.contains('hv-eye-iris')
+          ? 'translate(-50%, -50%)'
+          : (el.classList.contains('hv-eye-wisp')
+              ? 'translateX(-50%) rotate(var(--wisp-tilt, 0deg))'
+              : 'translate(-50%, -50%)');
+        el.style.transform = baseTransform + ' translateZ(0)';
+      }
+    };
+
+    setEyePosition(coverL, 35.42, 31.77);
+    setEyePosition(coverR, 48.73, 31.94);
+    setEyePosition(irisL,  35.42, 31.77);
+    setEyePosition(irisR,  48.73, 31.94);
+    setEyePosition(wispL,  35.42, 31.77);
+    setEyePosition(wispR,  48.73, 31.94);
+  };
+  // Run on load + resize + orientation change (iPad rotation)
+  positionChildren();
+  window.addEventListener('load',      positionChildren);
+  window.addEventListener('resize',    positionChildren);
+  window.addEventListener('orientationchange', positionChildren);
+  // Also re-run on the next frame (catches layout shifts
+  // like the hero's responsive layout completing)
+  requestAnimationFrame(positionChildren);
+  setTimeout(positionChildren, 100);
+  setTimeout(positionChildren, 500);
 
   if (heroFigure && heroSection && !reduceMotion) {
     const MAX_TILT_X = 8;
