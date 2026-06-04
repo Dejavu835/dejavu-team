@@ -520,40 +520,6 @@ h1, h2, h3, h4, p { margin: 0; }
   z-index: 4;
 }
 
-/* CRT SCAN LINES — thin horizontal stripes that overlay the
-   AI image, giving the "old CRT monitor" feel. The user
-   asked for this on hover. We make it visible on:
-   - hover (full opacity 0.6)
-   - always at low opacity (0.25) so the CRT feel is
-     present even at rest
-   Pattern: alternating 1px transparent + 3px very dark
-   stripe. Total pattern: 4px period, so the eye perceives
-   ~250 scan lines on a 1000px-tall figure.
-
-   This is a low-effort, high-impact effect: 0 JS, 0
-   extra DOM elements, just a CSS pseudo. */
-.hv-figure::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-xl);
-  background: repeating-linear-gradient(
-    0deg,
-    transparent 0px,
-    transparent 2px,
-    rgba(0, 0, 0, 0.18) 2px,
-    rgba(0, 0, 0, 0.18) 4px
-  );
-  pointer-events: none;
-  z-index: 3;   /* above image (1), halo (2), below eye-cover/iris (3+) */
-  opacity: 0.25;
-  mix-blend-mode: multiply;
-  transition: opacity 0.3s var(--ease);
-}
-.hv-figure:hover::after {
-  opacity: 0.6;
-}
-
 /* The AI image fills the figure. JS sets the figure's
    transform directly with rotateX/rotateY on mouse move. */
 .hv-figure-img {
