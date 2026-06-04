@@ -829,24 +829,32 @@ h1, h2, h3, h4, p { margin: 0; }
    - Same size as the cover, follows the gaze via JS
    - Single layer, soft warm gradient
    - Breathes in sync with the cover
+
+   UPDATE (2026-06-04): Enlarged from 14% to 30% and softened
+   (blur 8px → 18px, lower alpha) so the glow always visually
+   merges with the AI-baked red eye. Previously, at max gaze
+   offset (~20px), the small 14% glow sat visibly to the side
+   of the fixed red eye pixel — the user saw a clear "disconnect".
+   At 30% (~165px) the AI red eye is always well within the
+   glow's bright zone, even at max gaze offset.
    =========================================================== */
 .hv-cover-glow {
   position: absolute;
-  width: 14%;
-  height: 14%;
-  margin: -7% 0 0 -7%;
+  width: 30%;                    /* was 14% — 2.1x larger, always covers AI red eye */
+  height: 30%;
+  margin: -15% 0 0 -15%;
   border-radius: 50%;
   pointer-events: none;
   z-index: 2;                     /* above image, below red-ambient */
   background: radial-gradient(
     circle at center,
-    rgba(255, 220, 150, 0.45) 0%,
-    rgba(255, 150, 80, 0.25) 35%,
-    rgba(255, 80, 40, 0.10) 65%,
+    rgba(255, 220, 150, 0.30) 0%,    /* was 0.45 — softer center */
+    rgba(255, 150, 80, 0.15) 35%,   /* was 0.25 */
+    rgba(255, 80, 40, 0.06) 65%,    /* was 0.10 */
     transparent 100%
   );
   opacity: 0.7;
-  filter: blur(8px);
+  filter: blur(18px);              /* was 8px — much softer edge */
   mix-blend-mode: screen;
   animation: hv-cover-glow-breathe 3s ease-in-out infinite;
   will-change: transform, opacity;
@@ -866,6 +874,47 @@ h1, h2, h3, h4, p { margin: 0; }
 /* In warning state, the cover glow intensifies */
 .hv-figure.is-warning .hv-cover-glow {
   opacity: 1.0;
+}
+
+/* ===========================================================
+   HERO LIGHT SPILL — very large, very soft warm halo that
+   "spills" from the eye area into the wider hero section.
+   Stays fixed (ambient) — doesn't follow the gaze.
+   - 90% of figure width (~500px), centered on the eye area
+   - Very low alpha (0.12 center, fades to 0)
+   - Massive 50px blur for atmospheric softness
+   - mix-blend-mode: screen so it brightens whatever is behind
+   - 6s slow breathe for "the room is alive" feel
+   =========================================================== */
+.hv-hero-spill {
+  position: absolute;
+  width: 90%;
+  height: 70%;
+  left: 50%;
+  top: 35%;
+  margin: -35% 0 0 -45%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;                     /* above image, below halo/red-ambient */
+  background: radial-gradient(
+    ellipse 70% 50% at 50% 50%,
+    rgba(255, 200, 130, 0.12) 0%,
+    rgba(255, 150, 80, 0.06) 35%,
+    rgba(255, 80, 40, 0.02) 65%,
+    transparent 100%
+  );
+  filter: blur(50px);
+  mix-blend-mode: screen;
+  animation: hv-hero-spill-breathe 6s ease-in-out infinite;
+}
+
+@keyframes hv-hero-spill-breathe {
+  0%, 100% { opacity: 0.85; transform: scale(0.95); }
+  50%      { opacity: 1.15; transform: scale(1.05); }
+}
+
+.hv-figure.is-warning .hv-hero-spill {
+  opacity: 1.3;
 }
 
 .hv-eye-cover-l {
@@ -1000,7 +1049,7 @@ h1, h2, h3, h4, p { margin: 0; }
      to 2.4x (left→108%, right→77%) — at 2.4x the LEFT wisp
      extends BEYOND the hero card edges, giving the 'light
      growing out' effect the user wanted. */
-  width: calc(var(--wisp-base-w, 45%) * var(--wisp-extension, 1) * 0.6);  /* was 1.0, now 0.6 = 40% shorter */
+  width: calc(var(--wisp-base-w, 45%) * var(--wisp-extension, 1) * 0.7);  /* was 0.6, now 0.7 — base width will be longer */
   pointer-events: none;
   z-index: 3;
   /* Per-eye transform: translateX(-50%) centers, rotate gives
@@ -1052,13 +1101,13 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-eye-wisp-l {
   left: 35%;
   top: 31.8%;
-  --wisp-base-w: 30%;            /* was 45% — much smaller wisp */
+  --wisp-base-w: 45%;            /* was 30% — longer so it extends past the card */
   --wisp-tilt: -4deg;
 }
 .hv-eye-wisp-r {
   left: 48.5%;
   top: 32.3%;
-  --wisp-base-w: 22%;            /* was 32% — much smaller wisp */
+  --wisp-base-w: 32%;            /* was 22% — longer */
   --wisp-tilt: 4deg;
   /* Phase-offset the right wisp for asymmetric flicker so both
      eyes don't wobble in lockstep. */

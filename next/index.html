@@ -152,6 +152,22 @@
             <div class="hv-cover-glow hv-cover-glow-l" id="hvCoverGlowL" aria-hidden="true"></div>
             <div class="hv-cover-glow hv-cover-glow-r" id="hvCoverGlowR" aria-hidden="true"></div>
 
+            <!-- HERO LIGHT SPILL — a very large, very soft warm
+                 halo that extends from the cover area outward
+                 into the surrounding hero section. Represents
+                 the light from the eyes "spilling out" of the
+                 card into the rest of the hero (text area, etc).
+                 Stays fixed (doesn't follow the gaze) so it
+                 provides a stable "ambient" feel that contrasts
+                 with the gaze-following cover-glow.
+
+                 Very low alpha (0.12 center), very large (90% of
+                 figure), massive blur (50px), screen blend.
+                 Result: barely visible at rest, but adds a sense
+                 of "warmth" extending from the eye into the
+                 surrounding hero area. Breathes slowly. -->
+            <div class="hv-hero-spill" id="hvHeroSpill" aria-hidden="true"></div>
+
             <!-- WISP — thin horizontal "wispy strand of light" that
                  passes through each eye. Always visible (not just
                  firing). The user said the wisp should be MORE
