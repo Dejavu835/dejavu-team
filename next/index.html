@@ -113,26 +113,6 @@
                  light' oppressive feeling. -->
             <div class="hv-red-ambient" id="hvRedAmbient" aria-hidden="true"></div>
 
-            <!-- SEARCHLIGHT BEAMS — visible cones of light that project
-                 from each eye outward, like a searchlight. The beams
-                 ROTATE to follow the mouse/touch position (set by JS
-                 via --search-l-angle / --search-r-angle on the figure).
-                 The beams are 700px long and extend WELL beyond the
-                 card edges (figure is ~550px wide), so the light
-                 visibly "spills" into the air around the figure.
-
-                 z-index: 3 (above image/halo/red-ambient at 1-2,
-                 same layer as eye-cover at 3 — DOM order puts it
-                 below eye-cover, so the eye-cover still hides the
-                 red-eye source when in calm state. In detected/
-                 warning when the cover fades, the beam's red origin
-                 is visible at the eye position.)
-
-                 mix-blend-mode: screen — brightens whatever is
-                 behind, like real light through dust/fog. -->
-            <div class="hv-search hv-search-l" id="hvSearchL" aria-hidden="true"></div>
-            <div class="hv-search hv-search-r" id="hvSearchR" aria-hidden="true"></div>
-
             <!-- EYE COVERS — warm white radial gradient that hides the
                  baked-in red eyes in the calm state. Fades out as the
                  user clicks the head repeatedly, revealing red underneath

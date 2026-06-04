@@ -345,41 +345,7 @@
         targetIrisX = nx * IRIS_RANGE_X;
         targetIrisY = ny * IRIS_RANGE_Y;
       }
-      // SEARCHLIGHT BEAMS — set the rotation angle so the cones
-      // point toward the cursor. Always active (in any state),
-      // even though opacity is 0 in calm — JS still writes the
-      // vars so the beams "snap" to position the moment the
-      // user advances the state.
-      setSearchAngles(e.clientX, e.clientY);
       if (rafId === null) rafId = requestAnimationFrame(apply);
-    };
-
-    /* ---------- SEARCHLIGHT BEAM ANGLES ----------
-       Calculate the angle from each eye to the mouse position,
-       and set the --search-l-angle / --search-r-angle CSS
-       variables on the heroFigure. The beam elements rotate
-       based on these vars (see styles.css).
-
-       Eye positions (in figure %):
-         Left eye:  (35.42%, 31.77%)
-         Right eye: (48.73%, 31.94%)
-
-       Angle = atan2(dy, dx) in degrees, where 0 = mouse to
-       the right of the eye, 90 = below, 180 = left, -90 = up. */
-    const setSearchAngles = (mx, my) => {
-      if (!heroFigure) return;
-      const rect = heroFigure.getBoundingClientRect();
-      // Left eye position in viewport coords
-      const lex = rect.left + rect.width * 0.3542;
-      const ley = rect.top  + rect.height * 0.3177;
-      // Right eye position
-      const rex = rect.left + rect.width * 0.4873;
-      const rey = rect.top  + rect.height * 0.3194;
-      // Angles
-      const lAngle = Math.atan2(my - ley, mx - lex) * 180 / Math.PI;
-      const rAngle = Math.atan2(my - rey, mx - rex) * 180 / Math.PI;
-      heroFigure.style.setProperty('--search-l-angle', lAngle.toFixed(1) + 'deg');
-      heroFigure.style.setProperty('--search-r-angle', rAngle.toFixed(1) + 'deg');
     };
 
     const onLeave = () => {
@@ -403,30 +369,11 @@
         // so this just kicks the scheduler back into gear.
         startCuriousGaze();
       }
-      // Reset the searchlight beams to point right (0deg) on
-      // mouse-leave. The curious gaze will then take over for
-      // the iris, but the beams settle to a neutral position.
-      if (heroFigure) {
-        heroFigure.style.setProperty('--search-l-angle', '0deg');
-        heroFigure.style.setProperty('--search-r-angle', '0deg');
-      }
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
 
     heroSection.addEventListener('mousemove', onMove);
     heroSection.addEventListener('mouseleave', onLeave);
-
-    // TOUCH handler — on touch devices the searchlight should
-    // also follow the touch position. (The existing
-    // touchToMouse bridge at the bottom of the file also
-    // dispatches a synthetic mousemove, but this is a
-    // direct, lightweight path so the beam responds even
-    // if the mousemove dispatch is intercepted.)
-    heroSection.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 0) return;
-      const t = e.touches[0];
-      setSearchAngles(t.clientX, t.clientY);
-    }, { passive: true });
 
     /* ---------- 3b. HOVER-TRIGGERED STATE PROGRESSION ----------
        User wanted: 'the effect can also be triggered by
