@@ -782,13 +782,6 @@ h1, h2, h3, h4, p { margin: 0; }
   border-radius: 50%;
   pointer-events: none;
   z-index: 3;
-  background: radial-gradient(
-    ellipse 50% 50% at 50% 50%,
-    #fff4d6 0%,            /* warm cream center */
-    #ffe6b8 25%,           /* warm peach */
-    #f0c890 55%,           /* warm amber */
-    transparent 85%
-  );
   filter: blur(2.5px);
   /* translate3d(0,0,0) = translateZ(0) — force the cover onto
      the same 3D plane as the AI image so the 3D tilt doesn't
@@ -798,29 +791,35 @@ h1, h2, h3, h4, p { margin: 0; }
   transition: opacity 0.5s var(--ease);
   animation: hv-eye-cover-breathe 4s ease-in-out infinite;
   mix-blend-mode: screen;
-  /* GAZE LIGHT — a small bright "spark" inside the cover that
-     follows the iris position. The spark uses the same
-     --iris-x/y vars as the iris (and 0.6× scale so the
-     sparkle stays within the cover even when the iris
-     drifts near the edge). This gives a "looking around
-     with light" effect — when the iris darts to a new
-     position, the cover has a corresponding bright spot,
-     as if light is reflecting off the eye in that direction. */
-  --gaze-light-x: calc(50% + var(--iris-x, 0px) * 0.6);
-  --gaze-light-y: calc(50% + var(--iris-y, 0px) * 0.6);
+  /* FIERCE EYE: white "pupil" in the center, red "ring" on
+     the outside. The pupil is small and bright (always
+     visible). The red ring creates a permanent "fierce" /
+     "menacing" look — like the angry red eye of a robot or
+     a predator. Replaces the old warm-white cover AND the
+     old "gaze light" spark (which the user found distracting
+     because it broke the design). */
   background:
+    /* Layer 1: white "pupil" — small, bright, always centered
+       (no longer follows iris — that was the distracting
+       "gaze light" dot that the user wanted removed). */
     radial-gradient(
-      circle 12% at var(--gaze-light-x) var(--gaze-light-y),
-      rgba(255, 255, 240, 0.7) 0%,
-      rgba(255, 240, 200, 0.4) 40%,
-      transparent 80%
+      circle 22% at 50% 50%,
+      #ffffff 0%,
+      rgba(255, 248, 230, 0.95) 40%,
+      rgba(255, 220, 180, 0.5) 70%,
+      transparent 100%
     ),
+    /* Layer 2: red "fierce ring" — white center to red outer.
+       This is the "menacing eye" design. White at center
+       (where the pupil sits), warm cream at 18%, warm
+       orange at 50%, deep red at 80%, transparent at edge. */
     radial-gradient(
       ellipse 50% 50% at 50% 50%,
-      #fff4d6 0%,
-      #ffe6b8 25%,
-      #f0c890 55%,
-      transparent 85%
+      #ffffff 0%,
+      #fff0d0 18%,
+      #ffaa70 50%,
+      #ff3020 80%,
+      transparent 100%
     );
   /* The cover's INNER red glow (the 'leak' that builds
      as the cover thins) is a box-shadow inset whose
@@ -829,22 +828,22 @@ h1, h2, h3, h4, p { margin: 0; }
      from 0 to strong — visually cracks the cover open
      from the inside. */
   box-shadow:
-    inset 0 0 calc(6px + (1 - var(--eye-cover-opacity, 1)) * 22px)
-      rgba(255, 50, 20, calc((1 - var(--eye-cover-opacity, 1)) * 0.85)),
-    inset 0 0 calc(2px + (1 - var(--eye-cover-opacity, 1)) * 4px)
-      rgba(255, 100, 50, calc((1 - var(--eye-cover-opacity, 1)) * 0.4));
+    inset 0 0 calc(8px + (1 - var(--eye-cover-opacity, 1)) * 28px)
+      rgba(255, 30, 10, calc((1 - var(--eye-cover-opacity, 1)) * 0.95)),
+    inset 0 0 calc(3px + (1 - var(--eye-cover-opacity, 1)) * 6px)
+      rgba(255, 120, 60, calc((1 - var(--eye-cover-opacity, 1)) * 0.55));
 }
 .hv-eye-cover-l {
   left: 35%;
   top: 32%;
-  width: 10%;          /* bigger — matches the larger LEFT red eye (6.6%×4.5%) */
-  height: 6.5%;
+  width: 7.5%;         /* was 10% — smaller so gaze movement is visible */
+  height: 5.5%;        /* was 6.5% */
 }
 .hv-eye-cover-r {
   left: 48.5%;
   top: 32%;
-  width: 7%;           /* smaller — matches the smaller RIGHT red eye (4.9%×3.1%) */
-  height: 4.5%;
+  width: 5.5%;         /* was 7% */
+  height: 4%;          /* was 4.5% */
   animation-delay: 0.5s;
 }
 @keyframes hv-eye-cover-breathe {
