@@ -789,7 +789,7 @@ h1, h2, h3, h4, p { margin: 0; }
   transform: translate(-50%, -50%) translateZ(0);
   opacity: var(--eye-cover-opacity, 1);
   transition: opacity 0.5s var(--ease);
-  animation: hv-eye-cover-breathe 4s ease-in-out infinite;
+  animation: hv-eye-cover-breathe 3.5s ease-in-out infinite;
   mix-blend-mode: screen;
   /* FIERCE EYE (v2) — single smooth white-to-red gradient.
      No hard "pupil" circle (v1 had a small white dot at the
@@ -823,6 +823,51 @@ h1, h2, h3, h4, p { margin: 0; }
     inset 0 0 calc(3px + (1 - var(--eye-cover-opacity, 1)) * 6px)
       rgba(255, 120, 60, calc((1 - var(--eye-cover-opacity, 1)) * 0.55));
 }
+/* ===========================================================
+   COVER GLOW — soft warm halo around the eye cover.
+   Makes the cover feel like a "lit" light source.
+   - Same size as the cover, follows the gaze via JS
+   - Single layer, soft warm gradient
+   - Breathes in sync with the cover
+   =========================================================== */
+.hv-cover-glow {
+  position: absolute;
+  width: 14%;
+  height: 14%;
+  margin: -7% 0 0 -7%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;                     /* above image, below red-ambient */
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 220, 150, 0.45) 0%,
+    rgba(255, 150, 80, 0.25) 35%,
+    rgba(255, 80, 40, 0.10) 65%,
+    transparent 100%
+  );
+  opacity: 0.7;
+  filter: blur(8px);
+  mix-blend-mode: screen;
+  animation: hv-cover-glow-breathe 3s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.hv-cover-glow-l { left: 35.42%; top: 31.77%; }
+.hv-cover-glow-r { left: 48.73%; top: 31.94%; }
+
+.hv-cover-glow-l { animation-delay: 0s; }
+.hv-cover-glow-r { animation-delay: 1.5s; }
+
+@keyframes hv-cover-glow-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.9); }
+  50%      { opacity: 0.85; transform: scale(1.1); }
+}
+
+/* In warning state, the cover glow intensifies */
+.hv-figure.is-warning .hv-cover-glow {
+  opacity: 1.0;
+}
+
 .hv-eye-cover-l {
   left: 35%;
   top: 32%;
@@ -837,8 +882,9 @@ h1, h2, h3, h4, p { margin: 0; }
   animation-delay: 0.5s;
 }
 @keyframes hv-eye-cover-breathe {
-  0%, 100% { filter: blur(2.5px) brightness(1); }
-  50%      { filter: blur(2.5px) brightness(1.15); }
+  0%, 100% { filter: blur(2.5px) brightness(1)    saturate(1); }
+  40%      { filter: blur(2.5px) brightness(1.05) saturate(1.05); }
+  60%      { filter: blur(2.5px) brightness(1.35) saturate(1.4); }
 }
 
 /* STATE: detected — eye cover breathes FASTER (alarm),
@@ -943,8 +989,8 @@ h1, h2, h3, h4, p { margin: 0; }
   /* The y position is set per eye (left vs right) below — the
      two wisps are at DIFFERENT vertical positions so they don't
      merge into a single horizontal line. */
-  height: 2px;
-  margin-top: -1px;
+  height: 1.5px;                  /* was 2px */
+  margin-top: -0.75px;
   /* WISP GROWTH: the width scales with --wisp-extension
      (set by JS based on state). The base width is set per
      eye via --wisp-base-w (left=45%, right=32% — the LEFT
@@ -954,7 +1000,7 @@ h1, h2, h3, h4, p { margin: 0; }
      to 2.4x (left→108%, right→77%) — at 2.4x the LEFT wisp
      extends BEYOND the hero card edges, giving the 'light
      growing out' effect the user wanted. */
-  width: calc(var(--wisp-base-w, 45%) * var(--wisp-extension, 1));
+  width: calc(var(--wisp-base-w, 45%) * var(--wisp-extension, 1) * 0.6);  /* was 1.0, now 0.6 = 40% shorter */
   pointer-events: none;
   z-index: 3;
   /* Per-eye transform: translateX(-50%) centers, rotate gives
@@ -962,6 +1008,7 @@ h1, h2, h3, h4, p { margin: 0; }
      — like a menacing scowl), translateZ(0) keeps the wisp
      on the same 3D plane as the AI image. */
   transform: translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translateZ(0);
+  opacity: 0.6;                  /* NEW: was 1.0, now 0.6 */
   background:
     /* Inner brighter core — RED-ORANGE (user wanted the wispy
        strand to be RED/red-orange, not white. White read as
@@ -1005,13 +1052,13 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-eye-wisp-l {
   left: 35%;
   top: 31.8%;
-  --wisp-base-w: 45%;
+  --wisp-base-w: 30%;            /* was 45% — much smaller wisp */
   --wisp-tilt: -4deg;
 }
 .hv-eye-wisp-r {
   left: 48.5%;
   top: 32.3%;
-  --wisp-base-w: 32%;
+  --wisp-base-w: 22%;            /* was 32% — much smaller wisp */
   --wisp-tilt: 4deg;
   /* Phase-offset the right wisp for asymmetric flicker so both
      eyes don't wobble in lockstep. */

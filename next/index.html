@@ -139,6 +139,19 @@
             <div class="hv-eye-cover hv-eye-cover-l" id="hvEyeCoverL" aria-hidden="true"></div>
             <div class="hv-eye-cover hv-eye-cover-r" id="hvEyeCoverR" aria-hidden="true"></div>
 
+            <!-- COVER GLOW — soft warm halo around each cover
+                 (the white-to-red gradient ellipse). Gives the
+                 cover a "lit light source" feel — the eye
+                 looks like a powered CRT emitting warm light.
+                 Follows the gaze (translated by JS in apply()).
+                 Different from .hv-eye-glow (which is centered
+                 on the AI image's red eye, fixed position) —
+                 this is centered on the COVER and moves with
+                 it. mix-blend-mode: screen so it brightens
+                 the surrounding CRT screen area. -->
+            <div class="hv-cover-glow hv-cover-glow-l" id="hvCoverGlowL" aria-hidden="true"></div>
+            <div class="hv-cover-glow hv-cover-glow-r" id="hvCoverGlowR" aria-hidden="true"></div>
+
             <!-- WISP — thin horizontal "wispy strand of light" that
                  passes through each eye. Always visible (not just
                  firing). The user said the wisp should be MORE

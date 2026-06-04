@@ -59,6 +59,8 @@
   const redAmbient  = $('#hvRedAmbient');
   const coverL      = document.querySelector('.hv-eye-cover-l');
   const coverR      = document.querySelector('.hv-eye-cover-r');
+  const coverGlowL  = document.querySelector('.hv-cover-glow-l');
+  const coverGlowR  = document.querySelector('.hv-cover-glow-r');
   const wispL       = document.querySelector('.hv-eye-wisp-l');
   const wispR       = document.querySelector('.hv-eye-wisp-r');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -313,12 +315,16 @@
       if (coverR) {
         coverR.style.transform = `translate(-50%, -50%) translate(${cx}, ${cy}) translateZ(0)`;
       }
-      if (wispL) {
-        wispL.style.transform = `translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translate(${cx}, ${cy}) translateZ(0)`;
+      if (coverGlowL) {
+        coverGlowL.style.transform = `translate(-50%, -50%) translate(${cx}, ${cy}) translateZ(0)`;
       }
-      if (wispR) {
-        wispR.style.transform = `translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translate(${cx}, ${cy}) translateZ(0)`;
+      if (coverGlowR) {
+        coverGlowR.style.transform = `translate(-50%, -50%) translate(${cx}, ${cy}) translateZ(0)`;
       }
+      // WISP no longer follows the gaze — it is now a static
+      // decoration (lens-flare detail). It only blinks via the
+      // blink keyframe and the JS-set width (--wisp-extension).
+      // Removed: wispL/wispR transform-update blocks.
 
       // Shake offset (random, intensity from state)
       let shakeX = 0, shakeY = 0;
