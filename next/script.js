@@ -284,6 +284,42 @@
         irisR.style.setProperty('--iris-y', currentIrisY.toFixed(1) + 'px');
       }
 
+      // COVER + WISP follow the gaze (gives the "lively" feel
+      // the user asked for). The cover (white ellipse that
+      // hides the red eye in calm state) and the wisp (horizontal
+      // light strand through each eye) translate by the same
+      // `currentIrisX/Y` as the iris, so the whole eye moves
+      // together as one unit.
+      //
+      // Why this works:
+      // - The cover/wisp have a base position set by
+      //   positionChildren() via `left/top` (pixels)
+      // - The transform is a relative offset from that base
+      // - We add `translate(currentIrisX, currentIrisY)` to the
+      //   existing centering transform
+      // - This makes the cover/wisp slide by the gaze direction
+      //
+      // Edge case: the red eye underneath the cover is baked
+      // into the AI image at a fixed position. When the cover
+      // moves 20px to the side, some red peeks out around the
+      // cover edge — this is INTENTIONAL, it makes the eye feel
+      // "alive" and looking around. (In detected/warning the
+      // cover fades anyway, so the red is fully revealed.)
+      const cx = currentIrisX.toFixed(1) + 'px';
+      const cy = currentIrisY.toFixed(1) + 'px';
+      if (coverL) {
+        coverL.style.transform = `translate(-50%, -50%) translate(${cx}, ${cy}) translateZ(0)`;
+      }
+      if (coverR) {
+        coverR.style.transform = `translate(-50%, -50%) translate(${cx}, ${cy}) translateZ(0)`;
+      }
+      if (wispL) {
+        wispL.style.transform = `translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translate(${cx}, ${cy}) translateZ(0)`;
+      }
+      if (wispR) {
+        wispR.style.transform = `translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translate(${cx}, ${cy}) translateZ(0)`;
+      }
+
       // Shake offset (random, intensity from state)
       let shakeX = 0, shakeY = 0;
       if (shakeLevel > 0) {
