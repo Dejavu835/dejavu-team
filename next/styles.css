@@ -791,36 +791,26 @@ h1, h2, h3, h4, p { margin: 0; }
   transition: opacity 0.5s var(--ease);
   animation: hv-eye-cover-breathe 4s ease-in-out infinite;
   mix-blend-mode: screen;
-  /* FIERCE EYE: white "pupil" in the center, red "ring" on
-     the outside. The pupil is small and bright (always
-     visible). The red ring creates a permanent "fierce" /
-     "menacing" look — like the angry red eye of a robot or
-     a predator. Replaces the old warm-white cover AND the
-     old "gaze light" spark (which the user found distracting
-     because it broke the design). */
-  background:
-    /* Layer 1: white "pupil" — small, bright, always centered
-       (no longer follows iris — that was the distracting
-       "gaze light" dot that the user wanted removed). */
-    radial-gradient(
-      circle 22% at 50% 50%,
-      #ffffff 0%,
-      rgba(255, 248, 230, 0.95) 40%,
-      rgba(255, 220, 180, 0.5) 70%,
-      transparent 100%
-    ),
-    /* Layer 2: red "fierce ring" — white center to red outer.
-       This is the "menacing eye" design. White at center
-       (where the pupil sits), warm cream at 18%, warm
-       orange at 50%, deep red at 80%, transparent at edge. */
-    radial-gradient(
-      ellipse 50% 50% at 50% 50%,
-      #ffffff 0%,
-      #fff0d0 18%,
-      #ffaa70 50%,
-      #ff3020 80%,
-      transparent 100%
-    );
+  /* FIERCE EYE (v2) — single smooth white-to-red gradient.
+     No hard "pupil" circle (v1 had a small white dot at the
+     center that the user found distracting — it looked like
+     a separate "dot" on top of the eye when the cover moved
+     with the gaze). Now the entire cover is ONE smooth
+     radial gradient: bright white in the center that
+     smoothly fades through cream → orange → deep red →
+     transparent. The white center is a SOFT highlight
+     (no hard edge), so when the cover moves with the gaze,
+     there's no visible "dot" — just a smooth gradient that
+     shifts as a whole. */
+  background: radial-gradient(
+    ellipse 50% 50% at 50% 50%,
+    #ffffff 0%,                          /* bright white center (soft, no hard edge) */
+    rgba(255, 245, 220, 0.92) 18%,       /* warm cream */
+    rgba(255, 180, 120, 0.85) 40%,      /* warm peach-orange */
+    rgba(255, 80, 40, 0.75) 65%,        /* bright red */
+    rgba(255, 30, 10, 0.55) 85%,        /* deep red */
+    transparent 100%
+  );
   /* The cover's INNER red glow (the 'leak' that builds
      as the cover thins) is a box-shadow inset whose
      intensity is tied to the cover's opacity. As cover
