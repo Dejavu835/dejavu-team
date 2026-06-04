@@ -1227,74 +1227,6 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-particles-r .hv-particle:nth-child(8) { --pdx:  92px; --pdy: 28px;  }
 .hv-particles-r .hv-particle:nth-child(9) { --pdx: -42px; --pdy: -84px; }
 
-/* ===========================================================
-   IDLE PARTICLES (v2 — atmospheric dust motes) — small glowing
-   particles around each eye, always visible. v2 is designed to
-   look like "light in air" (atmospheric), NOT cheap CSS circles.
-
-   Key premium techniques:
-   - SOLID color core (no radial gradient inside the dot —
-     the v1 gradient created a visible inner circle)
-   - 2-LAYERED box-shadow: tight 3px core + soft 10px outer
-     (the v1 had a single 4px halo that read as a "ring")
-   - Container filter: blur(0.4px) for atmospheric softness
-   - Smaller core (1px) but bigger soft glow (10px) — feels
-     "punchier" without being punchy
-   - 5 per eye with random positions (more variety = more
-     atmospheric, less mechanical)
-   =========================================================== */
-.hv-idle-particles {
-  position: absolute;
-  top: 28%;
-  pointer-events: none;
-  z-index: 4;
-  opacity: 0.55;
-  filter: blur(0.4px);             /* KEY: *** atmospheric softness */
-  transition: opacity 0.4s var(--ease);
-}
-.hv-idle-particles-l { left: 30%; }
-.hv-idle-particles-r { right: 30%; }
-
-.hv-figure.is-detected .hv-idle-particles { opacity: 0.75; }
-.hv-figure.is-warning  .hv-idle-particles { opacity: 0.95; }
-
-.hv-idle-particle {
-  position: absolute;
-  width: 1px;                       /* was 1.5px — smaller core */
-  height: 1px;
-  border-radius: 50%;
-  background: rgba(255, 240, 200, 0.95);  /* SOLID warm white, not a gradient */
-  box-shadow:
-    /* Tight inner glow */
-    0 0 3px rgba(255, 220, 170, 0.55),
-    /* Soft outer atmosphere */
-    0 0 10px rgba(255, 180, 100, 0.22);
-  animation: hv-idle-particle-drift 5.5s ease-in-out infinite;
-  mix-blend-mode: screen;
-}
-
-/* 5 per eye with varied positions, delays, and drift directions.
-   Each particle has a unique (--ipdx, --ipdy) drift target. */
-.hv-idle-particles-l .hv-idle-particle:nth-child(1) { left: 18%; top: 12%;  --ipdx:  22px; --ipdy: -18px; animation-delay: 0s;    }
-.hv-idle-particles-l .hv-idle-particle:nth-child(2) { left: 48%; top: 32%;  --ipdx: -16px; --ipdy:  20px; animation-delay: 1.1s;  }
-.hv-idle-particles-l .hv-idle-particle:nth-child(3) { left: 30%; top: 60%;  --ipdx:  24px; --ipdy:  14px; animation-delay: 2.2s;  }
-.hv-idle-particles-l .hv-idle-particle:nth-child(4) { left: 72%; top: 78%;  --ipdx: -22px; --ipdy: -20px; animation-delay: 3.3s;  }
-.hv-idle-particles-l .hv-idle-particle:nth-child(5) { left: 40%; top: 22%;  --ipdx:  18px; --ipdy:  24px; animation-delay: 4.4s;  }
-
-/* Right-eye mirror */
-.hv-idle-particles-r .hv-idle-particle:nth-child(1) { right: 18%; top: 12%;  --ipdx: -22px; --ipdy: -18px; animation-delay: 0.55s; }
-.hv-idle-particles-r .hv-idle-particle:nth-child(2) { right: 48%; top: 32%;  --ipdx:  16px; --ipdy:  20px; animation-delay: 1.65s; }
-.hv-idle-particles-r .hv-idle-particle:nth-child(3) { right: 30%; top: 60%;  --ipdx: -24px; --ipdy:  14px; animation-delay: 2.75s; }
-.hv-idle-particles-r .hv-idle-particle:nth-child(4) { right: 72%; top: 78%;  --ipdx:  22px; --ipdy: -20px; animation-delay: 3.85s; }
-.hv-idle-particles-r .hv-idle-particle:nth-child(5) { right: 40%; top: 22%;  --ipdx: -18px; --ipdy:  24px; animation-delay: 4.95s; }
-
-@keyframes hv-idle-particle-drift {
-  0%   { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  15%  { transform: translate(0, 0) scale(1);   opacity: 1; }
-  85%  { transform: translate(calc(var(--ipdx, 15px) * 0.7), calc(var(--ipdy, -15px) * 0.7)) scale(0.7); opacity: 0.8; }
-  100% { transform: translate(var(--ipdx, 15px), var(--ipdy, -15px)) scale(0.3); opacity: 0; }
-}
-
 /* ---------- SPARKS (火星子) — tiny twinkling embers ----------
    The user wanted a layer of small "火星子" (spark) particles
    ON TOP OF the existing 18 drifting embers. These are:
@@ -1521,8 +1453,6 @@ h1, h2, h3, h4, p { margin: 0; }
   .hv-figure.is-blinking .hv-eye-cover,
   .hv-figure.is-blinking .hv-eye-iris,
   .hv-figure.is-blinking .hv-eye-wisp { animation: none; }
-  .hv-idle-particles,
-  .hv-idle-particle { animation: none !important; filter: none !important; }
 }
 
 /* ===========================================================

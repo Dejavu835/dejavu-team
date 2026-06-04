@@ -197,45 +197,6 @@
             <div class="hv-sparks hv-sparks-l" aria-hidden="true"></div>
             <div class="hv-sparks hv-sparks-r" aria-hidden="true"></div>
 
-            <!-- IDLE PARTICLES (v2 — atmospheric dust motes) —
-                 Small glowing dust around each eye, always visible
-                 even in calm state. These make the character feel
-                 "alive" with a sense of atmosphere — like motes
-                 floating in the warm light around the eyes.
-
-                 v2 (premium) differences from v1 (the cheap version
-                 that the user called "fake"):
-                 - Smaller core (1px vs 1.5px)
-                 - SOLID color (no internal radial gradient that
-                   created a visible "circle" within each dot)
-                 - 2-LAYERED glow: tight 3px + soft 10px outer (not
-                   a single 4px halo)
-                 - Container has `filter: blur(0.4px)` for
-                   atmospheric softness
-                 - 5 per eye (vs 3) with more variety in positions
-                 - Slower drift (5.5s vs 4.5s) — calmer, more
-                   atmospheric
-                 - Less opacity (0.55 vs 0.5) but with bigger
-                   soft glow, so it FEELS brighter but isn't
-                   punchy
-
-                 Result: dust motes that feel like "light in air",
-                 not cheap CSS circles. -->
-            <div class="hv-idle-particles hv-idle-particles-l" aria-hidden="true">
-              <span class="hv-idle-particle"></span>
-              <span class="hv-idle-particle"></span>
-              <span class="hv-idle-particle"></span>
-              <span class="hv-idle-particle"></span>
-              <span class="hv-idle-particle"></span>
-            </div>
-            <div class="hv-idle-particles hv-idle-particles-r" aria-hidden="true">
-              <span class="hv-idle-particle"></span>
-              <span class="hv-idle-particle"></span>
-              <span class="hv-idle-particle"></span>
-              <span class="hv-idle-particle"></span>
-              <span class="hv-idle-particle"></span>
-            </div>
-
             <!-- EYE IRIS — small bright "pupil" highlight that drifts
                  around within each eye, simulating curious gaze. JS sets
                  --iris-x/y for each eye (default centered, drifts when
