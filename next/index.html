@@ -113,6 +113,25 @@
                  light' oppressive feeling. -->
             <div class="hv-red-ambient" id="hvRedAmbient" aria-hidden="true"></div>
 
+            <!-- EYE GLOW RING — a soft warm halo around each eye.
+                 Always visible (even in calm state) so the character
+                 feels "alive" with a steady light around each eye.
+                 The ring is BIGGER than the eye (25% of figure width)
+                 so it surrounds the eye like a soft corona — the eye
+                 cover is on top of the eye itself, so the ring is
+                 what peeks out around it.
+
+                 z-index: 3 (above red-ambient 2, same as eye-cover
+                 3 — DOM order before eye-cover, so the cover paints
+                 on top, hiding the eye center while the ring
+                 remains visible).
+
+                 Animations: 2 layered
+                 1. breathe: gentle 3.5s opacity + scale pulse
+                 2. flicker: 0.7s brightness flicker for "vibration" -->
+            <div class="hv-eye-glow hv-eye-glow-l" id="hvEyeGlowL" aria-hidden="true"></div>
+            <div class="hv-eye-glow hv-eye-glow-r" id="hvEyeGlowR" aria-hidden="true"></div>
+
             <!-- EYE COVERS — warm white radial gradient that hides the
                  baked-in red eyes in the calm state. Fades out as the
                  user clicks the head repeatedly, revealing red underneath
@@ -177,6 +196,29 @@
                  and POP in/out via opacity animation. -->
             <div class="hv-sparks hv-sparks-l" aria-hidden="true"></div>
             <div class="hv-sparks hv-sparks-r" aria-hidden="true"></div>
+
+            <!-- IDLE PARTICLES — small "alive" particles around each
+                 eye, ALWAYS visible (even in calm state). Different
+                 from the 18 dramatic .hv-particle embers (which are
+                 only visible in detected/warning states) — these are
+                 the "breathing" particles that make the character
+                 feel alive even at rest.
+
+                 3 per eye, 1.5px, very slow drift (4.5s), warm
+                 yellow/orange colors. Always present, low opacity
+                 in calm (0.5), brighter in detected (0.7) and
+                 warning (0.9). Mix-blend-mode: screen for the
+                 "light in air" feel. -->
+            <div class="hv-idle-particles hv-idle-particles-l" aria-hidden="true">
+              <span class="hv-idle-particle"></span>
+              <span class="hv-idle-particle"></span>
+              <span class="hv-idle-particle"></span>
+            </div>
+            <div class="hv-idle-particles hv-idle-particles-r" aria-hidden="true">
+              <span class="hv-idle-particle"></span>
+              <span class="hv-idle-particle"></span>
+              <span class="hv-idle-particle"></span>
+            </div>
 
             <!-- EYE IRIS — small bright "pupil" highlight that drifts
                  around within each eye, simulating curious gaze. JS sets
