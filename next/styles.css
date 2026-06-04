@@ -686,213 +686,90 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 /* ===========================================================
-   EYE COVER — soft warm-white glow that hides the baked-in
-   red eyes in the calm state. Fades out as the user keeps
-   clicking the head, revealing red underneath.
-
-   UPDATE (2026-06-04): Cover enlarged to 18%×13% (left) /
-   14%×10% (right) so the cover ALWAYS fully covers the
-   baked-in red eye even at the maximum gaze offset (20px).
-   The previous 7.5%×5.5% / 5.5%×4% sizes left a ~17.5px gap
-   between the cover's edge and the red eye's edge at max
-   gaze, which the user saw as "the red eye peeks out".
-   The new size has a 1.5× safety margin over the strict
-   20.5% minimum. The cover's red ring zone (60-85% from
-   center) blends with the red eye, so even partial overlap
-   looks like one thing.
+   EYE AMBIENT — soft warm halo around each AI red eye.
+   The AI red eye is the protagonist; this just adds a
+   subtle warm "atmosphere" to make it look "lit".
+   FIXED position (doesn't follow gaze) — provides
+   visual stability. Very low alpha, very soft, very
+   large. Multiplied by screen blend so it brightens
+   the CRT screen area around the eye.
    =========================================================== */
-.hv-eye-cover {
+.hv-eye-ambient {
   position: absolute;
-  /* Width/height per eye (left vs right) — set below in
-     .hv-eye-cover-l / .hv-eye-cover-r. The covers are
-     proportional to the actual red eye sizes in the AI
-     image (left eye 6.6%×4.5% → cover 10%×6.5%; right
-     eye 4.9%×3.1% → cover 7%×4.5%). The left is
-     ~1.4x bigger than the right, matching the red eye
-     size ratio. */
-  width: 10%;
-  height: 6.5%;
+  width: 22%;
+  height: 32%;
+  margin: -16% 0 0 -11%;
   border-radius: 50%;
   pointer-events: none;
-  z-index: 3;
-  filter: blur(2.5px);
-  /* translate3d(0,0,0) = translateZ(0) — force the cover onto
-     the same 3D plane as the AI image so the 3D tilt doesn't
-     separate the white from the red eyes underneath. */
-  transform: translate(-50%, -50%) translateZ(0);
-  opacity: var(--eye-cover-opacity, 1);
-  transition: opacity 0.5s var(--ease);
-  animation: hv-eye-cover-breathe 3.5s ease-in-out infinite;
-  /* mix-blend-mode: screen — the warm glow ADDS light to the
-     AI red eye underneath, making it look "lit" and "fierce"
-     without hiding it. The AI red eye stays visible through
-     the semi-transparent glow. */
-  mix-blend-mode: screen;
-  /* SOFT WARM GLOW (v3) — a subtle warm light on top of the
-     AI red eye, NOT a replacement. The AI red eye is the
-     "real" eye; the cover just makes it look more "lit".
-
-     Maximum alpha is 0.85 (not 1.0) — semi-transparent
-     throughout, so the AI red eye shows through naturally.
-     Colors are warm cream / peach / orange (low contrast,
-     elegant) — NOT bright red. The "separation" issue is
-     solved BY DESIGN: because the cover is mostly
-     transparent, when it moves with the gaze, the AI red
-     eye stays put and the warm glow slides over it like a
-     soft light. No visible "gap" or "two orbs" effect. */
+  z-index: 2;
   background: radial-gradient(
-    ellipse 50% 50% at 50% 50%,
-    rgba(255, 255, 255, 0.85) 0%,       /* soft white center (translucent, not pure white) */
-    rgba(255, 240, 200, 0.55) 25%,      /* warm cream (lower alpha) */
-    rgba(255, 200, 130, 0.35) 55%,      /* soft peach (lower alpha) */
-    rgba(255, 150, 90, 0.15) 80%,       /* warm orange tint (very low alpha) */
+    ellipse 60% 50% at 50% 50%,
+    rgba(255, 220, 150, 0.20) 0%,        /* very subtle warm center */
+    rgba(255, 180, 100, 0.10) 35%,
+    rgba(255, 140, 70, 0.04) 65%,
     transparent 100%
   );
-  /* The cover's INNER red glow (the 'leak' that builds
-     as the cover thins) is a box-shadow inset whose
-     intensity is tied to the cover's opacity. As cover
-     opacity drops from 1 to 0, the inner red glow grows
-     from 0 to strong — visually cracks the cover open
-     from the inside. */
-  box-shadow:
-    inset 0 0 calc(8px + (1 - var(--eye-cover-opacity, 1)) * 28px)
-      rgba(255, 30, 10, calc((1 - var(--eye-cover-opacity, 1)) * 0.95)),
-    inset 0 0 calc(3px + (1 - var(--eye-cover-opacity, 1)) * 6px)
-      rgba(255, 120, 60, calc((1 - var(--eye-cover-opacity, 1)) * 0.55));
-}
-/* ===========================================================
-   COVER GLOW — soft warm halo around the eye cover.
-   Makes the cover feel like a "lit" light source.
-   - Same size as the cover, follows the gaze via JS
-   - Single layer, soft warm gradient
-   - Breathes in sync with the cover
-
-   UPDATE (2026-06-04): Enlarged from 14% to 30% and softened
-   (blur 8px → 18px, lower alpha) so the glow always visually
-   merges with the AI-baked red eye. Previously, at max gaze
-   offset (~20px), the small 14% glow sat visibly to the side
-   of the fixed red eye pixel — the user saw a clear "disconnect".
-   At 30% (~165px) the AI red eye is always well within the
-   glow's bright zone, even at max gaze offset.
-   =========================================================== */
-.hv-cover-glow {
-  position: absolute;
-  width: 22%;                    /* was 35% — smaller, more focused (matches smaller cover) */
-  height: 30%;                   /* was 50% */
-  margin: -15% 0 0 -11%;         /* centered on the cover (offset for non-square aspect) */
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 2;                     /* above image, below red-ambient */
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 220, 150, 0.30) 0%,    /* was 0.45 — softer center */
-    rgba(255, 150, 80, 0.15) 35%,   /* was 0.25 */
-    rgba(255, 80, 40, 0.06) 65%,    /* was 0.10 */
-    transparent 100%
-  );
-  opacity: 0.7;
-  filter: blur(16px);              /* was 20px */
   mix-blend-mode: screen;
-  animation: hv-cover-glow-breathe 3s ease-in-out infinite;
-  will-change: transform, opacity;
+  filter: blur(18px);
+  animation: hv-eye-ambient-breathe 5s ease-in-out infinite;
+  will-change: opacity, transform;
 }
 
-.hv-cover-glow-l { left: 35.42%; top: 31.77%; }
-.hv-cover-glow-r { left: 48.73%; top: 31.94%; }
+.hv-eye-ambient-l { left: 35.42%; top: 31.77%; }
+.hv-eye-ambient-r { left: 48.73%; top: 31.94%; }
 
-.hv-cover-glow-l { animation-delay: 0s; }
-.hv-cover-glow-r { animation-delay: 1.5s; }
+.hv-eye-ambient-l { animation-delay: 0s; }
+.hv-eye-ambient-r { animation-delay: 2.5s; }
 
-@keyframes hv-cover-glow-breathe {
-  0%, 100% { opacity: 0.55; transform: scale(0.9); }
-  50%      { opacity: 0.85; transform: scale(1.1); }
-}
-
-/* In warning state, the cover glow intensifies */
-.hv-figure.is-warning .hv-cover-glow {
-  opacity: 1.0;
-}
-
-/* ===========================================================
-   HERO LIGHT SPILL — very large, very soft warm halo that
-   "spills" from the eye area into the wider hero section.
-   Stays fixed (ambient) — doesn't follow the gaze.
-   - 90% of figure width (~500px), centered on the eye area
-   - Very low alpha (0.12 center, fades to 0)
-   - Massive 50px blur for atmospheric softness
-   - mix-blend-mode: screen so it brightens whatever is behind
-   - 6s slow breathe for "the room is alive" feel
-   =========================================================== */
-.hv-hero-spill {
-  position: absolute;
-  width: 90%;
-  height: 70%;
-  left: 50%;
-  top: 35%;
-  margin: -35% 0 0 -45%;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 1;                     /* above image, below halo/red-ambient */
-  background: radial-gradient(
-    ellipse 70% 50% at 50% 50%,
-    rgba(255, 200, 130, 0.12) 0%,
-    rgba(255, 150, 80, 0.06) 35%,
-    rgba(255, 80, 40, 0.02) 65%,
-    transparent 100%
-  );
-  filter: blur(50px);
-  mix-blend-mode: screen;
-  animation: hv-hero-spill-breathe 6s ease-in-out infinite;
-}
-
-@keyframes hv-hero-spill-breathe {
+@keyframes hv-eye-ambient-breathe {
   0%, 100% { opacity: 0.85; transform: scale(0.95); }
-  50%      { opacity: 1.15; transform: scale(1.05); }
+  50%      { opacity: 1.10; transform: scale(1.05); }
 }
 
-.hv-figure.is-warning .hv-hero-spill {
-  opacity: 1.3;
-}
+/* ===========================================================
+   CURSOR TRACKER — soft warm light that follows the mouse
+   position with smooth easing. This is the "searchlight"
+   effect — but rendered as a large soft warm halo, NOT a
+   hard beam or triangle.
 
-.hv-eye-cover-l {
-  left: 35%;
-  top: 32%;
-  width: 8%;           /* was 16% — back to elegant, slightly larger than the AI red eye (6.6%×4.5%) */
-  height: 12%;         /* was 28% — back to elegant, vertical almond */
-}
-.hv-eye-cover-r {
-  left: 48.5%;
-  top: 32%;
-  width: 6%;           /* was 13% */
-  height: 10%;         /* was 22% */
-  animation-delay: 0.5s;
-}
-@keyframes hv-eye-cover-breathe {
-  0%, 100% { filter: blur(2.5px) brightness(1)    saturate(1); }
-  40%      { filter: blur(2.5px) brightness(1.05) saturate(1.05); }
-  60%      { filter: blur(2.5px) brightness(1.35) saturate(1.4); }
-}
+   JS sets --cursor-x and --cursor-y (in pixels, relative to
+   the figure) on the figure. The tracker's transform is
+   translate(cx, cy) — smoothly following the cursor.
 
-/* STATE: detected — eye cover breathes FASTER (alarm),
-   iris darts up, slight scale-up (eye widening in alarm). */
-.hv-figure.is-detected .hv-eye-cover {
-  animation-duration: 1.6s;
-}
+   The tracker is LARGE (50% × 60% of figure) and SOFT
+   (blur 30px) so the effect is atmospheric, not a
+   concentrated beam. It extends BEYOND the figure (figure
+   has overflow: visible) so the light "feeds back" to the
+   wider hero area.
 
-/* STATE: warning — eye cover pulses FAST and bright
-   (rapid heartbeat of the threatened character), iris
-   shrinks + trembles. */
-.hv-figure.is-warning .hv-eye-cover {
-  animation-duration: 0.55s;
-  filter: blur(2.5px) brightness(1.4);
-}
-
-/* The eye cover fully disappears when the laser fires so the
-   red eyes underneath are visible (and the laser sources
-   add the bright plasma glow on top). */
-.hv-figure.is-firing .hv-eye-cover {
+   mix-blend-mode: screen — adds light, doesn't replace. */
+.hv-cursor-tracker {
+  position: absolute;
+  width: 50%;
+  height: 60%;
+  left: 50%;
+  top: 50%;
+  margin: -30% 0 0 -25%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse 60% 55% at 50% 50%,
+    rgba(255, 200, 130, 0.30) 0%,        /* warm cream center */
+    rgba(255, 150, 80, 0.18) 35%,       /* warm orange */
+    rgba(255, 100, 50, 0.08) 65%,       /* soft red-orange */
+    transparent 100%
+  );
+  mix-blend-mode: screen;
+  filter: blur(30px);
+  transform: translate(var(--cursor-x, 0px), var(--cursor-y, 0px));
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
   opacity: 0;
-  transition: opacity 0.18s var(--ease);
+  /* Fade in the tracker when the cursor first moves */
+}
+.hv-figure.has-cursor .hv-cursor-tracker {
+  opacity: 1;
 }
 
 /* EYE IRIS — small bright "pupil" highlight that drifts
@@ -1102,7 +979,6 @@ h1, h2, h3, h4, p { margin: 0; }
   100%      { transform: translateX(-50%) rotate(var(--wisp-tilt, 0deg)) translateZ(0) scaleY(1); }
 }
 
-.hv-figure.is-blinking .hv-eye-cover,
 .hv-figure.is-blinking .hv-eye-iris {
   animation: hv-eye-blink 280ms ease-in-out;
 }
@@ -1464,14 +1340,12 @@ h1, h2, h3, h4, p { margin: 0; }
   .hv-status::before,
   .hv-figure-img,
   .hv-halo { animation: none; }
-  .hv-eye-cover,
   .hv-eye-iris,
   .hv-eye-wisp,
+  .hv-eye-ambient,
+  .hv-cursor-tracker,
   .hv-red-ambient { animation: none; }
-  .hv-figure.is-detected .hv-eye-cover,
-  .hv-figure.is-warning .hv-eye-cover,
   .hv-figure.is-warning .hv-eye-iris { animation: none; }
-  .hv-figure.is-blinking .hv-eye-cover,
   .hv-figure.is-blinking .hv-eye-iris,
   .hv-figure.is-blinking .hv-eye-wisp { animation: none; }
 }

@@ -57,10 +57,6 @@
   const irisL       = $('#hvEyeIrisL');
   const irisR       = $('#hvEyeIrisR');
   const redAmbient  = $('#hvRedAmbient');
-  const coverL      = document.querySelector('.hv-eye-cover-l');
-  const coverR      = document.querySelector('.hv-eye-cover-r');
-  const coverGlowL  = document.querySelector('.hv-cover-glow-l');
-  const coverGlowR  = document.querySelector('.hv-cover-glow-r');
   const wispL       = document.querySelector('.hv-eye-wisp-l');
   const wispR       = document.querySelector('.hv-eye-wisp-r');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -118,8 +114,6 @@
       }
     };
 
-    setEyePosition(coverL, 35.42, 31.77);
-    setEyePosition(coverR, 48.73, 31.94);
     setEyePosition(irisL,  35.42, 31.77);
     setEyePosition(irisR,  48.73, 31.94);
     setEyePosition(wispL,  35.42, 31.77);
@@ -253,9 +247,18 @@
 
     const cardGlow = $('#hvCardGlow');
 
-    /* ---------- 3a. Iris + halo + card-glow follow cursor ---------- */
-    const IRIS_RANGE_X = 20;     /* was 12 — much wider for truly visible "curious looking" */
-    const IRIS_RANGE_Y = 8;      /* was 5 — wider vertical range for up-glances */
+    /* ---------- 3a. Iris + halo + card-glow follow cursor ----------
+       REDUCED gaze amplitude (was 20×8) so the eye doesn't
+       "jerk" — the user said the old 20px movement looked
+       robotic. New 7×4 range = subtle, alive. */
+    const IRIS_RANGE_X = 7;      /* was 20 — much subtler, "curious looking" without jerking */
+    const IRIS_RANGE_Y = 4;      /* was 8 — subtler vertical range */
+    // Asymmetric gaze: each eye gets a small L/R offset so the
+    // two eyes don't move in perfect lockstep. Mimics real
+    // binocular gaze where the eyes are never perfectly
+    // synchronized.
+    const ASYMMETRY_L = { x: -2, y: -1 };
+    const ASYMMETRY_R = { x:  2, y:  1 };
     let currentIrisX = 0, currentIrisY = 0;
     let targetIrisX = 0, targetIrisY = 0;
 
@@ -274,57 +277,29 @@
       const dx = mx - 0.5;
       const dy = my - 0.5;
 
-      // Smooth iris position
-      currentIrisX += (targetIrisX - currentIrisX) * 0.40;
-      currentIrisY += (targetIrisY - currentIrisY) * 0.40;
+      // Smooth iris position (cubic-bezier style — use a
+      // 0.18 interpolation factor for a soft, eased feel
+      // rather than the previous linear-ish 0.40).
+      currentIrisX += (targetIrisX - currentIrisX) * 0.18;
+      currentIrisY += (targetIrisY - currentIrisY) * 0.18;
+      // ASYMMETRIC gaze: left and right irises each get a small
+      // per-eye offset, so they don't move in perfect lockstep.
+      // Result: the eyes feel "alive" and not robotic.
       if (irisL) {
-        irisL.style.setProperty('--iris-x', currentIrisX.toFixed(1) + 'px');
-        irisL.style.setProperty('--iris-y', currentIrisY.toFixed(1) + 'px');
+        irisL.style.setProperty('--iris-x', (currentIrisX + ASYMMETRY_L.x).toFixed(1) + 'px');
+        irisL.style.setProperty('--iris-y', (currentIrisY + ASYMMETRY_L.y).toFixed(1) + 'px');
       }
       if (irisR) {
-        irisR.style.setProperty('--iris-x', currentIrisX.toFixed(1) + 'px');
-        irisR.style.setProperty('--iris-y', currentIrisY.toFixed(1) + 'px');
+        irisR.style.setProperty('--iris-x', (currentIrisX + ASYMMETRY_R.x).toFixed(1) + 'px');
+        irisR.style.setProperty('--iris-y', (currentIrisY + ASYMMETRY_R.y).toFixed(1) + 'px');
       }
 
-      // COVER + WISP follow the gaze (gives the "lively" feel
-      // the user asked for). The cover (white ellipse that
-      // hides the red eye in calm state) and the wisp (horizontal
-      // light strand through each eye) translate by the same
-      // `currentIrisX/Y` as the iris, so the whole eye moves
-      // together as one unit.
-      //
-      // Why this works:
-      // - The cover/wisp have a base position set by
-      //   positionChildren() via `left/top` (pixels)
-      // - The transform is a relative offset from that base
-      // - We add `translate(currentIrisX, currentIrisY)` to the
-      //   existing centering transform
-      // - This makes the cover/wisp slide by the gaze direction
-      //
-      // Edge case: the red eye underneath the cover is baked
-      // into the AI image at a fixed position. When the cover
-      // moves 20px to the side, some red peeks out around the
-      // cover edge — this is INTENTIONAL, it makes the eye feel
-      // "alive" and looking around. (In detected/warning the
-      // cover fades anyway, so the red is fully revealed.)
-      const cx = currentIrisX.toFixed(1) + 'px';
-      const cy = currentIrisY.toFixed(1) + 'px';
-      if (coverL) {
-        coverL.style.transform = `translate(-50%, -50%) translate(${cx}, ${cy}) translateZ(0)`;
-      }
-      if (coverR) {
-        coverR.style.transform = `translate(-50%, -50%) translate(${cx}, ${cy}) translateZ(0)`;
-      }
-      if (coverGlowL) {
-        coverGlowL.style.transform = `translate(-50%, -50%) translate(${cx}, ${cy}) translateZ(0)`;
-      }
-      if (coverGlowR) {
-        coverGlowR.style.transform = `translate(-50%, -50%) translate(${cx}, ${cy}) translateZ(0)`;
-      }
-      // WISP no longer follows the gaze — it is now a static
-      // decoration (lens-flare detail). It only blinks via the
-      // blink keyframe and the JS-set width (--wisp-extension).
-      // Removed: wispL/wispR transform-update blocks.
+      // No more COVER or COVER-GLOW follow — the eye cover has
+      // been removed (the AI red eye is the protagonist, no
+      // CSS layer covers it). The cursor-tracker handles the
+      // "searchlight" effect via a separate soft warm halo
+      // (see .hv-cursor-tracker in styles.css). The WISP also
+      // stays static (lens-flare detail, doesn't follow gaze).
 
       // Shake offset (random, intensity from state)
       let shakeX = 0, shakeY = 0;
@@ -387,6 +362,25 @@
         targetIrisX = nx * IRIS_RANGE_X;
         targetIrisY = ny * IRIS_RANGE_Y;
       }
+      // CURSOR TRACKER — the soft warm light follows the
+      // cursor with a 0.6s cubic-bezier ease (CSS transition
+      // on the .hv-cursor-tracker transform). The tracker
+      // is clamped to within ±40% of the figure so it doesn't
+      // drift too far when the cursor is far from the hero.
+      if (heroFigure) {
+        const tr = heroFigure.getBoundingClientRect();
+        // Cursor position relative to the figure's CENTER
+        const ttx = e.clientX - (tr.left + tr.width / 2);
+        const tty = e.clientY - (tr.top + tr.height / 2);
+        // Clamp to within the figure
+        const tMaxX = tr.width * 0.4;
+        const tMaxY = tr.height * 0.4;
+        const tClampedX = Math.max(-tMaxX, Math.min(tMaxX, ttx));
+        const tClampedY = Math.max(-tMaxY, Math.min(tMaxY, tty));
+        heroFigure.style.setProperty('--cursor-x', tClampedX.toFixed(1) + 'px');
+        heroFigure.style.setProperty('--cursor-y', tClampedY.toFixed(1) + 'px');
+        heroFigure.classList.add('has-cursor');
+      }
       if (rafId === null) rafId = requestAnimationFrame(apply);
     };
 
@@ -401,6 +395,12 @@
       // CARD-EDGE GLOW fades back when cursor leaves
       if (cardGlow) {
         cardGlow.style.setProperty('--card-glow-i', '0');
+      }
+      // CURSOR TRACKER: fade out by removing the has-cursor
+      // class. The tracker itself transitions opacity 0→1 via
+      // CSS (see .hv-figure.has-cursor .hv-cursor-tracker).
+      if (heroFigure) {
+        heroFigure.classList.remove('has-cursor');
       }
       // Reset iris only in calm state
       if (currentState === 'calm') {
