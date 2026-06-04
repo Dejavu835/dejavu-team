@@ -252,8 +252,8 @@
     const cardGlow = $('#hvCardGlow');
 
     /* ---------- 3a. Iris + halo + card-glow follow cursor ---------- */
-    const IRIS_RANGE_X = 8;
-    const IRIS_RANGE_Y = 4;
+    const IRIS_RANGE_X = 12;     /* was 8 — wider for more dramatic "curious looking" */
+    const IRIS_RANGE_Y = 5;      /* was 4 — slightly wider for vertical glances */
     let currentIrisX = 0, currentIrisY = 0;
     let targetIrisX = 0, targetIrisY = 0;
 
@@ -474,18 +474,28 @@
     // positions, except position 8 which is a quick glance
     // down-left, fine for "scanning").
     const CURIOUS_GAZE_POSITIONS = [
-      { x: -1.0, y: -0.1, hold: 1300, name: 'look_left' },
-      { x:  1.0, y: -0.1, hold: 1300, name: 'look_right' },
-      { x:  0.2, y: -0.8, hold:  600, name: 'glance_up' },
-      { x:  0.0, y:  0.0, hold:  500, name: 'center' },
-      { x: -0.6, y:  0.0, hold:  900, name: 'look_left_mid' },
-      { x:  0.6, y:  0.0, hold:  900, name: 'look_right_mid' },
-      { x:  0.0, y: -0.4, hold:  700, name: 'look_up_slight' },
-      { x: -0.3, y:  0.3, hold:  800, name: 'look_down_left' }
+      // Pattern: look → center → look (curious scan, like reading the room)
+      { x: -1.0, y: -0.1, hold: 1400, name: 'look_left' },
+      { x:  0.0, y:  0.0, hold:  350, name: 'center_breath' },
+      { x:  1.0, y: -0.1, hold: 1400, name: 'look_right' },
+      { x:  0.0, y:  0.0, hold:  350, name: 'center_breath' },
+      // "Double take" — look at the same thing again
+      { x:  0.0, y:  0.0, hold:  600, name: 'center_settle' },
+      { x: -1.0, y: -0.1, hold:  900, name: 'double_take_left' },
+      { x:  0.0, y:  0.0, hold:  400, name: 'center_breath' },
+      // "What was that?" — glance up
+      { x:  0.2, y: -0.9, hold:  700, name: 'glance_up' },
+      { x:  0.0, y:  0.0, hold:  500, name: 'center_settle' },
+      // Look up-left, up-right
+      { x: -0.6, y: -0.5, hold:  900, name: 'glance_up_left' },
+      { x:  0.0, y:  0.0, hold:  300, name: 'center_breath' },
+      { x:  0.6, y: -0.5, hold:  900, name: 'glance_up_right' },
+      { x:  0.0, y:  0.0, hold:  800, name: 'settle' }
     ];
 
     let curiousGazeIndex = 0;
     let curiousGazeTimer = null;
+    let curiousMicroTimer = null;   // NEW — micro-saccade timer
 
     const advanceCuriousGaze = () => {
       // If user is hovering or state is non-calm, skip this
@@ -493,14 +503,35 @@
       // onLeave or setState→calm) will resume the cycle.
       if (currentState !== 'calm' || active) {
         curiousGazeTimer = null;
+        if (curiousMicroTimer) { clearTimeout(curiousMicroTimer); curiousMicroTimer = null; }
         return;
       }
 
       // Pick the next position in the sequence (with 30%
       // chance to skip 2-3 ahead for variety).
       const pos = CURIOUS_GAZE_POSITIONS[curiousGazeIndex];
+      // MAIN target: the position we're looking at
       targetIrisX = pos.x * IRIS_RANGE_X;
       targetIrisY = pos.y * IRIS_RANGE_Y;
+
+      // MICRO-SACCADE: tiny random offset during this hold, so
+      // the eye doesn't sit perfectly still. Refreshes every
+      // 300ms (via setTimeout) — gives the eye a "scanning"
+      // feel even within a single hold position.
+      // Skip micro-saccade during center positions (would just
+      // be jittery at rest).
+      if (Math.abs(pos.x) > 0.2 || Math.abs(pos.y) > 0.2) {
+        if (curiousMicroTimer) clearTimeout(curiousMicroTimer);
+        const scheduleMicro = () => {
+          // Add ±0.10 of IRIS_RANGE_X / ±0.08 of IRIS_RANGE_Y
+          targetIrisX += (Math.random() - 0.5) * 2 * 0.10 * IRIS_RANGE_X;
+          targetIrisY += (Math.random() - 0.5) * 2 * 0.08 * IRIS_RANGE_Y;
+          curiousMicroTimer = setTimeout(scheduleMicro, 300);
+        };
+        scheduleMicro();
+      } else {
+        if (curiousMicroTimer) { clearTimeout(curiousMicroTimer); curiousMicroTimer = null; }
+      }
 
       let skip = 1;
       if (Math.random() < 0.3) skip = 2 + Math.floor(Math.random() * 2);

@@ -695,58 +695,68 @@ h1, h2, h3, h4, p { margin: 0; }
    - breathe: 3.5s opacity 0.55→0.75 + scale 0.95→1.05
    - flicker: 0.7s brightness wobble for "vibration"
    =========================================================== */
+/* ===========================================================
+   EYE GLOW RING — soft atmospheric halo around each eye.
+   v2 (premium): much more gradual gradient, soft blur to
+   eliminate visible boundaries, multi-layer for depth.
+
+   Why the v1 looked "fake":
+   - 4 hard color stops in the radial gradient → visible ring
+   - blur(0) → hard edge where the gradient hits 80% transparent
+   - high alpha values (0.55, 0.30) → punchy, not atmospheric
+
+   v2 fixes:
+   - 1 single very gradual gradient (no stops) → smooth fade
+   - filter: blur(20px) → the soft edge becomes a true fade
+   - lower alpha (0.18, 0.08) → atmospheric, not punchy
+   - extra outer layer for "atmosphere" depth
+   =========================================================== */
 .hv-eye-glow {
   position: absolute;
-  width: 25%;
-  height: 25%;
-  margin: -12.5% 0 0 -12.5%;     /* center on the eye */
+  width: 40%;                  /* bigger — more spread, less punchy */
+  height: 40%;
+  margin: -20% 0 0 -20%;
   border-radius: 50%;
   pointer-events: none;
-  z-index: 3;                     /* above red-ambient (2), below eye-cover (3) */
+  z-index: 3;
+  /* Single VERY gradual gradient — alpha at 50% is 0.04, fades
+     to 0 at 100%. No hard stops anywhere. */
   background: radial-gradient(
     circle at center,
-    rgba(255, 210, 140, 0.55) 0%,
-    rgba(255, 160, 80, 0.30) 35%,
-    rgba(255, 110, 50, 0.10) 60%,
-    transparent 80%
+    rgba(255, 190, 120, 0.30) 0%,
+    rgba(255, 160, 80, 0.12) 30%,
+    rgba(255, 120, 50, 0.04) 60%,
+    transparent 100%
   );
-  opacity: 0.65;
+  opacity: 0.7;
   mix-blend-mode: screen;
-  animation:
-    hv-eye-glow-breathe 3.5s ease-in-out infinite,
-    hv-eye-glow-flicker 0.7s ease-in-out infinite;
+  filter: blur(20px);          /* KEY: blur the edge so no boundary */
+  animation: hv-eye-glow-breathe 4.5s ease-in-out infinite;
   will-change: transform, opacity, filter;
 }
 
 .hv-eye-glow-l { left: 35.42%; top: 31.77%; }
 .hv-eye-glow-r { left: 48.73%; top: 31.94%; }
 
-/* Per-eye phase offset so they don't pulse in sync */
-.hv-eye-glow-l { animation-delay: 0s, 0.2s; }
-.hv-eye-glow-r { animation-delay: 1.75s, 0.5s; }
+/* Phase offset for asymmetry (less mechanical) */
+.hv-eye-glow-l { animation-delay: 0s; }
+.hv-eye-glow-r { animation-delay: 2.25s; }
 
 @keyframes hv-eye-glow-breathe {
-  0%, 100% { opacity: 0.55; transform: scale(0.95); }
-  50%      { opacity: 0.78; transform: scale(1.06); }
+  0%, 100% { opacity: 0.55; transform: scale(0.92); }
+  50%      { opacity: 0.85; transform: scale(1.08); }
 }
 
-@keyframes hv-eye-glow-flicker {
-  0%, 60%, 100% { filter: brightness(1); }
-  20%           { filter: brightness(1.20) saturate(1.15); }
-  40%           { filter: brightness(0.92) saturate(0.95); }
-  80%           { filter: brightness(1.10) saturate(1.08); }
-}
-
-/* In warning state, the glow is more intense */
+/* In warning state — the glow intensifies, no hard edge */
 .hv-figure.is-warning .hv-eye-glow {
   background: radial-gradient(
     circle at center,
-    rgba(255, 230, 160, 0.75) 0%,
-    rgba(255, 170, 80, 0.50) 35%,
-    rgba(255, 100, 40, 0.20) 60%,
-    transparent 80%
+    rgba(255, 200, 130, 0.45) 0%,
+    rgba(255, 160, 80, 0.20) 30%,
+    rgba(255, 100, 40, 0.08) 60%,
+    transparent 100%
   );
-  opacity: 0.90;
+  opacity: 1.0;
 }
 
 /* Subtle red EYE GLOW under each baked-in red eye. The
@@ -993,17 +1003,15 @@ h1, h2, h3, h4, p { margin: 0; }
      Animates FILTER only (brightness + saturate), leaving the
      transform (translateX(-50%) rotate(--wisp-tilt) translateZ(0))
      alone so the per-eye rotation and the JS-controlled
-     --wisp-tilt remain intact. The 0.4s cycle gives a steady
-     'powered on' vibration feel without being distracting. */
-  animation: hv-wisp-flicker 0.4s ease-in-out infinite;
+     --wisp-tilt remain intact. The 1.2s cycle gives a slow,
+     atmospheric "breathing" feel — not a strobe. */
+  animation: hv-wisp-flicker 1.2s ease-in-out infinite;
 }
 
 @keyframes hv-wisp-flicker {
   0%, 100% { filter: blur(0.4px) brightness(1) saturate(1); }
-  20%      { filter: blur(0.4px) brightness(1.15) saturate(1.1); }
-  40%      { filter: blur(0.4px) brightness(0.95) saturate(0.95); }
-  60%      { filter: blur(0.4px) brightness(1.10) saturate(1.05); }
-  80%      { filter: blur(0.4px) brightness(0.98) saturate(1); }
+  30%      { filter: blur(0.4px) brightness(1.10) saturate(1.08); }
+  60%      { filter: blur(0.4px) brightness(0.95) saturate(0.97); }
 }
 .hv-eye-wisp-l {
   left: 35%;
@@ -1018,7 +1026,7 @@ h1, h2, h3, h4, p { margin: 0; }
   --wisp-tilt: 4deg;
   /* Phase-offset the right wisp for asymmetric flicker so both
      eyes don't wobble in lockstep. */
-  animation-delay: 0.2s;
+  animation-delay: 0.6s;
 }
 /* The wisp STAYS VISIBLE through the state progression — it
    intensifies in warning state (the 'aggressive' red strand
@@ -1218,73 +1226,6 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-particles-r .hv-particle:nth-child(7) { --pdx: -92px; --pdy: 42px;  }
 .hv-particles-r .hv-particle:nth-child(8) { --pdx:  92px; --pdy: 28px;  }
 .hv-particles-r .hv-particle:nth-child(9) { --pdx: -42px; --pdy: -84px; }
-
-/* ===========================================================
-   IDLE PARTICLES — small "alive" particles around each eye,
-   ALWAYS visible (even in calm state). Different from the
-   18 dramatic .hv-particle embers (which are 4px, 2.2s drift,
-   only visible in detected/warning).
-
-   These idle particles are:
-   - TINY (1.5px)
-   - SLOW (4.5s drift)
-   - ALWAYS visible at 0.5 opacity in calm
-   - Warm yellow/orange (matches the eye glow ring)
-   - Only 3 per eye (vs 9 for the dramatic embers)
-   - Positioned around the eye, not from the eye center
-
-   The user wanted "particles" and "vibration" around the eye
-   light at rest — these provide the particle half of that.
-   The wisp flicker (B3 below) provides the vibration half.
-   =========================================================== */
-.hv-idle-particles {
-  position: absolute;
-  top: 28%;
-  pointer-events: none;
-  z-index: 4;                     /* above eye-cover/wisp (3) */
-  opacity: 0.50;                  /* visible in calm by default */
-  transition: opacity 0.4s var(--ease);
-}
-.hv-idle-particles-l { left: 30%; }
-.hv-idle-particles-r { right: 30%; }
-
-.hv-figure.is-detected .hv-idle-particles { opacity: 0.70; }
-.hv-figure.is-warning  .hv-idle-particles { opacity: 0.90; }
-
-.hv-idle-particle {
-  position: absolute;
-  width: 1.5px;
-  height: 1.5px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 230, 170, 0.95) 0%,
-    rgba(255, 170, 100, 0.55) 50%,
-    transparent 100%
-  );
-  box-shadow: 0 0 4px rgba(255, 200, 130, 0.55);
-  animation: hv-idle-particle-drift 4.5s ease-in-out infinite;
-  mix-blend-mode: screen;
-}
-
-/* Left-eye idle particles — 3 small dots scattered in a
-   ~40px radius around the left eye. Each has a unique
-   starting position and drift direction. */
-.hv-idle-particles-l .hv-idle-particle:nth-child(1) { left: 25%; top: 15%; animation-delay: 0s;   --ipdx: 22px;  --ipdy: -18px; }
-.hv-idle-particles-l .hv-idle-particle:nth-child(2) { left: 55%; top: 45%; animation-delay: 1.5s; --ipdx: -16px; --ipdy: 14px;  }
-.hv-idle-particles-l .hv-idle-particle:nth-child(3) { left: 35%; top: 75%; animation-delay: 3.0s; --ipdx: 20px;  --ipdy: 12px;  }
-
-/* Right-eye idle particles — mirror layout */
-.hv-idle-particles-r .hv-idle-particle:nth-child(1) { right: 25%; top: 15%; animation-delay: 0.75s; --ipdx: -22px; --ipdy: -18px; }
-.hv-idle-particles-r .hv-idle-particle:nth-child(2) { right: 55%; top: 45%; animation-delay: 2.25s; --ipdx:  16px; --ipdy: 14px;  }
-.hv-idle-particles-r .hv-idle-particle:nth-child(3) { right: 35%; top: 75%; animation-delay: 3.75s; --ipdx: -20px; --ipdy: 12px;  }
-
-@keyframes hv-idle-particle-drift {
-  0%   { transform: translate(0, 0) scale(0.4); opacity: 0; }
-  15%  { transform: translate(0, 0) scale(1);   opacity: 1; }
-  85%  { transform: translate(calc(var(--ipdx, 15px) * 0.7), calc(var(--ipdy, -15px) * 0.7)) scale(0.8); opacity: 0.8; }
-  100% { transform: translate(var(--ipdx, 15px), var(--ipdy, -15px)) scale(0.3); opacity: 0; }
-}
 
 /* ---------- SPARKS (火星子) — tiny twinkling embers ----------
    The user wanted a layer of small "火星子" (spark) particles
@@ -1512,8 +1453,6 @@ h1, h2, h3, h4, p { margin: 0; }
   .hv-figure.is-blinking .hv-eye-cover,
   .hv-figure.is-blinking .hv-eye-iris,
   .hv-figure.is-blinking .hv-eye-wisp { animation: none; }
-  /* Disable idle alive animations for reduced-motion users */
-  .hv-idle-particle { animation: none !important; }
 }
 
 /* ===========================================================
