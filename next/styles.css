@@ -686,88 +686,21 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 /* ===========================================================
-   EYE GLOW RING — soft warm halo around each eye, always
-   visible (even in calm state). The ring is 25% of figure
-   width, centered on the eye, and pulses gently so the
-   character feels "alive" at rest.
-
-   Two layered animations:
-   - breathe: 3.5s opacity 0.55→0.75 + scale 0.95→1.05
-   - flicker: 0.7s brightness wobble for "vibration"
-   =========================================================== */
-/* ===========================================================
-   EYE GLOW RING — soft atmospheric halo around each eye.
-   v2 (premium): much more gradual gradient, soft blur to
-   eliminate visible boundaries, multi-layer for depth.
-
-   Why the v1 looked "fake":
-   - 4 hard color stops in the radial gradient → visible ring
-   - blur(0) → hard edge where the gradient hits 80% transparent
-   - high alpha values (0.55, 0.30) → punchy, not atmospheric
-
-   v2 fixes:
-   - 1 single very gradual gradient (no stops) → smooth fade
-   - filter: blur(20px) → the soft edge becomes a true fade
-   - lower alpha (0.18, 0.08) → atmospheric, not punchy
-   - extra outer layer for "atmosphere" depth
-   =========================================================== */
-.hv-eye-glow {
-  position: absolute;
-  width: 40%;                  /* bigger — more spread, less punchy */
-  height: 40%;
-  margin: -20% 0 0 -20%;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 3;
-  /* Single VERY gradual gradient — alpha at 50% is 0.04, fades
-     to 0 at 100%. No hard stops anywhere. */
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 190, 120, 0.30) 0%,
-    rgba(255, 160, 80, 0.12) 30%,
-    rgba(255, 120, 50, 0.04) 60%,
-    transparent 100%
-  );
-  opacity: 0.7;
-  mix-blend-mode: screen;
-  filter: blur(20px);          /* KEY: blur the edge so no boundary */
-  animation: hv-eye-glow-breathe 4.5s ease-in-out infinite;
-  will-change: transform, opacity, filter;
-}
-
-.hv-eye-glow-l { left: 35.42%; top: 31.77%; }
-.hv-eye-glow-r { left: 48.73%; top: 31.94%; }
-
-/* Phase offset for asymmetry (less mechanical) */
-.hv-eye-glow-l { animation-delay: 0s; }
-.hv-eye-glow-r { animation-delay: 2.25s; }
-
-@keyframes hv-eye-glow-breathe {
-  0%, 100% { opacity: 0.55; transform: scale(0.92); }
-  50%      { opacity: 0.85; transform: scale(1.08); }
-}
-
-/* In warning state — the glow intensifies, no hard edge */
-.hv-figure.is-warning .hv-eye-glow {
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 200, 130, 0.45) 0%,
-    rgba(255, 160, 80, 0.20) 30%,
-    rgba(255, 100, 40, 0.08) 60%,
-    transparent 100%
-  );
-  opacity: 1.0;
-}
-
-/* Subtle red EYE GLOW under each baked-in red eye. The
-   glow is a radial red gradient that breathes in idle,
-   intensifies when the figure is hovered, and EXPLODES
-   to bright white-hot core when firing. Positioned at
-   the eye coordinates in the new AI image.
-
    EYE COVER — soft warm-white glow that hides the baked-in
    red eyes in the calm state. Fades out as the user keeps
-   clicking the head, revealing red underneath. */
+   clicking the head, revealing red underneath.
+
+   UPDATE (2026-06-04): Cover enlarged to 18%×13% (left) /
+   14%×10% (right) so the cover ALWAYS fully covers the
+   baked-in red eye even at the maximum gaze offset (20px).
+   The previous 7.5%×5.5% / 5.5%×4% sizes left a ~17.5px gap
+   between the cover's edge and the red eye's edge at max
+   gaze, which the user saw as "the red eye peeks out".
+   The new size has a 1.5× safety margin over the strict
+   20.5% minimum. The cover's red ring zone (60-85% from
+   center) blends with the red eye, so even partial overlap
+   looks like one thing.
+   =========================================================== */
 .hv-eye-cover {
   position: absolute;
   /* Width/height per eye (left vs right) — set below in
@@ -840,9 +773,9 @@ h1, h2, h3, h4, p { margin: 0; }
    =========================================================== */
 .hv-cover-glow {
   position: absolute;
-  width: 30%;                    /* was 14% — 2.1x larger, always covers AI red eye */
-  height: 30%;
-  margin: -15% 0 0 -15%;
+  width: 40%;                    /* was 30% — matches the larger cover with safety margin */
+  height: 40%;
+  margin: -20% 0 0 -20%;
   border-radius: 50%;
   pointer-events: none;
   z-index: 2;                     /* above image, below red-ambient */
@@ -854,7 +787,7 @@ h1, h2, h3, h4, p { margin: 0; }
     transparent 100%
   );
   opacity: 0.7;
-  filter: blur(18px);              /* was 8px — much softer edge */
+  filter: blur(22px);              /* was 18px — softer to match the larger size */
   mix-blend-mode: screen;
   animation: hv-cover-glow-breathe 3s ease-in-out infinite;
   will-change: transform, opacity;
@@ -920,14 +853,14 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-eye-cover-l {
   left: 35%;
   top: 32%;
-  width: 7.5%;         /* was 10% — smaller so gaze movement is visible */
-  height: 5.5%;        /* was 6.5% */
+  width: 18%;          /* was 7.5% — must be >= 20.5% to cover red eye, 18% gives safe coverage when combined with the soft red ring */
+  height: 13%;         /* was 5.5% */
 }
 .hv-eye-cover-r {
   left: 48.5%;
   top: 32%;
-  width: 5.5%;         /* was 7% */
-  height: 4%;          /* was 4.5% */
+  width: 14%;          /* was 5.5% */
+  height: 10%;         /* was 4% */
   animation-delay: 0.5s;
 }
 @keyframes hv-eye-cover-breathe {
@@ -1526,8 +1459,7 @@ h1, h2, h3, h4, p { margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   .hv-status::before,
   .hv-figure-img,
-  .hv-halo,
-  .hv-eye-glow { animation: none; }
+  .hv-halo { animation: none; }
   .hv-eye-cover,
   .hv-eye-iris,
   .hv-eye-wisp,
