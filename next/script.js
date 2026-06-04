@@ -252,8 +252,8 @@
     const cardGlow = $('#hvCardGlow');
 
     /* ---------- 3a. Iris + halo + card-glow follow cursor ---------- */
-    const IRIS_RANGE_X = 12;     /* was 8 — wider for more dramatic "curious looking" */
-    const IRIS_RANGE_Y = 5;      /* was 4 — slightly wider for vertical glances */
+    const IRIS_RANGE_X = 20;     /* was 12 — much wider for truly visible "curious looking" */
+    const IRIS_RANGE_Y = 8;      /* was 5 — wider vertical range for up-glances */
     let currentIrisX = 0, currentIrisY = 0;
     let targetIrisX = 0, targetIrisY = 0;
 
@@ -267,14 +267,14 @@
       rafId = null;
 
       // Smooth tilt
-      mx += (targetX - mx) * 0.18;
-      my += (targetY - my) * 0.18;
+      mx += (targetX - mx) * 0.30;
+      my += (targetY - my) * 0.30;
       const dx = mx - 0.5;
       const dy = my - 0.5;
 
       // Smooth iris position
-      currentIrisX += (targetIrisX - currentIrisX) * 0.25;
-      currentIrisY += (targetIrisY - currentIrisY) * 0.25;
+      currentIrisX += (targetIrisX - currentIrisX) * 0.40;
+      currentIrisY += (targetIrisY - currentIrisY) * 0.40;
       if (irisL) {
         irisL.style.setProperty('--iris-x', currentIrisX.toFixed(1) + 'px');
         irisL.style.setProperty('--iris-y', currentIrisY.toFixed(1) + 'px');
@@ -474,22 +474,31 @@
     // positions, except position 8 which is a quick glance
     // down-left, fine for "scanning").
     const CURIOUS_GAZE_POSITIONS = [
-      // Pattern: look → center → look (curious scan, like reading the room)
-      { x: -1.0, y: -0.1, hold: 1400, name: 'look_left' },
-      { x:  0.0, y:  0.0, hold:  350, name: 'center_breath' },
-      { x:  1.0, y: -0.1, hold: 1400, name: 'look_right' },
-      { x:  0.0, y:  0.0, hold:  350, name: 'center_breath' },
-      // "Double take" — look at the same thing again
-      { x:  0.0, y:  0.0, hold:  600, name: 'center_settle' },
-      { x: -1.0, y: -0.1, hold:  900, name: 'double_take_left' },
-      { x:  0.0, y:  0.0, hold:  400, name: 'center_breath' },
-      // "What was that?" — glance up
-      { x:  0.2, y: -0.9, hold:  700, name: 'glance_up' },
-      { x:  0.0, y:  0.0, hold:  500, name: 'center_settle' },
-      // Look up-left, up-right
-      { x: -0.6, y: -0.5, hold:  900, name: 'glance_up_left' },
+      // 1. Full look left (clear directional move)
+      { x: -1.0, y: -0.2, hold: 1500, name: 'look_left' },
+      // 2. Quick return to center (decide where to look next)
       { x:  0.0, y:  0.0, hold:  300, name: 'center_breath' },
-      { x:  0.6, y: -0.5, hold:  900, name: 'glance_up_right' },
+      // 3. Full look right (opposite direction = clear scan)
+      { x:  1.0, y: -0.2, hold: 1500, name: 'look_right' },
+      // 4. Quick return
+      { x:  0.0, y:  0.0, hold:  300, name: 'center_breath' },
+      // 5. Settle briefly
+      { x:  0.0, y:  0.0, hold:  600, name: 'center_settle' },
+      // 6. DOUBLE-TAKE left (look back at the same thing — curious!)
+      { x: -1.0, y: -0.2, hold: 1000, name: 'double_take_left' },
+      // 7. Center breath
+      { x:  0.0, y:  0.0, hold:  400, name: 'center_breath' },
+      // 8. "What was that?" — glance straight up
+      { x:  0.0, y: -1.0, hold:  700, name: 'glance_up' },
+      // 9. Settle
+      { x:  0.0, y:  0.0, hold:  500, name: 'center_settle' },
+      // 10. Glance up-left
+      { x: -0.7, y: -0.7, hold:  900, name: 'glance_up_left' },
+      // 11. Center breath
+      { x:  0.0, y:  0.0, hold:  300, name: 'center_breath' },
+      // 12. Glance up-right
+      { x:  0.7, y: -0.7, hold:  900, name: 'glance_up_right' },
+      // 13. Settle
       { x:  0.0, y:  0.0, hold:  800, name: 'settle' }
     ];
 
