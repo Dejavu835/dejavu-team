@@ -520,6 +520,40 @@ h1, h2, h3, h4, p { margin: 0; }
   z-index: 4;
 }
 
+/* CRT SCAN LINES — thin horizontal stripes that overlay the
+   AI image, giving the "old CRT monitor" feel. The user
+   asked for this on hover. We make it visible on:
+   - hover (full opacity 0.6)
+   - always at low opacity (0.25) so the CRT feel is
+     present even at rest
+   Pattern: alternating 1px transparent + 3px very dark
+   stripe. Total pattern: 4px period, so the eye perceives
+   ~250 scan lines on a 1000px-tall figure.
+
+   This is a low-effort, high-impact effect: 0 JS, 0
+   extra DOM elements, just a CSS pseudo. */
+.hv-figure::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-xl);
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.18) 2px,
+    rgba(0, 0, 0, 0.18) 4px
+  );
+  pointer-events: none;
+  z-index: 3;   /* above image (1), halo (2), below eye-cover/iris (3+) */
+  opacity: 0.25;
+  mix-blend-mode: multiply;
+  transition: opacity 0.3s var(--ease);
+}
+.hv-figure:hover::after {
+  opacity: 0.6;
+}
+
 /* The AI image fills the figure. JS sets the figure's
    transform directly with rotateX/rotateY on mouse move. */
 .hv-figure-img {
@@ -552,13 +586,22 @@ h1, h2, h3, h4, p { margin: 0; }
   border-radius: var(--radius-xl);
   pointer-events: none;
   z-index: 2;
-  background: radial-gradient(
-    circle 220px at var(--halo-x, 50%) var(--halo-y, 30%),
-    rgba(255, 220, 160, 0.30) 0%,
-    rgba(255, 200, 130, 0.18) 18%,
-    rgba(255, 180, 100, 0.08) 35%,
-    transparent 60%
-  );
+  background:
+    /* Secondary outer warm ring (subtle, 0.10 alpha) */
+    radial-gradient(
+      circle 360px at var(--halo-x, 50%) var(--halo-y, 30%),
+      rgba(255, 200, 130, 0.10) 0%,
+      transparent 50%
+    ),
+    /* Main cursor-tracking halo (bigger + brighter) */
+    radial-gradient(
+      circle 280px at var(--halo-x, 50%) var(--halo-y, 30%),
+      rgba(255, 220, 160, 0.45) 0%,
+      rgba(255, 200, 130, 0.28) 16%,
+      rgba(255, 180, 100, 0.14) 32%,
+      rgba(255, 160, 80, 0.06) 50%,
+      transparent 70%
+    );
   opacity: var(--halo-i, 0.6);
   mix-blend-mode: screen;
   transition: opacity 0.4s var(--ease);
@@ -572,7 +615,7 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 @keyframes hv-halo-pulse {
   0%, 100% { filter: brightness(1); }
-  50%      { filter: brightness(1.12); }
+  50%      { filter: brightness(1.45); }
 }
 @keyframes hv-halo-click-feedback {
   0%   { opacity: 1.0; transform: scale(1.08); filter: brightness(1.8); }
@@ -594,17 +637,25 @@ h1, h2, h3, h4, p { margin: 0; }
    On click: opacity briefly 0.85 (then back to 0). */
 .hv-card-glow {
   position: absolute;
-  inset: -18%;            /* extends 18% beyond the figure on all sides */
+  inset: -25%;            /* extends 25% beyond the figure on all sides */
   border-radius: var(--radius-xl);
   pointer-events: none;
   z-index: 1;
-  background: radial-gradient(
-    ellipse 65% 50% at 50% 35%,
-    rgba(255, 180, 100, 0.55) 0%,
-    rgba(255, 120, 60, 0.30) 35%,
-    rgba(255, 80, 30, 0.12) 60%,
-    transparent 80%
-  );
+  background:
+    /* Secondary outer falloff — gives the "warm aura" extending further */
+    radial-gradient(
+      ellipse 85% 65% at 50% 35%,
+      rgba(255, 140, 70, 0.25) 0%,
+      transparent 65%
+    ),
+    /* Main warm glow — brighter, wider */
+    radial-gradient(
+      ellipse 70% 55% at 50% 35%,
+      rgba(255, 180, 100, 0.80) 0%,
+      rgba(255, 130, 70, 0.45) 30%,
+      rgba(255, 80, 30, 0.20) 55%,
+      transparent 78%
+    );
   opacity: var(--card-glow-i, 0);
   mix-blend-mode: screen;
   transition: opacity 0.4s var(--ease);
@@ -614,12 +665,12 @@ h1, h2, h3, h4, p { margin: 0; }
   animation: hv-card-glow-click 0.9s ease-out;
 }
 @keyframes hv-card-glow-breathe {
-  0%, 100% { filter: brightness(0.95); }
-  50%      { filter: brightness(1.1); }
+  0%, 100% { filter: brightness(0.90); }
+  50%      { filter: brightness(1.25); }
 }
 @keyframes hv-card-glow-click {
-  0%   { opacity: 0.85; filter: brightness(1.6); }
-  60%  { opacity: 0.55; filter: brightness(1.2); }
+  0%   { opacity: 1.0; filter: brightness(2.0); }
+  60%  { opacity: 0.65; filter: brightness(1.5); }
   100% { opacity: var(--card-glow-i, 0.4); filter: brightness(1); }
 }
 
@@ -637,12 +688,23 @@ h1, h2, h3, h4, p { margin: 0; }
   border-radius: var(--radius-xl);
   pointer-events: none;
   z-index: 2;
-  background: radial-gradient(
-    ellipse 95% 80% at 50% 30%,
-    rgba(255, 50, 20, 0.85) 0%,
-    rgba(255, 30, 10, 0.45) 30%,
-    transparent 70%
-  );
+  background:
+    /* Inner hot orange ring — simulates the "white-hot core" at
+       the eye centers, gives warmth to the red glow */
+    radial-gradient(
+      ellipse 50% 35% at 50% 32%,
+      rgba(255, 180, 60, 0.55) 0%,
+      rgba(255, 100, 30, 0.35) 25%,
+      transparent 55%
+    ),
+    /* Main red ambient — wider + more intense */
+    radial-gradient(
+      ellipse 100% 85% at 50% 30%,
+      rgba(255, 60, 25, 0.95) 0%,
+      rgba(255, 30, 10, 0.60) 25%,
+      rgba(180, 20, 5, 0.25) 55%,
+      transparent 78%
+    );
   mix-blend-mode: screen;
   opacity: var(--red-i, 0);
   transition: opacity 0.5s var(--ease);
@@ -654,7 +716,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-figure.is-firing .hv-red-ambient { animation-play-state: running; }
 @keyframes hv-red-ambient-flicker {
   0%, 100% { filter: brightness(1) saturate(1); }
-  50%      { filter: brightness(1.25) saturate(1.4); }
+  50%      { filter: brightness(1.45) saturate(1.6); }
 }
 
 /* Subtle red EYE GLOW under each baked-in red eye. The
@@ -1044,19 +1106,20 @@ h1, h2, h3, h4, p { margin: 0; }
 
 .hv-particle {
   position: absolute;
-  width: 3px;
-  height: 3px;
+  width: 4px;            /* was 3px */
+  height: 4px;           /* was 3px */
   border-radius: 50%;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(255, 200, 130, 1) 0%,
-    rgba(255, 100, 50, 0.95) 40%,
-    rgba(255, 50, 10, 0.4) 80%,
+    rgba(255, 240, 200, 1) 0%,         /* brighter white-hot center */
+    rgba(255, 130, 60, 0.95) 35%,
+    rgba(255, 60, 20, 0.5) 75%,
     transparent 100%
   );
-  box-shadow: 0 0 6px rgba(255, 100, 50, 0.8),
-              0 0 12px rgba(255, 60, 20, 0.5);
-  animation: hv-particle-drift 3s ease-out infinite;
+  box-shadow:
+    0 0 6px rgba(255, 200, 130, 0.95),
+    0 0 18px rgba(255, 80, 30, 0.7);    /* was 0 0 12px rgba(255, 60, 20, 0.5) */
+  animation: hv-particle-drift 2.2s ease-out infinite;   /* was 3s */
   mix-blend-mode: screen;
 }
 
@@ -1070,6 +1133,9 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-particles-l .hv-particle:nth-child(4) { left: 5%;  top: 15%; animation-delay: 1.5s;  }
 .hv-particles-l .hv-particle:nth-child(5) { left: 20%; top: -5%; animation-delay: 2.0s;  }
 .hv-particles-l .hv-particle:nth-child(6) { left: -5%; top: -15%; animation-delay: 2.5s; }
+.hv-particles-l .hv-particle:nth-child(7) { left: 15%;  top: 10%;  animation-delay: 0.2s;  }
+.hv-particles-l .hv-particle:nth-child(8) { left: -15%; top: -5%;  animation-delay: 1.7s;  }
+.hv-particles-l .hv-particle:nth-child(9) { left: 25%;  top: 20%;  animation-delay: 2.3s;  }
 
 .hv-particles-r .hv-particle:nth-child(1) { right: 0;  top: 0;  animation-delay: 0.25s; }
 .hv-particles-r .hv-particle:nth-child(2) { right: 10%; top: -10%; animation-delay: 0.75s; }
@@ -1077,6 +1143,9 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-particles-r .hv-particle:nth-child(4) { right: 5%;  top: 15%; animation-delay: 1.75s; }
 .hv-particles-r .hv-particle:nth-child(5) { right: 20%; top: -5%; animation-delay: 2.25s; }
 .hv-particles-r .hv-particle:nth-child(6) { right: -5%; top: -15%; animation-delay: 2.75s; }
+.hv-particles-r .hv-particle:nth-child(7) { right: 15%;  top: 10%;  animation-delay: 0.45s; }
+.hv-particles-r .hv-particle:nth-child(8) { right: -15%; top: -5%;  animation-delay: 1.95s; }
+.hv-particles-r .hv-particle:nth-child(9) { right: 25%;  top: 20%;  animation-delay: 2.55s; }
 
 @keyframes hv-particle-drift {
   0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
@@ -1089,12 +1158,92 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-particles-l .hv-particle:nth-child(4) { --pdx: 40px;  --pdy: 70px;  }
 .hv-particles-l .hv-particle:nth-child(5) { --pdx: 110px; --pdy: -30px; }
 .hv-particles-l .hv-particle:nth-child(6) { --pdx: -70px; --pdy: -90px; }
+.hv-particles-l .hv-particle:nth-child(7) { --pdx: 130px; --pdy: 60px;  }
+.hv-particles-l .hv-particle:nth-child(8) { --pdx: -130px; --pdy: 40px; }
+.hv-particles-l .hv-particle:nth-child(9) { --pdx: 60px;  --pdy: -120px; }
 .hv-particles-r .hv-particle:nth-child(1) { --pdx: -70px; --pdy: -50px; }
 .hv-particles-r .hv-particle:nth-child(2) { --pdx: -90px; --pdy: -80px; }
 .hv-particles-r .hv-particle:nth-child(3) { --pdx:  50px; --pdy: 30px;  }
 .hv-particles-r .hv-particle:nth-child(4) { --pdx: -40px; --pdy: 70px;  }
 .hv-particles-r .hv-particle:nth-child(5) { --pdx: -110px; --pdy: -30px; }
 .hv-particles-r .hv-particle:nth-child(6) { --pdx:  70px; --pdy: -90px; }
+.hv-particles-r .hv-particle:nth-child(7) { --pdx: -130px; --pdy: 60px;  }
+.hv-particles-r .hv-particle:nth-child(8) { --pdx: 130px;  --pdy: 40px;  }
+.hv-particles-r .hv-particle:nth-child(9) { --pdx: -60px;  --pdy: -120px; }
+
+/* ---------- SPARKS (火星子) — tiny twinkling embers ----------
+   The user wanted a layer of small "火星子" (spark) particles
+   ON TOP OF the existing 18 drifting embers. These are:
+   - TINY (1-2px) — much smaller than the 4px .hv-particle
+   - TWINKLE in place (don't drift outward)
+   - POP in/out via opacity (not via animation distance)
+   - Use box-shadow trick: one element draws many virtual
+     dots, no need for many HTML elements
+   - Color: warm white with red/orange tint
+   - Visible in detected + warning states (peak in warning) */
+.hv-sparks {
+  position: absolute;
+  top: 28%;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+}
+.hv-sparks-l { left: 35%; }
+.hv-sparks-r { left: 49%; }
+
+.hv-figure.is-detected .hv-sparks { opacity: 0.5; }
+.hv-figure.is-warning  .hv-sparks { opacity: 1.0; }
+
+/* Left sparks — 10 small dots scattered in a 60px radius
+   around the left eye. Each box-shadow is one virtual spark.
+   The animation `hv-sparks-twinkle` randomly varies opacity
+   for each spark via the keyframe. */
+.hv-sparks-l {
+  box-shadow:
+    0    0    0.5px rgba(255, 240, 200, 0.95),
+    8px  -10px 0 0   rgba(255, 220, 130, 0.85),
+    -12px -6px  0.5px rgba(255, 200, 100, 0.8),
+    18px 8px   0    rgba(255, 180, 80, 0.7),
+    -20px 4px  0    rgba(255, 200, 100, 0.75),
+    6px  22px  0    rgba(255, 160, 60, 0.6),
+    -10px 18px 0.5px rgba(255, 220, 130, 0.7),
+    24px -18px 0    rgba(255, 200, 100, 0.6),
+    -25px -14px 0   rgba(255, 180, 80, 0.65),
+    14px 28px  0    rgba(255, 220, 130, 0.55);
+  animation: hv-sparks-twinkle 1.4s ease-in-out infinite;
+}
+
+/* Right sparks — mirror layout */
+.hv-sparks-r {
+  box-shadow:
+    0    0    0.5px rgba(255, 240, 200, 0.95),
+    -8px -10px 0   rgba(255, 220, 130, 0.85),
+    12px -6px  0.5px rgba(255, 200, 100, 0.8),
+    -18px 8px  0   rgba(255, 180, 80, 0.7),
+    20px 4px   0   rgba(255, 200, 100, 0.75),
+    -6px 22px  0   rgba(255, 160, 60, 0.6),
+    10px 18px  0.5px rgba(255, 220, 130, 0.7),
+    -24px -18px 0  rgba(255, 200, 100, 0.6),
+    25px -14px 0   rgba(255, 180, 80, 0.65),
+    -14px 28px 0   rgba(255, 220, 130, 0.55);
+  animation: hv-sparks-twinkle 1.4s ease-in-out 0.7s infinite;
+}
+
+/* Twinkle animation — opacity pulses 0.4 → 1 → 0.4
+   for the WHOLE element (so all sparks twinkle in sync,
+   not each independently — this gives a "breathing
+   ember" feel rather than chaotic strobe). Could be
+   enhanced later with per-shadow animations if needed. */
+@keyframes hv-sparks-twinkle {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50%      { opacity: 1.0; transform: scale(1.1); }
+}
+
 /* (wisp + laser styles removed — user requested deletion of
    the 3rd-click firing effect. The eye-state buildup
    remains: cover fades, red ambient builds, screen
