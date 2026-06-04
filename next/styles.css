@@ -723,38 +723,29 @@ h1, h2, h3, h4, p { margin: 0; }
   opacity: var(--eye-cover-opacity, 1);
   transition: opacity 0.5s var(--ease);
   animation: hv-eye-cover-breathe 3.5s ease-in-out infinite;
-  /* mix-blend-mode removed — cover is a normal composited layer
-     that FULLY hides the AI red eye behind it (no light blend
-     that would let the red eye peek through). */
-  /* FIERCE EYE (v2) — single smooth white-to-red gradient.
-     No hard "pupil" circle (v1 had a small white dot at the
-     center that the user found distracting — it looked like
-     a separate "dot" on top of the eye when the cover moved
-     with the gaze). Now the entire cover is ONE smooth
-     radial gradient: bright white in the center that
-     smoothly fades through cream → orange → deep red →
-     transparent. The white center is a SOFT highlight
-     (no hard edge), so when the cover moves with the gaze,
-     there's no visible "dot" — just a smooth gradient that
-     shifts as a whole.
+  /* mix-blend-mode: screen — the warm glow ADDS light to the
+     AI red eye underneath, making it look "lit" and "fierce"
+     without hiding it. The AI red eye stays visible through
+     the semi-transparent glow. */
+  mix-blend-mode: screen;
+  /* SOFT WARM GLOW (v3) — a subtle warm light on top of the
+     AI red eye, NOT a replacement. The AI red eye is the
+     "real" eye; the cover just makes it look more "lit".
 
-     UPDATE (2026-06-04): Made FULLY OPAQUE from 0% to 88% radius
-     so the AI red eye behind the cover is COMPLETELY hidden.
-     Previously the gradient was mostly transparent (alpha
-     0.55-0.92) which allowed the AI red eye to peek through
-     and create a visible "separation" between the cover and
-     the eye. Now the red ring is at alpha 1.0 until 88% and
-     only fades to transparent at the very edge (96-100%) for a
-     soft transition. The cover IS the eye — the AI red eye is
-     no longer visible. */
+     Maximum alpha is 0.85 (not 1.0) — semi-transparent
+     throughout, so the AI red eye shows through naturally.
+     Colors are warm cream / peach / orange (low contrast,
+     elegant) — NOT bright red. The "separation" issue is
+     solved BY DESIGN: because the cover is mostly
+     transparent, when it moves with the gaze, the AI red
+     eye stays put and the warm glow slides over it like a
+     soft light. No visible "gap" or "two orbs" effect. */
   background: radial-gradient(
     ellipse 50% 50% at 50% 50%,
-    #ffffff 0%,                          /* bright white center */
-    #fff5e0 20%,                         /* warm cream */
-    #ff9060 45%,                         /* bright orange-red */
-    #ff3020 70%,                         /* deep red (OPACITY 1.0 — covers the red eye) */
-    #ff2010 88%,                         /* very deep red (still opaque) */
-    rgba(255, 20, 5, 0.4) 96%,           /* fades at the very edge for soft transition */
+    rgba(255, 255, 255, 0.85) 0%,       /* soft white center (translucent, not pure white) */
+    rgba(255, 240, 200, 0.55) 25%,      /* warm cream (lower alpha) */
+    rgba(255, 200, 130, 0.35) 55%,      /* soft peach (lower alpha) */
+    rgba(255, 150, 90, 0.15) 80%,       /* warm orange tint (very low alpha) */
     transparent 100%
   );
   /* The cover's INNER red glow (the 'leak' that builds
@@ -786,9 +777,9 @@ h1, h2, h3, h4, p { margin: 0; }
    =========================================================== */
 .hv-cover-glow {
   position: absolute;
-  width: 35%;                    /* was 40% */
-  height: 50%;                   /* was 40% — TALLER for vertical glow */
-  margin: -25% 0 0 -17.5%;       /* centered on the cover (offset for non-square aspect) */
+  width: 22%;                    /* was 35% — smaller, more focused (matches smaller cover) */
+  height: 30%;                   /* was 50% */
+  margin: -15% 0 0 -11%;         /* centered on the cover (offset for non-square aspect) */
   border-radius: 50%;
   pointer-events: none;
   z-index: 2;                     /* above image, below red-ambient */
@@ -800,7 +791,7 @@ h1, h2, h3, h4, p { margin: 0; }
     transparent 100%
   );
   opacity: 0.7;
-  filter: blur(20px);              /* was 22px */
+  filter: blur(16px);              /* was 20px */
   mix-blend-mode: screen;
   animation: hv-cover-glow-breathe 3s ease-in-out infinite;
   will-change: transform, opacity;
@@ -866,14 +857,14 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-eye-cover-l {
   left: 35%;
   top: 32%;
-  width: 16%;          /* was 18% — vertical, slightly narrower */
-  height: 28%;         /* was 13% — much taller (vertical almond shape) */
+  width: 8%;           /* was 16% — back to elegant, slightly larger than the AI red eye (6.6%×4.5%) */
+  height: 12%;         /* was 28% — back to elegant, vertical almond */
 }
 .hv-eye-cover-r {
   left: 48.5%;
   top: 32%;
-  width: 13%;          /* was 14% */
-  height: 22%;         /* was 10% — much taller */
+  width: 6%;           /* was 13% */
+  height: 10%;         /* was 22% */
   animation-delay: 0.5s;
 }
 @keyframes hv-eye-cover-breathe {
