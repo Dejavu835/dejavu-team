@@ -1067,25 +1067,25 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-particles-l { top: 28%; left: 30%; }
 .hv-particles-r { top: 28%; right: 30%; }
 
-.hv-figure.is-detected .hv-particles { opacity: 0.4; }
-.hv-figure.is-warning .hv-particles { opacity: 1.0; }
+.hv-figure.is-detected .hv-particles { opacity: 0.22; }   /* was 0.4 */
+.hv-figure.is-warning  .hv-particles { opacity: 0.85; }   /* was 1.0 */
 
 .hv-particle {
   position: absolute;
-  width: 4px;            /* was 3px */
-  height: 4px;           /* was 3px */
+  width: 3px;            /* was 4px */
+  height: 3px;           /* was 4px */
   border-radius: 50%;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(255, 240, 200, 1) 0%,         /* brighter white-hot center */
-    rgba(255, 130, 60, 0.95) 35%,
-    rgba(255, 60, 20, 0.5) 75%,
+    rgba(255, 220, 170, 0.9) 0%,        /* less white-hot */
+    rgba(255, 140, 70, 0.7) 40%,
+    rgba(255, 60, 20, 0.35) 75%,        /* less saturated red */
     transparent 100%
   );
   box-shadow:
-    0 0 6px rgba(255, 200, 130, 0.95),
-    0 0 18px rgba(255, 80, 30, 0.7);    /* was 0 0 12px rgba(255, 60, 20, 0.5) */
-  animation: hv-particle-drift 2.2s ease-out infinite;   /* was 3s */
+    0 0 4px rgba(255, 200, 130, 0.7),
+    0 0 10px rgba(255, 80, 30, 0.4);    /* was 18px, less alpha */
+  animation: hv-particle-drift 2.8s ease-out infinite;   /* was 2.2s */
   mix-blend-mode: screen;
 }
 
@@ -1118,24 +1118,24 @@ h1, h2, h3, h4, p { margin: 0; }
   15%  { transform: translate(0, 0) scale(1); opacity: 1; }
   100% { transform: translate(var(--pdx, 60px), var(--pdy, -40px)) scale(0); opacity: 0; }
 }
-.hv-particles-l .hv-particle:nth-child(1) { --pdx: 70px;  --pdy: -50px; }
-.hv-particles-l .hv-particle:nth-child(2) { --pdx: 90px;  --pdy: -80px; }
-.hv-particles-l .hv-particle:nth-child(3) { --pdx: -50px; --pdy: 30px;  }
-.hv-particles-l .hv-particle:nth-child(4) { --pdx: 40px;  --pdy: 70px;  }
-.hv-particles-l .hv-particle:nth-child(5) { --pdx: 110px; --pdy: -30px; }
-.hv-particles-l .hv-particle:nth-child(6) { --pdx: -70px; --pdy: -90px; }
-.hv-particles-l .hv-particle:nth-child(7) { --pdx: 130px; --pdy: 60px;  }
-.hv-particles-l .hv-particle:nth-child(8) { --pdx: -130px; --pdy: 40px; }
-.hv-particles-l .hv-particle:nth-child(9) { --pdx: 60px;  --pdy: -120px; }
-.hv-particles-r .hv-particle:nth-child(1) { --pdx: -70px; --pdy: -50px; }
-.hv-particles-r .hv-particle:nth-child(2) { --pdx: -90px; --pdy: -80px; }
-.hv-particles-r .hv-particle:nth-child(3) { --pdx:  50px; --pdy: 30px;  }
-.hv-particles-r .hv-particle:nth-child(4) { --pdx: -40px; --pdy: 70px;  }
-.hv-particles-r .hv-particle:nth-child(5) { --pdx: -110px; --pdy: -30px; }
-.hv-particles-r .hv-particle:nth-child(6) { --pdx:  70px; --pdy: -90px; }
-.hv-particles-r .hv-particle:nth-child(7) { --pdx: -130px; --pdy: 60px;  }
-.hv-particles-r .hv-particle:nth-child(8) { --pdx: 130px;  --pdy: 40px;  }
-.hv-particles-r .hv-particle:nth-child(9) { --pdx: -60px;  --pdy: -120px; }
+.hv-particles-l .hv-particle:nth-child(1) { --pdx: 50px;  --pdy: -36px; }
+.hv-particles-l .hv-particle:nth-child(2) { --pdx: 64px;  --pdy: -56px; }
+.hv-particles-l .hv-particle:nth-child(3) { --pdx: -36px; --pdy: 22px;  }
+.hv-particles-l .hv-particle:nth-child(4) { --pdx: 28px;  --pdy: 50px;  }
+.hv-particles-l .hv-particle:nth-child(5) { --pdx: 78px;  --pdy: -22px; }
+.hv-particles-l .hv-particle:nth-child(6) { --pdx: -50px; --pdy: -64px; }
+.hv-particles-l .hv-particle:nth-child(7) { --pdx: 92px;  --pdy: 42px;  }
+.hv-particles-l .hv-particle:nth-child(8) { --pdx: -92px; --pdy: 28px;  }
+.hv-particles-l .hv-particle:nth-child(9) { --pdx: 42px;  --pdy: -84px; }
+.hv-particles-r .hv-particle:nth-child(1) { --pdx: -50px; --pdy: -36px; }
+.hv-particles-r .hv-particle:nth-child(2) { --pdx: -64px; --pdy: -56px; }
+.hv-particles-r .hv-particle:nth-child(3) { --pdx:  36px; --pdy: 22px;  }
+.hv-particles-r .hv-particle:nth-child(4) { --pdx: -28px; --pdy: 50px;  }
+.hv-particles-r .hv-particle:nth-child(5) { --pdx: -78px; --pdy: -22px; }
+.hv-particles-r .hv-particle:nth-child(6) { --pdx:  50px; --pdy: -64px; }
+.hv-particles-r .hv-particle:nth-child(7) { --pdx: -92px; --pdy: 42px;  }
+.hv-particles-r .hv-particle:nth-child(8) { --pdx:  92px; --pdy: 28px;  }
+.hv-particles-r .hv-particle:nth-child(9) { --pdx: -42px; --pdy: -84px; }
 
 /* ---------- SPARKS (火星子) — tiny twinkling embers ----------
    The user wanted a layer of small "火星子" (spark) particles
@@ -1150,9 +1150,9 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-sparks {
   position: absolute;
   top: 28%;
-  width: 2px;
-  height: 2px;
-  margin: -1px 0 0 -1px;
+  width: 1.5px;           /* was 2px */
+  height: 1.5px;          /* was 2px */
+  margin: -0.75px 0 0 -0.75px;   /* was -1px */
   border-radius: 50%;
   pointer-events: none;
   z-index: 4;
@@ -1162,52 +1162,40 @@ h1, h2, h3, h4, p { margin: 0; }
 .hv-sparks-l { left: 35%; }
 .hv-sparks-r { left: 49%; }
 
-.hv-figure.is-detected .hv-sparks { opacity: 0.5; }
-.hv-figure.is-warning  .hv-sparks { opacity: 1.0; }
+.hv-figure.is-detected .hv-sparks    { opacity: 0.30; }   /* was 0.5 */
+.hv-figure.is-warning  .hv-sparks    { opacity: 0.80; }   /* was 1.0 */
 
-/* Left sparks — 10 small dots scattered in a 60px radius
-   around the left eye. Each box-shadow is one virtual spark.
-   The animation `hv-sparks-twinkle` randomly varies opacity
-   for each spark via the keyframe. */
+/* 6 sparks per eye (was 10). Positions spread within ~24px radius
+   — tighter than before so they feel like a small ember cluster,
+   not a wide scattered field. */
 .hv-sparks-l {
   box-shadow:
-    0    0    0.5px rgba(255, 240, 200, 0.95),
-    8px  -10px 0 0   rgba(255, 220, 130, 0.85),
-    -12px -6px  0.5px rgba(255, 200, 100, 0.8),
-    18px 8px   0    rgba(255, 180, 80, 0.7),
-    -20px 4px  0    rgba(255, 200, 100, 0.75),
-    6px  22px  0    rgba(255, 160, 60, 0.6),
-    -10px 18px 0.5px rgba(255, 220, 130, 0.7),
-    24px -18px 0    rgba(255, 200, 100, 0.6),
-    -25px -14px 0   rgba(255, 180, 80, 0.65),
-    14px 28px  0    rgba(255, 220, 130, 0.55);
-  animation: hv-sparks-twinkle 1.4s ease-in-out infinite;
+    0    0    0.5px rgba(255, 220, 170, 0.85),
+    7px  -9px  0    rgba(255, 200, 130, 0.7),
+    -9px -5px  0    rgba(255, 180, 100, 0.65),
+    12px 6px   0    rgba(255, 160, 80, 0.55),
+    -10px 8px  0    rgba(255, 180, 100, 0.6),
+    5px  14px  0    rgba(255, 200, 130, 0.5);
+  animation: hv-sparks-twinkle 1.6s ease-in-out infinite;   /* was 1.4s */
 }
-
-/* Right sparks — mirror layout */
 .hv-sparks-r {
   box-shadow:
-    0    0    0.5px rgba(255, 240, 200, 0.95),
-    -8px -10px 0   rgba(255, 220, 130, 0.85),
-    12px -6px  0.5px rgba(255, 200, 100, 0.8),
-    -18px 8px  0   rgba(255, 180, 80, 0.7),
-    20px 4px   0   rgba(255, 200, 100, 0.75),
-    -6px 22px  0   rgba(255, 160, 60, 0.6),
-    10px 18px  0.5px rgba(255, 220, 130, 0.7),
-    -24px -18px 0  rgba(255, 200, 100, 0.6),
-    25px -14px 0   rgba(255, 180, 80, 0.65),
-    -14px 28px 0   rgba(255, 220, 130, 0.55);
-  animation: hv-sparks-twinkle 1.4s ease-in-out 0.7s infinite;
+    0    0    0.5px rgba(255, 220, 170, 0.85),
+    -7px -9px  0    rgba(255, 200, 130, 0.7),
+    9px  -5px  0    rgba(255, 180, 100, 0.65),
+    -12px 6px  0    rgba(255, 160, 80, 0.55),
+    10px 8px   0    rgba(255, 180, 100, 0.6),
+    -5px 14px  0    rgba(255, 200, 130, 0.5);
+  animation: hv-sparks-twinkle 1.6s ease-in-out 0.8s infinite;
 }
 
-/* Twinkle animation — opacity pulses 0.4 → 1 → 0.4
-   for the WHOLE element (so all sparks twinkle in sync,
-   not each independently — this gives a "breathing
-   ember" feel rather than chaotic strobe). Could be
-   enhanced later with per-shadow animations if needed. */
+/* Reduced twinkle amplitude — 0.4→1.0 was too dramatic.
+   New: 0.5→0.9 (so 80% of full intensity at peak, dipping to 55%
+   at trough). Combined with reduced per-shadow alpha, the overall
+   effect is much more subtle. */
 @keyframes hv-sparks-twinkle {
-  0%, 100% { opacity: 0.4; transform: scale(0.9); }
-  50%      { opacity: 1.0; transform: scale(1.1); }
+  0%, 100% { opacity: 0.55; transform: scale(0.95); }
+  50%      { opacity: 0.90; transform: scale(1.05); }
 }
 
 /* (wisp + laser styles removed — user requested deletion of
