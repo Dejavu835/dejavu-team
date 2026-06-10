@@ -699,6 +699,247 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 /* ===========================================================
+   P1-2 · CRT SCREEN CONTENT (3 modes cycling every 6s)
+   ===========================================================
+   A container that paints on top of the AI image (z=1) but
+   BELOW the eye overlays (eye-ambient z=2, wisp z=3, iris z=4)
+   so the red AI eyes stay visible. The container is sized to
+   cover the CRT screen area of the head (vertical 25-45% of
+   the figure, horizontal 25-75%). JS rotates .is-active
+   between the 3 mode children for a 200ms cross-fade.
+
+   The 3 modes:
+     1. CODE    — green terminal text scrolling/typing
+     2. WAVE    — coral red sine wave (SVG path)
+     3. ON AIR  — large red blinking text
+   */
+.hv-screen-content {
+  position: absolute;
+  top: 25%;
+  left: 25%;
+  width: 50%;
+  height: 20%;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 2;
+  /* Container is pointer-events: none so it doesn't block the
+     hv-head-click area (which is the click target). */
+  overflow: hidden;
+}
+
+.hv-screen-mode {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+  /* Slight dark plate behind the content so the text/wave
+     reads on top of the cream CRT area of the AI image.
+     mix-blend-mode: multiply so it darkens the underlying
+     cream to a deep teal/black, making the green/red content
+     pop. */
+  background: rgba(8, 18, 14, 0.18);
+  mix-blend-mode: multiply;
+}
+.hv-screen-mode.is-active {
+  opacity: 1;
+}
+
+/* ----- MODE 1: CODE (terminal green) -----
+   Small monospace text, 4 lines. Green text with a soft
+   green glow (text-shadow). The text sits in the upper
+   portion of the container so it doesn't completely
+   overlap the eyes (32% vertical) — even though the eye
+   overlays will paint on top regardless. */
+.hv-screen-code {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 5.5px;
+  line-height: 1.45;
+  color: #9CFFA8;
+  text-shadow:
+    0 0 3px rgba(156, 255, 168, 0.55),
+    0 0 7px rgba(60, 200, 100, 0.35);
+  white-space: pre;
+  width: 100%;
+  padding: 4px 6px 0;
+  font-weight: 500;
+  align-self: flex-start;
+  /* Subtle "type-in" reveal: each character opacity flicker
+     via animation. Cheap to do via pre-element animation. */
+  animation: hv-code-typein 0.6s steps(4) both;
+  letter-spacing: 0.01em;
+}
+@keyframes hv-code-typein {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ----- MODE 2: WAVE (coral red sine) -----
+   An inline SVG sine path that occupies ~70% of the
+   container width. Coral red (#E94E5B) with a soft drop-
+   shadow glow. The path is animated by translating the SVG
+   horizontally to create a "scrolling waveform" feel — the
+   sine is repeated via the SVG's path so the scroll loop
+   is seamless. */
+.hv-screen-wave-svg {
+  width: 70%;
+  height: 60%;
+  color: #E94E5B;
+  filter: drop-shadow(0 0 3px rgba(233, 78, 91, 0.55))
+          drop-shadow(0 0 8px rgba(233, 78, 91, 0.3));
+  /* Slow horizontal drift for "wave scrolling" feel */
+  animation: hv-wave-scroll 1.6s linear infinite;
+}
+.hv-screen-wave-path {
+  /* The viewBox sine covers 0-240 horizontally. Translate
+     by -60 (one quarter wavelength) per cycle = full sine
+     that looks continuous. */
+  transform-origin: center;
+}
+@keyframes hv-wave-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-30px); }
+}
+
+/* ----- MODE 3: ON AIR (red blinking) -----
+   Large Fraunces/serif text, coral red, on a semi-opaque
+   black plate. 1.2s blink cycle (1s on, ~0.2s off — the
+   short off reads as a CRT flicker, not a long fade). */
+.hv-screen-onair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  mix-blend-mode: normal;
+}
+.hv-screen-onair-text {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #E94E5B;
+  text-shadow:
+    0 0 6px rgba(233, 78, 91, 0.65),
+    0 0 14px rgba(233, 78, 91, 0.4);
+  line-height: 1;
+  animation: hv-onair-blink 1.2s ease-in-out infinite;
+}
+@keyframes hv-onair-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.15; }
+}
+
+/* ----- Per-state visibility -----
+   The screen content is always visible (in all 3 eye states),
+   but the warning state's red ambient is paint-over the
+   screen content via mix-blend-mode. The screen content
+   stays "running" the whole time, even as the eyes burn. */
+.hv-figure.is-firing .hv-screen-content {
+  /* On firing, the screen content fades to a red wash so it
+     reads as "screen overwhelmed by the laser". */
+  filter: hue-rotate(-30deg) saturate(1.4) brightness(0.8);
+  transition: filter 0.3s var(--ease);
+}
+
+/* ===========================================================
+   P1-2 · CRT SCANLINES
+   ===========================================================
+   Repeating horizontal lines that simulate a CRT tube's
+   scanline pattern. Painted over the figure (inset: 0) at
+   z-index 2 (above img=1, below eye overlays z=3+). Uses
+   mix-blend-mode: multiply so it darkens the underlying
+   image with horizontal bands. Slow 30s linear vertical
+   scroll gives a "tube refresh" feel.
+
+   In warning state, the scanline color shifts from neutral
+   black to coral red and opacity bumps from 0.3 → 0.6 so
+   the red ambient reads as "the screen is breaking". */
+.hv-scanlines {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-xl);
+  pointer-events: none;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.15) 2px,
+    rgba(0, 0, 0, 0.15) 3px
+  );
+  background-size: 100% 3px;
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+  opacity: 0.3;
+  animation: hv-scanlines-scroll 30s linear infinite;
+}
+@keyframes hv-scanlines-scroll {
+  from { background-position-y: 0px; }
+  to   { background-position-y: 30px; }
+}
+
+/* Warning state: scanlines become more visible + coral-tinted */
+.hv-figure.is-detected .hv-scanlines {
+  opacity: 0.45;
+  transition: opacity 0.4s var(--ease);
+}
+.hv-figure.is-warning .hv-scanlines,
+.hv-figure.is-firing .hv-scanlines {
+  opacity: 0.6;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(233, 78, 91, 0.25) 2px,
+    rgba(233, 78, 91, 0.25) 3px
+  );
+  background-size: 100% 3px;
+  background-repeat: repeat;
+  transition: opacity 0.4s var(--ease), background 0.4s var(--ease);
+}
+
+/* ===========================================================
+   P1-2 · SCREEN REFLECTION (mouse-driven)
+   ===========================================================
+   A soft white radial gradient that follows the cursor on
+   the figure, simulating light reflecting off the curved
+   glass of the CRT monitor. Painted at z-index 1 (below
+   cursor-tracker z=1 via DOM order, above img z=1 via
+   DOM order). mix-blend-mode: screen so it adds light
+   (brightens the area under the cursor) instead of
+   replacing the underlying image.
+
+   In detected/warning states the reflection fades to 0.1
+   opacity so the red ambient can take over without
+   competition. */
+.hv-screen-reflection {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-xl);
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse 30% 30% at var(--reflection-x, 50%) var(--reflection-y, 30%),
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.05) 40%,
+    transparent 70%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  transition: opacity 0.4s var(--ease);
+}
+/* In non-calm states, the reflection drops to 0.1 so it
+   doesn't fight the red ambient cast over the figure. */
+.hv-figure.is-detected .hv-screen-reflection,
+.hv-figure.is-warning .hv-screen-reflection,
+.hv-figure.is-firing .hv-screen-reflection {
+  opacity: 0.1;
+}
+
+/* ===========================================================
    EYE AMBIENT — soft warm halo around each AI red eye.
    The AI red eye is the protagonist; this just adds a
    subtle warm "atmosphere" to make it look "lit".
@@ -1057,86 +1298,165 @@ h1, h2, h3, h4, p { margin: 0; }
      - calm: 0 (hidden — no buildup yet)
      - detected: 0.4 (subtle embers)
      - warning: 1.0 (full embers, climax) */
+/* ---------- UPGRADED PARTICLE SYSTEM (P1-1) ----------
+   3 types per eye × 6 each = 18 per eye = 36 total:
+     - .hv-particle--ember  round 0.8-2.5px, hot→cool gradient
+     - .hv-particle--spark  small cross/star 1.5-3px, bright white→red
+     - .hv-particle--wisp   horizontal oval 1×4-8px, transparent red trail
+   Color gradient: inner (yellow/white) → mid (coral) → outer (dark red)
+   Mouse attract/repel: --p-tx / --p-ty set by JS on .hv-particles-l/r
+   (children inherit). State machine: calm 2.8s, detected 1.4s,
+   warning 0.7s (with explode keyframe 1.5× scale + 1.5× distance). */
 .hv-particles {
   position: absolute;
-  inset: -30%;            /* extends 30% beyond figure — well past card */
+  inset: -30%;
   pointer-events: none;
   z-index: 4;
   opacity: 0;
+  /* JS sets --p-tx / --p-ty on the parent (eye cluster) for attract/repel */
+  --p-tx: 0px;
+  --p-ty: 0px;
   transition: opacity 0.4s var(--ease);
 }
 .hv-particles-l { top: 28%; left: 30%; }
 .hv-particles-r { top: 28%; right: 30%; }
 
-.hv-figure.is-detected .hv-particles { opacity: 0.22; }   /* was 0.4 */
-.hv-figure.is-warning  .hv-particles { opacity: 0.85; }   /* was 1.0 */
+/* Per-state opacities. calm shows embers at very low base (rare
+   flicker via keyframe), sparks/wisps hidden. */
+.hv-figure.is-calm    .hv-particles { opacity: 0.10; }   /* rare embers only */
+.hv-figure.is-detected .hv-particles { opacity: 0.45; }  /* was 0.22 — bumped for new types */
+.hv-figure.is-warning  .hv-particles { opacity: 0.95; }  /* was 0.85 */
 
+/* In calm: sparks + wisps completely hidden, only embers (rare) visible */
+.hv-figure.is-calm .hv-particle--spark,
+.hv-figure.is-calm .hv-particle--wisp {
+  opacity: 0;
+}
+
+/* ----- .hv-particle base (shared by all 3 types) ----- */
 .hv-particle {
   position: absolute;
-  width: 3px;            /* was 4px */
-  height: 3px;           /* was 4px */
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(255, 220, 170, 0.9) 0%,        /* less white-hot */
-    rgba(255, 140, 70, 0.7) 40%,
-    rgba(255, 60, 20, 0.35) 75%,        /* less saturated red */
-    transparent 100%
-  );
-  box-shadow:
-    0 0 4px rgba(255, 200, 130, 0.7),
-    0 0 10px rgba(255, 80, 30, 0.4);    /* was 18px, less alpha */
-  animation: hv-particle-drift 2.8s ease-out infinite;   /* was 2.2s */
+  background: var(--p-color);
+  box-shadow: 0 0 4px rgba(255, 200, 130, 0.7),
+              0 0 10px rgba(255, 80, 30, 0.4);
+  animation: hv-particle-drift 2.8s ease-out infinite;
   mix-blend-mode: screen;
+  will-change: transform, opacity;
 }
 
-/* Each particle has a different position offset and animation
-   delay so they emit in different directions and at different
-   times. The animation moves the particle outward in a specific
-   direction. */
-.hv-particles-l .hv-particle:nth-child(1) { left: 0;  top: 0;  animation-delay: 0s;    }
-.hv-particles-l .hv-particle:nth-child(2) { left: 10%; top: -10%; animation-delay: 0.5s;  }
-.hv-particles-l .hv-particle:nth-child(3) { left: -10%; top: 5%;  animation-delay: 1.0s;  }
-.hv-particles-l .hv-particle:nth-child(4) { left: 5%;  top: 15%; animation-delay: 1.5s;  }
-.hv-particles-l .hv-particle:nth-child(5) { left: 20%; top: -5%; animation-delay: 2.0s;  }
-.hv-particles-l .hv-particle:nth-child(6) { left: -5%; top: -15%; animation-delay: 2.5s; }
-.hv-particles-l .hv-particle:nth-child(7) { left: 15%;  top: 10%;  animation-delay: 0.2s;  }
-.hv-particles-l .hv-particle:nth-child(8) { left: -15%; top: -5%;  animation-delay: 1.7s;  }
-.hv-particles-l .hv-particle:nth-child(9) { left: 25%;  top: 20%;  animation-delay: 2.3s;  }
+/* ----- TYPE 1: EMBER (火星子) — round 0.8-2.5px dot ----- */
+.hv-particle--ember {
+  width: var(--p-size, 2px);
+  height: var(--p-size, 2px);
+  border-radius: 50%;
+}
 
-.hv-particles-r .hv-particle:nth-child(1) { right: 0;  top: 0;  animation-delay: 0.25s; }
-.hv-particles-r .hv-particle:nth-child(2) { right: 10%; top: -10%; animation-delay: 0.75s; }
-.hv-particles-r .hv-particle:nth-child(3) { right: -10%; top: 5%;  animation-delay: 1.25s; }
-.hv-particles-r .hv-particle:nth-child(4) { right: 5%;  top: 15%; animation-delay: 1.75s; }
-.hv-particles-r .hv-particle:nth-child(5) { right: 20%; top: -5%; animation-delay: 2.25s; }
-.hv-particles-r .hv-particle:nth-child(6) { right: -5%; top: -15%; animation-delay: 2.75s; }
-.hv-particles-r .hv-particle:nth-child(7) { right: 15%;  top: 10%;  animation-delay: 0.45s; }
-.hv-particles-r .hv-particle:nth-child(8) { right: -15%; top: -5%;  animation-delay: 1.95s; }
-.hv-particles-r .hv-particle:nth-child(9) { right: 25%;  top: 20%;  animation-delay: 2.55s; }
+/* ----- TYPE 2: SPARK (闪光) — small star/cross 1.5-3px ----- */
+.hv-particle--spark {
+  width: var(--p-size, 2.5px);
+  height: var(--p-size, 2.5px);
+  /* rotated square reads as a diamond/spark shape; combined with
+     the bright white→red gradient + heavier glow it reads as a flash */
+  border-radius: 30%;
+  transform-origin: center;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 245, 0.6),
+    0 0 5px rgba(255, 240, 200, 0.9),
+    0 0 12px rgba(255, 100, 60, 0.55);
+}
 
+/* ----- TYPE 3: WISP-TRAIL (拖尾) — horizontal oval 1×4-8px ----- */
+.hv-particle--wisp {
+  width: var(--p-size-w, 1px);
+  height: var(--p-size-h, 6px);
+  border-radius: 50%;
+  box-shadow:
+    0 0 3px rgba(255, 80, 40, 0.5),
+    0 0 8px rgba(180, 40, 30, 0.4);
+}
+
+/* P1-1: brief opacity/glow boost when JS adds .is-flare to an
+   ember during calm state (the "rare 5% per frame" flicker). */
+.hv-particle--ember.is-flare {
+  opacity: 0.85;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 245, 0.5),
+    0 0 6px rgba(255, 220, 160, 1),
+    0 0 14px rgba(255, 100, 50, 0.6);
+}
+
+/* ----- Per-particle position / direction / color -----
+   18 positions per side. Interleaved by type (1=ember, 2=spark,
+   3=wisp, 4=ember, ...) so types are mixed across the cluster.
+   --pdx / --pdy = drift direction. --p-size = ember/spark size
+   (wisp uses --p-size-w / --p-size-h). --p-color = gradient
+   (inner ring = hot, outer = dark). Animation-delay = stagger. */
+
+/* LEFT EYE — 18 particles */
+.hv-particles-l .hv-particle:nth-child(1)  { left: 0;    top: 0;     animation-delay: 0.00s; --pdx:  50px; --pdy: -36px; --p-size: 2.2px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,244,214,0.95) 0%, rgba(255,180,90,0.7) 45%, rgba(220,60,30,0.4) 80%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(2)  { left: 8%;   top: -8%;   animation-delay: 0.35s; --pdx:  64px; --pdy: -56px; --p-size: 2.5px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,255,250,0.95) 0%, rgba(255,140,80,0.6) 50%, rgba(200,50,40,0.3) 85%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(3)  { left: -8%;  top: 5%;    animation-delay: 0.70s; --pdx: -36px; --pdy:  22px; --p-size-w: 1px; --p-size-h: 5px; --p-color: linear-gradient(90deg, transparent 0%, rgba(180,40,30,0.6) 50%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(4)  { left: 5%;   top: 12%;   animation-delay: 1.05s; --pdx:  28px; --pdy:  50px; --p-size: 1.8px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,229,168,0.9) 0%, rgba(255,140,70,0.65) 50%, rgba(200,50,30,0.3) 80%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(5)  { left: 18%;  top: -3%;   animation-delay: 1.40s; --pdx:  78px; --pdy: -22px; --p-size: 2.8px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,255,250,0.95) 0%, rgba(255,160,90,0.6) 50%, rgba(220,50,40,0.3) 85%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(6)  { left: -4%;  top: -12%;  animation-delay: 1.75s; --pdx: -50px; --pdy: -64px; --p-size-w: 1px; --p-size-h: 7px; --p-color: linear-gradient(90deg, transparent 0%, rgba(160,30,20,0.55) 50%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(7)  { left: 14%;  top: 8%;    animation-delay: 0.20s; --pdx:  92px; --pdy:  42px; --p-size: 1.5px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,200,130,0.85) 0%, rgba(220,80,50,0.6) 50%, rgba(160,40,30,0.3) 85%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(8)  { left: -14%; top: -4%;   animation-delay: 1.85s; --pdx: -92px; --pdy:  28px; --p-size: 2.0px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,255,250,0.9) 0%, rgba(255,120,70,0.55) 55%, rgba(180,40,30,0.3) 85%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(9)  { left: 22%;  top: 18%;   animation-delay: 2.45s; --pdx:  42px; --pdy: -84px; --p-size-w: 1px; --p-size-h: 6px; --p-color: linear-gradient(90deg, transparent 0%, rgba(140,30,20,0.5) 50%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(10) { left: -22%; top: 16%;   animation-delay: 0.55s; --pdx: -42px; --pdy: -78px; --p-size: 1.2px; --p-color: radial-gradient(circle at 50% 50%, rgba(200,90,50,0.85) 0%, rgba(150,40,30,0.55) 55%, rgba(107,26,31,0.3) 85%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(11) { left: 26%;  top: -14%;  animation-delay: 1.25s; --pdx:  88px; --pdy: -38px; --p-size: 2.2px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,255,250,0.9) 0%, rgba(255,140,80,0.55) 55%, rgba(193,62,72,0.3) 85%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(12) { left: 0;    top: -18%;  animation-delay: 2.10s; --pdx:   0px; --pdy: -90px; --p-size-w: 1px; --p-size-h: 8px; --p-color: linear-gradient(90deg, transparent 0%, rgba(180,50,40,0.55) 50%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(13) { left: 0;    top: 22%;   animation-delay: 0.85s; --pdx:   0px; --pdy:  92px; --p-size: 1.4px; --p-color: radial-gradient(circle at 50% 50%, rgba(220,100,60,0.85) 0%, rgba(160,40,30,0.5) 55%, rgba(107,26,31,0.25) 85%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(14) { left: 30%;  top: 0;     animation-delay: 1.65s; --pdx:  96px; --pdy:   6px; --p-size: 2.4px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,255,250,0.95) 0%, rgba(255,160,90,0.6) 50%, rgba(200,50,40,0.3) 85%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(15) { left: -30%; top: 0;     animation-delay: 2.25s; --pdx: -96px; --pdy:  -6px; --p-size-w: 1px; --p-size-h: 6px; --p-color: linear-gradient(90deg, transparent 0%, rgba(160,30,20,0.5) 50%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(16) { left: 18%;  top: 24%;   animation-delay: 0.40s; --pdx:  60px; --pdy:  82px; --p-size: 1.6px; --p-color: radial-gradient(circle at 50% 50%, rgba(230,120,70,0.8) 0%, rgba(160,40,30,0.5) 55%, rgba(107,26,31,0.25) 85%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(17) { left: -18%; top: 26%;   animation-delay: 1.95s; --pdx: -68px; --pdy:  78px; --p-size: 2.0px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,200,130,0.85) 0%, rgba(220,80,50,0.55) 55%, rgba(150,30,30,0.3) 85%, transparent 100%); }
+.hv-particles-l .hv-particle:nth-child(18) { left: 28%;  top: -22%;  animation-delay: 2.65s; --pdx:  72px; --pdy: -70px; --p-size-w: 1px; --p-size-h: 4px; --p-color: linear-gradient(90deg, transparent 0%, rgba(140,30,20,0.5) 50%, transparent 100%); }
+
+/* RIGHT EYE — 18 particles (mirrored directions, staggered delays) */
+.hv-particles-r .hv-particle:nth-child(1)  { right: 0;   top: 0;     animation-delay: 0.25s; --pdx: -50px; --pdy: -36px; --p-size: 2.2px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,244,214,0.95) 0%, rgba(255,180,90,0.7) 45%, rgba(220,60,30,0.4) 80%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(2)  { right: 8%;  top: -8%;   animation-delay: 0.60s; --pdx: -64px; --pdy: -56px; --p-size: 2.5px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,255,250,0.95) 0%, rgba(255,140,80,0.6) 50%, rgba(200,50,40,0.3) 85%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(3)  { right: -8%; top: 5%;    animation-delay: 0.95s; --pdx:  36px; --pdy:  22px; --p-size-w: 1px; --p-size-h: 5px; --p-color: linear-gradient(90deg, transparent 0%, rgba(180,40,30,0.6) 50%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(4)  { right: 5%;  top: 12%;   animation-delay: 1.30s; --pdx: -28px; --pdy:  50px; --p-size: 1.8px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,229,168,0.9) 0%, rgba(255,140,70,0.65) 50%, rgba(200,50,30,0.3) 80%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(5)  { right: 18%; top: -3%;   animation-delay: 1.65s; --pdx: -78px; --pdy: -22px; --p-size: 2.8px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,255,250,0.95) 0%, rgba(255,160,90,0.6) 50%, rgba(220,50,40,0.3) 85%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(6)  { right: -4%; top: -12%;  animation-delay: 2.00s; --pdx:  50px; --pdy: -64px; --p-size-w: 1px; --p-size-h: 7px; --p-color: linear-gradient(90deg, transparent 0%, rgba(160,30,20,0.55) 50%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(7)  { right: 14%; top: 8%;    animation-delay: 0.45s; --pdx: -92px; --pdy:  42px; --p-size: 1.5px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,200,130,0.85) 0%, rgba(220,80,50,0.6) 50%, rgba(160,40,30,0.3) 85%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(8)  { right: -14%;top: -4%;   animation-delay: 2.10s; --pdx:  92px; --pdy:  28px; --p-size: 2.0px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,255,250,0.9) 0%, rgba(255,120,70,0.55) 55%, rgba(180,40,30,0.3) 85%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(9)  { right: 22%; top: 18%;   animation-delay: 2.70s; --pdx: -42px; --pdy: -84px; --p-size-w: 1px; --p-size-h: 6px; --p-color: linear-gradient(90deg, transparent 0%, rgba(140,30,20,0.5) 50%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(10) { right: -22%;top: 16%;   animation-delay: 0.80s; --pdx:  42px; --pdy: -78px; --p-size: 1.2px; --p-color: radial-gradient(circle at 50% 50%, rgba(200,90,50,0.85) 0%, rgba(150,40,30,0.55) 55%, rgba(107,26,31,0.3) 85%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(11) { right: 26%; top: -14%;  animation-delay: 1.50s; --pdx: -88px; --pdy: -38px; --p-size: 2.2px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,255,250,0.9) 0%, rgba(255,140,80,0.55) 55%, rgba(193,62,72,0.3) 85%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(12) { right: 0;   top: -18%;  animation-delay: 2.35s; --pdx:   0px; --pdy: -90px; --p-size-w: 1px; --p-size-h: 8px; --p-color: linear-gradient(90deg, transparent 0%, rgba(180,50,40,0.55) 50%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(13) { right: 0;   top: 22%;   animation-delay: 1.10s; --pdx:   0px; --pdy:  92px; --p-size: 1.4px; --p-color: radial-gradient(circle at 50% 50%, rgba(220,100,60,0.85) 0%, rgba(160,40,30,0.5) 55%, rgba(107,26,31,0.25) 85%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(14) { right: 30%; top: 0;     animation-delay: 1.90s; --pdx: -96px; --pdy:   6px; --p-size: 2.4px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,255,250,0.95) 0%, rgba(255,160,90,0.6) 50%, rgba(200,50,40,0.3) 85%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(15) { right: -30%;top: 0;     animation-delay: 2.50s; --pdx:  96px; --pdy:  -6px; --p-size-w: 1px; --p-size-h: 6px; --p-color: linear-gradient(90deg, transparent 0%, rgba(160,30,20,0.5) 50%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(16) { right: 18%; top: 24%;   animation-delay: 0.65s; --pdx: -60px; --pdy:  82px; --p-size: 1.6px; --p-color: radial-gradient(circle at 50% 50%, rgba(230,120,70,0.8) 0%, rgba(160,40,30,0.5) 55%, rgba(107,26,31,0.25) 85%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(17) { right: -18%;top: 26%;   animation-delay: 2.20s; --pdx:  68px; --pdy:  78px; --p-size: 2.0px; --p-color: radial-gradient(circle at 50% 50%, rgba(255,200,130,0.85) 0%, rgba(220,80,50,0.55) 55%, rgba(150,30,30,0.3) 85%, transparent 100%); }
+.hv-particles-r .hv-particle:nth-child(18) { right: 28%; top: -22%;  animation-delay: 2.90s; --pdx: -72px; --pdy: -70px; --p-size-w: 1px; --p-size-h: 4px; --p-color: linear-gradient(90deg, transparent 0%, rgba(140,30,20,0.5) 50%, transparent 100%); }
+
+/* ----- State-driven animation timing ----- */
+.hv-figure.is-detected .hv-particle { animation-duration: 1.4s; }   /* 2× faster */
+.hv-figure.is-warning  .hv-particle { animation: hv-particle-explode 0.7s ease-out infinite; }  /* explosive */
+
+/* ----- Keyframes -----
+   Both keyframes compose --pdx/--pdy (per-particle drift) with
+   --p-tx/--p-ty (mouse attract/repel offset, set on parent). */
 @keyframes hv-particle-drift {
   0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
-  15%  { transform: translate(0, 0) scale(1); opacity: 1; }
-  100% { transform: translate(var(--pdx, 60px), var(--pdy, -40px)) scale(0); opacity: 0; }
+  15%  { transform: translate(0, 0) scale(1);   opacity: 1; }
+  100% { transform: translate(
+           calc(var(--pdx, 60px) + var(--p-tx, 0px)),
+           calc(var(--pdy, -40px) + var(--p-ty, 0px))
+         ) scale(0); opacity: 0; }
 }
-.hv-particles-l .hv-particle:nth-child(1) { --pdx: 50px;  --pdy: -36px; }
-.hv-particles-l .hv-particle:nth-child(2) { --pdx: 64px;  --pdy: -56px; }
-.hv-particles-l .hv-particle:nth-child(3) { --pdx: -36px; --pdy: 22px;  }
-.hv-particles-l .hv-particle:nth-child(4) { --pdx: 28px;  --pdy: 50px;  }
-.hv-particles-l .hv-particle:nth-child(5) { --pdx: 78px;  --pdy: -22px; }
-.hv-particles-l .hv-particle:nth-child(6) { --pdx: -50px; --pdy: -64px; }
-.hv-particles-l .hv-particle:nth-child(7) { --pdx: 92px;  --pdy: 42px;  }
-.hv-particles-l .hv-particle:nth-child(8) { --pdx: -92px; --pdy: 28px;  }
-.hv-particles-l .hv-particle:nth-child(9) { --pdx: 42px;  --pdy: -84px; }
-.hv-particles-r .hv-particle:nth-child(1) { --pdx: -50px; --pdy: -36px; }
-.hv-particles-r .hv-particle:nth-child(2) { --pdx: -64px; --pdy: -56px; }
-.hv-particles-r .hv-particle:nth-child(3) { --pdx:  36px; --pdy: 22px;  }
-.hv-particles-r .hv-particle:nth-child(4) { --pdx: -28px; --pdy: 50px;  }
-.hv-particles-r .hv-particle:nth-child(5) { --pdx: -78px; --pdy: -22px; }
-.hv-particles-r .hv-particle:nth-child(6) { --pdx:  50px; --pdy: -64px; }
-.hv-particles-r .hv-particle:nth-child(7) { --pdx: -92px; --pdy: 42px;  }
-.hv-particles-r .hv-particle:nth-child(8) { --pdx:  92px; --pdy: 28px;  }
-.hv-particles-r .hv-particle:nth-child(9) { --pdx: -42px; --pdy: -84px; }
+
+@keyframes hv-particle-explode {
+  0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
+  10%  { transform: translate(0, 0) scale(1.5); opacity: 1; }
+  100% { transform: translate(
+           calc(var(--pdx, 60px) * 1.5 + var(--p-tx, 0px)),
+           calc(var(--pdy, -40px) * 1.5 + var(--p-ty, 0px))
+         ) scale(0); opacity: 0; }
+}
 
 /* ---------- SPARKS (火星子) — tiny twinkling embers ----------
    The user wanted a layer of small "火星子" (spark) particles
@@ -1361,6 +1681,12 @@ h1, h2, h3, h4, p { margin: 0; }
   .hv-figure.is-warning .hv-eye-iris { animation: none; }
   .hv-figure.is-blinking .hv-eye-iris,
   .hv-figure.is-blinking .hv-eye-wisp { animation: none; }
+  /* P1-2: freeze the new screen content + scanlines for users
+     who request reduced motion. The modes still cross-fade
+     (managed by JS) but no per-mode animation runs. */
+  .hv-screen-wave-svg,
+  .hv-screen-onair-text,
+  .hv-scanlines { animation: none; }
 }
 
 /* ===========================================================

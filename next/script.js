@@ -59,7 +59,24 @@
   const redAmbient  = $('#hvRedAmbient');
   const wispL       = document.querySelector('.hv-eye-wisp-l');
   const wispR       = document.querySelector('.hv-eye-wisp-r');
+  // P1-1 upgraded particle system (3 types × 6 per eye = 36 total)
+  const particlesL  = document.querySelector('.hv-particles-l');
+  const particlesR  = document.querySelector('.hv-particles-r');
+  // Cache ember elements (used for calm-state "rare flicker" via JS)
+  const emberEls    = particlesL && particlesR
+    ? Array.from(document.querySelectorAll('.hv-particle--ember'))
+    : [];
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // P1-2 · CRT screen content (3 modes cycling every 6s) + screen
+  // reflection (mouse-driven). The reflection needs the figure rect
+  // (fR) so it can compute the cursor's relative position; the mode
+  // cycle is independent of the figure geometry.
+  const screenContent    = $('#hvScreenContent');
+  const screenModes      = screenContent
+    ? Array.from(screenContent.querySelectorAll('.hv-screen-mode'))
+    : [];
+  const screenReflection = $('#hvScreenReflection');
 
   // ===========================================================
   // POSITION CHILDREN VIA JAVASCRIPT (iPad Safari FIX)
@@ -130,6 +147,54 @@
   setTimeout(positionChildren, 100);
   setTimeout(positionChildren, 500);
 
+  // ===========================================================
+  // P1-2 · CRT SCREEN CONTENT MODE ROTATION
+  // ===========================================================
+  // 3 modes (code / wave / ON AIR) cycle every SCREEN_CYCLE_MS.
+  // Cross-fade is 200ms via the .hv-screen-mode CSS transition.
+  // Mode 0 (code) starts active by default (matches the HTML).
+  // The cycle runs even during eye-state transitions — the CRT
+  // screen "always has something running", which is the whole
+  // point of this layer.
+  const SCREEN_CYCLE_MS = 6000;
+  let currentScreenMode = 0;
+  let screenModeTimer = null;
+  const advanceScreenMode = () => {
+    if (!screenModes.length) return;
+    // Drop .is-active from the current mode, then add it to the next
+    screenModes[currentScreenMode].classList.remove('is-active');
+    currentScreenMode = (currentScreenMode + 1) % screenModes.length;
+    screenModes[currentScreenMode].classList.add('is-active');
+    // Schedule the next rotation
+    screenModeTimer = setTimeout(advanceScreenMode, SCREEN_CYCLE_MS);
+  };
+  if (screenContent && screenModes.length > 0 && !reduceMotion) {
+    // First rotation after SCREEN_CYCLE_MS; the initial .is-active
+    // is on the code mode in HTML so it shows on first paint.
+    screenModeTimer = setTimeout(advanceScreenMode, SCREEN_CYCLE_MS);
+  }
+
+  // P1-2 · SCREEN REFLECTION HELPER
+  // The reflection is a CSS radial-gradient with --reflection-x/y
+  // CSS vars on .hv-screen-reflection. We just write those vars
+  // from the cursor position (in figure-relative %).
+  const updateScreenReflection = (clientX, clientY) => {
+    if (!screenReflection || !heroFigure) return;
+    refreshFR();
+    if (fR.width === 0 || fR.height === 0) return;
+    const xPct = ((clientX - fR.left) / fR.width) * 100;
+    const yPct = ((clientY - fR.top) / fR.height) * 100;
+    screenReflection.style.setProperty('--reflection-x', xPct.toFixed(1) + '%');
+    screenReflection.style.setProperty('--reflection-y', yPct.toFixed(1) + '%');
+  };
+  // Clear the reflection position when the cursor leaves the hero
+  // (CSS animates the radial gradient back to its default position).
+  const clearScreenReflection = () => {
+    if (!screenReflection) return;
+    screenReflection.style.setProperty('--reflection-x', '50%');
+    screenReflection.style.setProperty('--reflection-y', '30%');
+  };
+
   if (heroFigure && heroSection && !reduceMotion) {
     const MAX_TILT_X = 8;
     const MAX_TILT_Y = 14;
@@ -176,9 +241,11 @@
       const prev = currentState;
       currentState = newState;
 
-      // Update figure classes (drives CSS for cover/iris/animations)
-      heroFigure.classList.remove('is-detected', 'is-warning');
-      if (newState !== 'calm') heroFigure.classList.add('is-' + newState);
+      // Update figure classes (drives CSS for cover/iris/animations).
+      // We add is-calm explicitly so CSS can use a clean class selector
+      // for the calm-only particle hiding (sparks/wisps off in calm).
+      heroFigure.classList.remove('is-calm', 'is-detected', 'is-warning');
+      heroFigure.classList.add('is-' + newState);
 
       // State parameters. irisY is always 0 (user feedback: don't
       // make the iris jump up — the build-up pressure comes from
@@ -381,7 +448,68 @@
         heroFigure.style.setProperty('--cursor-y', tClampedY.toFixed(1) + 'px');
         heroFigure.classList.add('has-cursor');
       }
+      // P1-1 PARTICLE ATTRACT / REPEL — set --p-tx / --p-ty on
+      // each .hv-particles-l/r parent (children inherit). The
+      // attract radius is 80px, strength 0.3. In calm: particles
+      // are ATTRACTED to the cursor. In detected / warning:
+      // particles are REPELLED (the AI "scares" them off).
+      // Sign flips based on state; magnitude ramps with proximity.
+      updateParticleAttract(e.clientX, e.clientY);
+      // P1-2 SCREEN REFLECTION — write the cursor position into
+      // the .hv-screen-reflection CSS vars so the radial gradient
+      // follows the mouse across the CRT glass surface.
+      updateScreenReflection(e.clientX, e.clientY);
       if (rafId === null) rafId = requestAnimationFrame(apply);
+    };
+
+    // P1-1 helper: write --p-tx / --p-ty to each .hv-particles-l/r
+    // so the keyframe calc(var(--pdx) + var(--p-tx)) drifts the
+    // particles toward (calm) or away from (detected/warning) the
+    // cursor. Cheap: 2 setProperty calls per side.
+    const PARTICLE_ATTRACT_RADIUS = 80;
+    const PARTICLE_ATTRACT_STRENGTH = 0.3;
+    const updateParticleAttract = (mx, my) => {
+      if (!heroFigure) return;
+      // Eye centers in figure-relative coords (same values used
+      // for positioning the irises, particles, etc.)
+      const leftEyeX  = fR.width  * 0.3542;
+      const leftEyeY  = fR.height * 0.3177;
+      const rightEyeX = fR.width  * 0.4873;
+      const rightEyeY = fR.height * 0.3194;
+      // Cursor in figure-relative coords
+      const cx = mx - fR.left;
+      const cy = my - fR.top;
+      // sign: +1 (attract) in calm, -1 (repel) in detected/warning
+      const sign = (currentState === 'calm') ? 1 : -1;
+      // For each eye cluster, compute distance cursor→eye and
+      // apply an attract/repel vector scaled by proximity.
+      const setFor = (cluster, eyeX, eyeY) => {
+        if (!cluster) return;
+        const dx = cx - eyeX;
+        const dy = cy - eyeY;
+        const d  = Math.hypot(dx, dy);
+        if (d < PARTICLE_ATTRACT_RADIUS && d > 0.001) {
+          // falloff: 1.0 at cursor, 0.0 at radius edge
+          const fall = 1 - (d / PARTICLE_ATTRACT_RADIUS);
+          const mag  = fall * PARTICLE_ATTRACT_STRENGTH * sign * d;
+          // Unit vector (dx, dy) * mag
+          const tx = (dx / d) * mag;
+          const ty = (dy / d) * mag;
+          cluster.style.setProperty('--p-tx', tx.toFixed(1) + 'px');
+          cluster.style.setProperty('--p-ty', ty.toFixed(1) + 'px');
+        } else {
+          cluster.style.setProperty('--p-tx', '0px');
+          cluster.style.setProperty('--p-ty', '0px');
+        }
+      };
+      setFor(particlesL, leftEyeX,  leftEyeY);
+      setFor(particlesR, rightEyeX, rightEyeY);
+    };
+
+    // P1-1 helper: clear the attract/repel offset on mouseleave.
+    const clearParticleAttract = () => {
+      if (particlesL) { particlesL.style.setProperty('--p-tx', '0px'); particlesL.style.setProperty('--p-ty', '0px'); }
+      if (particlesR) { particlesR.style.setProperty('--p-tx', '0px'); particlesR.style.setProperty('--p-ty', '0px'); }
     };
 
     const onLeave = () => {
@@ -396,6 +524,11 @@
       if (cardGlow) {
         cardGlow.style.setProperty('--card-glow-i', '0');
       }
+      // P1-1: clear particle attract/repel offset
+      clearParticleAttract();
+      // P1-2: clear screen reflection position (CSS animates
+      // the radial gradient back to the default 50%/30%)
+      clearScreenReflection();
       // CURSOR TRACKER: fade out by removing the has-cursor
       // class. The tracker itself transitions opacity 0→1 via
       // CSS (see .hv-figure.has-cursor .hv-cursor-tracker).
@@ -696,7 +829,20 @@
     if (headClick) {
       headClick.addEventListener('click', (e) => {
         e.stopPropagation();
+        // Capture prev state to drive the right haptic pattern
+        // AFTER advanceState() mutates currentState.
+        const prevState = currentState;
         advanceState();
+        // P1-1 TACTILE FEEDBACK — navigator.vibrate on mobile.
+        // Short pulse on detected, sharp pattern on warning.
+        // Guarded for browsers without Vibration API.
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+          if (prevState === 'calm' && currentState === 'detected') {
+            navigator.vibrate(10);
+          } else if (prevState === 'detected' && currentState === 'warning') {
+            navigator.vibrate([20, 30, 40]);
+          }
+        }
       });
     }
 
@@ -720,6 +866,30 @@
         }
       }
     });
+
+    // P1-1 CALM-STATE EMBER FLICKER — in calm, only embers
+    // should be visible (sparks/wisps are off via CSS). Even
+    // for embers we want the "rare 5% per frame" feel so the
+    // user perceives occasional hot sparks rather than a
+    // continuous glow. We run a small setInterval (~10 fps)
+    // and, for each ember, ~5% chance per tick to add a brief
+    // .is-flare class. The CSS keyframe for .is-flare boosts
+    // opacity for ~250ms.
+    const FLICKER_INTERVAL_MS = 100;
+    const FLICKER_PROBABILITY = 0.05;
+    const FLICKER_DURATION_MS = 250;
+    setInterval(() => {
+      if (currentState !== 'calm') return;
+      if (!emberEls || emberEls.length === 0) return;
+      for (let i = 0; i < emberEls.length; i++) {
+        const p = emberEls[i];
+        if (p.classList.contains('is-flare')) continue;  // already flaring
+        if (Math.random() < FLICKER_PROBABILITY) {
+          p.classList.add('is-flare');
+          setTimeout(() => p.classList.remove('is-flare'), FLICKER_DURATION_MS);
+        }
+      }
+    }, FLICKER_INTERVAL_MS);
 
     // Initialize state
     setState('calm');
