@@ -777,31 +777,37 @@ h1, h2, h3, h4, p { margin: 0; }
   100% { opacity: 1; }
 }
 
-/* ----- MODE 2: WAVE (coral red sine) -----
-   An inline SVG sine path that occupies ~70% of the
-   container width. Coral red (#E94E5B) with a soft drop-
-   shadow glow. The path is animated by translating the SVG
-   horizontally to create a "scrolling waveform" feel — the
-   sine is repeated via the SVG's path so the scroll loop
-   is seamless. */
+/* ----- MODE 2: WAVE (subtle corner heartbeat) -----
+   P1-2b: shrunk to a 30% x 15% corner decoration in the
+   lower-left of the CRT plate. Color shifted from coral
+   red (#E94E5B) to mid-gray (#6B6660) so the wave reads
+   as a quiet "signal/heartbeat" hint rather than a focal
+   element that competes with the eye. Drop-shadow glow
+   removed; opacity 0.5. Path has 3-4 small peaks instead
+   of 8 large ones. Animation still runs (slow horizontal
+   drift) for life. */
 .hv-screen-wave-svg {
-  width: 70%;
-  height: 60%;
-  color: #E94E5B;
-  filter: drop-shadow(0 0 3px rgba(233, 78, 91, 0.55))
-          drop-shadow(0 0 8px rgba(233, 78, 91, 0.3));
+  width: 30%;
+  height: 15%;
+  position: absolute;
+  left: 8%;
+  bottom: 12%;
+  color: #6B6660;
+  opacity: 0.5;
+  filter: none;
   /* Slow horizontal drift for "wave scrolling" feel */
   animation: hv-wave-scroll 1.6s linear infinite;
 }
 .hv-screen-wave-path {
-  /* The viewBox sine covers 0-240 horizontally. Translate
-     by -60 (one quarter wavelength) per cycle = full sine
+  /* The viewBox sine covers 0-90 horizontally. Translate
+     by -22 (one quarter wavelength) per cycle = full sine
      that looks continuous. */
+  stroke-width: 1.2;
   transform-origin: center;
 }
 @keyframes hv-wave-scroll {
   from { transform: translateX(0); }
-  to   { transform: translateX(-30px); }
+  to   { transform: translateX(-22px); }
 }
 
 /* ----- MODE 3: ON AIR (red blinking) -----
