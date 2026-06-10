@@ -12,7 +12,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -359,39 +359,116 @@
 
         <div class="work-grid">
 
-          <a class="work-card reveal" href="https://dejavuagent.cn/" target="_blank" rel="noopener">
-            <div class="work-thumb work-thumb-site"></div>
+          <!-- Card 1 · feature (spans 2 cols × 2 rows on desktop) -->
+          <a class="work-card work-card--feat reveal" href="https://dejavuagent.cn/" target="_blank" rel="noopener">
+            <div class="work-thumb work-thumb--feat">
+              <div class="feat-art" aria-hidden="true">
+                <div class="feat-art-head"></div>
+                <div class="feat-art-eye"></div>
+                <span class="feat-art-label">dejavu team · /next</span>
+              </div>
+            </div>
             <div class="work-body">
-              <span class="work-kind">Team site</span>
+              <span class="work-role">Built by dejavu</span>
               <h3 class="work-name">dejavu team · 官网</h3>
-              <p class="work-desc">Apple 风团队主页 · 深色字白卡 · 悬停动效</p>
+              <div class="work-stat">
+                <span class="work-stat-item">3<small>members</small></span>
+                <span class="work-stat-sep"></span>
+                <span class="work-stat-item">3<small>crafts</small></span>
+                <span class="work-stat-sep"></span>
+                <span class="work-stat-item">2026<small>launched</small></span>
+              </div>
+              <ul class="work-tags">
+                <li>HTML</li>
+                <li>CSS</li>
+                <li>JS</li>
+                <li>GitHub Pages</li>
+              </ul>
+              <p class="work-cta">View live <span aria-hidden="true">→</span></p>
+              <span class="work-arrow" aria-hidden="true">↗</span>
             </div>
           </a>
 
-          <a class="work-card reveal" data-reveal-delay="100" href="https://dejavuagent.cn/wuziqi/" target="_blank" rel="noopener">
-            <div class="work-thumb work-thumb-wuziqi"></div>
+          <!-- Card 2 · 五子棋 -->
+          <a class="work-card work-card--reg reveal" data-reveal-delay="100" href="https://dejavuagent.cn/wuziqi/" target="_blank" rel="noopener">
+            <div class="work-thumb work-thumb--wuziqi" aria-hidden="true">
+              <div class="wuzi-board">
+                <span class="wuzi-stone wuzi-stone--b" style="--c:14%;--r:24%"></span>
+                <span class="wuzi-stone wuzi-stone--w" style="--c:62%;--r:32%"></span>
+                <span class="wuzi-stone wuzi-stone--b" style="--c:38%;--r:50%"></span>
+                <span class="wuzi-stone wuzi-stone--w" style="--c:80%;--r:58%"></span>
+                <span class="wuzi-stone wuzi-stone--b" style="--c:24%;--r:74%"></span>
+              </div>
+            </div>
             <div class="work-body">
-              <span class="work-kind">Game · 策略</span>
+              <span class="work-role">Built by 创作虾</span>
               <h3 class="work-name">五子棋</h3>
-              <p class="work-desc">经典五子棋 · 本地对战 + AI</p>
+              <div class="work-stat">
+                <span class="work-stat-item">2<small>modes</small></span>
+                <span class="work-stat-sep"></span>
+                <span class="work-stat-item">AI<small>对手</small></span>
+              </div>
+              <ul class="work-tags">
+                <li>JS</li>
+                <li>Canvas</li>
+                <li>Strategy</li>
+              </ul>
             </div>
           </a>
 
-          <a class="work-card reveal" data-reveal-delay="200" href="https://dejavuagent.cn/games/tank/" target="_blank" rel="noopener">
-            <div class="work-thumb work-thumb-tank"></div>
+          <!-- Card 3 · 坦克大战 -->
+          <a class="work-card work-card--reg reveal" data-reveal-delay="200" href="https://dejavuagent.cn/games/tank/" target="_blank" rel="noopener">
+            <div class="work-thumb work-thumb--tank" aria-hidden="true">
+              <div class="tank-art">
+                <div class="tank-art-body"></div>
+                <div class="tank-art-turret"></div>
+                <div class="tank-art-barrel"></div>
+                <div class="tank-art-treads"></div>
+                <span class="tank-art-label">TANK · 1990</span>
+              </div>
+            </div>
             <div class="work-body">
-              <span class="work-kind">Game · 射击</span>
+              <span class="work-role">Built by 创作虾</span>
               <h3 class="work-name">坦克大战</h3>
-              <p class="work-desc">4 难度 + Boss · 街机手感</p>
+              <div class="work-stat">
+                <span class="work-stat-item">4<small>难度</small></span>
+                <span class="work-stat-sep"></span>
+                <span class="work-stat-item">Boss<small>关卡</small></span>
+              </div>
+              <ul class="work-tags">
+                <li>JS</li>
+                <li>Canvas</li>
+                <li>Arcade</li>
+              </ul>
             </div>
           </a>
 
-          <a class="work-card reveal" data-reveal-delay="300" href="https://163cn.tv/51b9bJa" target="_blank" rel="noopener">
-            <div class="work-thumb work-thumb-music"></div>
+          <!-- Card 4 · déjà vu 网易云 -->
+          <a class="work-card work-card--reg reveal" data-reveal-delay="300" href="https://163cn.tv/51b9bJa" target="_blank" rel="noopener">
+            <div class="work-thumb work-thumb--music" aria-hidden="true">
+              <div class="vinyl-art">
+                <div class="vinyl-art-disc">
+                  <div class="vinyl-art-grooves"></div>
+                  <div class="vinyl-art-label">déjà vu</div>
+                </div>
+                <div class="vinyl-art-logo" aria-hidden="true">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
             <div class="work-body">
-              <span class="work-kind">Music · 网易云</span>
+              <span class="work-role">Built by déjà vu</span>
               <h3 class="work-name">déjà vu 作品集</h3>
-              <p class="work-desc">原创单曲 + 专辑 · AI 辅助作曲</p>
+              <div class="work-stat">
+                <span class="work-stat-item">10+<small>单曲</small></span>
+                <span class="work-stat-sep"></span>
+                <span class="work-stat-item">163<small>music</small></span>
+              </div>
+              <ul class="work-tags">
+                <li>Suno</li>
+                <li>Compose</li>
+                <li>Mix</li>
+              </ul>
             </div>
           </a>
 
